@@ -31,3 +31,6 @@ Thumbs.db
 # Build artifacts
 dist/
 bin/
+
+# Claude Code
+.claude/
