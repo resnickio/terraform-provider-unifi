@@ -67,6 +67,25 @@ Two controller types with different API paths:
 
 The SDK handles path differences. Both use session-based authentication.
 
+### Resource Compatibility by Controller Type
+
+| Resource | UDM (Network 10.x) | Standalone Network App |
+|----------|-------------------|------------------------|
+| `unifi_network` | ✅ | ✅ |
+| `unifi_firewall_group` | ✅ | ✅ |
+| `unifi_firewall_rule` | ❌ (use zone-based) | ✅ |
+| `unifi_firewall_policy` | ✅ | ❌ (500 errors) |
+| `unifi_firewall_zone` | ✅ | ❌ (500 errors) |
+| `unifi_port_forward` | ✅ | ✅ |
+| `unifi_static_route` | ✅ | ✅ |
+| `unifi_user_group` | ✅ | ✅ |
+| `unifi_wlan` | ✅ | ✅ |
+
+**Notes:**
+- UDM with Network 10.x uses zone-based firewall (v2 API), legacy rules don't work
+- Standalone Network Application may not support zone-based firewall
+- Tests auto-skip on unsupported controllers
+
 ## Provider Architecture
 
 ### Auto-Relogin Client
