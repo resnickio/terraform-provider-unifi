@@ -486,3 +486,15 @@ func (c *AutoLoginClient) DeleteUserGroup(ctx context.Context, id string) error 
 		return c.client.DeleteUserGroup(ctx, id)
 	})
 }
+
+// AP Group operations
+
+func (c *AutoLoginClient) ListAPGroups(ctx context.Context) ([]unifi.APGroup, error) {
+	var result []unifi.APGroup
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListAPGroups(ctx)
+		return err
+	})
+	return result, err
+}
