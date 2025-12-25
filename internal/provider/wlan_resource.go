@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
@@ -99,12 +101,18 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("wpapsk"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("open", "wep", "wpapsk", "wpaeap"),
+				},
 			},
 			"wpa_mode": schema.StringAttribute{
 				Description: "The WPA mode. Valid values: 'auto', 'wpa1', 'wpa2'. Defaults to 'wpa2'. Note: WPA3 is controlled via wpa3_support attribute.",
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("wpa2"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("auto", "wpa1", "wpa2"),
+				},
 			},
 			"wpa_enc": schema.StringAttribute{
 				Description: "The WPA encryption type. Valid values: 'ccmp', 'gcmp', 'auto'. Defaults to 'ccmp'.",
@@ -183,6 +191,9 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("deny"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("allow", "deny"),
+				},
 			},
 			"schedule_enabled": schema.BoolAttribute{
 				Description: "Whether scheduling is enabled. Defaults to false.",
@@ -230,6 +241,9 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("optional"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("disabled", "optional", "required"),
+				},
 			},
 			"wpa3_support": schema.BoolAttribute{
 				Description: "Whether WPA3 support is enabled. Defaults to false.",
@@ -283,7 +297,7 @@ func (r *WLANResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	resp.Diagnostics.Append(r.sdkToState(ctx, created, &plan)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, created, &plan, nil)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -299,6 +313,8 @@ func (r *WLANResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
+	priorState := state
+
 	wlan, err := r.client.GetWLAN(ctx, state.ID.ValueString())
 	if err != nil {
 		if isNotFoundError(err) {
@@ -309,7 +325,7 @@ func (r *WLANResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	resp.Diagnostics.Append(r.sdkToState(ctx, wlan, &state)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, wlan, &state, &priorState)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -344,7 +360,7 @@ func (r *WLANResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	resp.Diagnostics.Append(r.sdkToState(ctx, updated, &plan)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, updated, &plan, nil)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -453,7 +469,7 @@ func (r *WLANResource) planToSDK(ctx context.Context, plan *WLANResourceModel, d
 	return wlan
 }
 
-func (r *WLANResource) sdkToState(ctx context.Context, wlan *unifi.WLANConf, state *WLANResourceModel) diag.Diagnostics {
+func (r *WLANResource) sdkToState(ctx context.Context, wlan *unifi.WLANConf, state *WLANResourceModel, priorState *WLANResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	state.ID = types.StringValue(wlan.ID)
@@ -466,6 +482,8 @@ func (r *WLANResource) sdkToState(ctx context.Context, wlan *unifi.WLANConf, sta
 
 	if wlan.XPassphrase != "" {
 		state.Passphrase = types.StringValue(wlan.XPassphrase)
+	} else if priorState != nil && !priorState.Passphrase.IsNull() {
+		state.Passphrase = priorState.Passphrase
 	} else {
 		state.Passphrase = types.StringNull()
 	}
