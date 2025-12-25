@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -13,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
@@ -94,18 +96,27 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 			"action": schema.StringAttribute{
 				Description: "The action to take. Valid values: 'ALLOW', 'BLOCK', 'REJECT'.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("ALLOW", "BLOCK", "REJECT"),
+				},
 			},
 			"protocol": schema.StringAttribute{
 				Description: "The protocol to match. Valid values: 'all', 'tcp_udp', 'tcp', 'udp', 'icmp', 'icmpv6'. Defaults to 'all'.",
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("all"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("all", "tcp_udp", "tcp", "udp", "icmp", "icmpv6"),
+				},
 			},
 			"ip_version": schema.StringAttribute{
 				Description: "The IP version to match. Valid values: 'BOTH', 'IPV4', 'IPV6'. Defaults to 'BOTH'.",
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("BOTH"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("BOTH", "IPV4", "IPV6"),
+				},
 			},
 			"index": schema.Int64Attribute{
 				Description: "The index/priority of the policy (lower numbers are evaluated first).",
@@ -122,6 +133,9 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("ALL"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("ALL", "RESPOND_ONLY", "CUSTOM"),
+				},
 			},
 			"connection_states": schema.ListAttribute{
 				Description: "List of connection states to match (when connection_state_type is 'CUSTOM').",
@@ -600,12 +614,12 @@ func (r *FirewallPolicyResource) endpointToObject(ctx context.Context, endpoint 
 	}
 
 	attrs := map[string]attr.Value{
-		"zone_id":         types.StringValue(endpoint.ZoneID),
-		"matching_target": types.StringValue(endpoint.MatchingTarget),
+		"zone_id":         stringValueOrNull(endpoint.ZoneID),
+		"matching_target": stringValueOrNull(endpoint.MatchingTarget),
 		"ips":             ipsVal,
-		"mac":             types.StringValue(endpoint.MAC),
-		"port":            types.StringValue(endpoint.Port),
-		"network_id":      types.StringValue(endpoint.NetworkID),
+		"mac":             stringValueOrNull(endpoint.MAC),
+		"port":            stringValueOrNull(endpoint.Port),
+		"network_id":      stringValueOrNull(endpoint.NetworkID),
 		"client_macs":     clientMacsVal,
 	}
 
@@ -630,9 +644,9 @@ func (r *FirewallPolicyResource) scheduleToObject(ctx context.Context, schedule 
 	}
 
 	attrs := map[string]attr.Value{
-		"mode":             types.StringValue(schedule.Mode),
-		"time_range_start": types.StringValue(schedule.TimeRangeStart),
-		"time_range_end":   types.StringValue(schedule.TimeRangeEnd),
+		"mode":             stringValueOrNull(schedule.Mode),
+		"time_range_start": stringValueOrNull(schedule.TimeRangeStart),
+		"time_range_end":   stringValueOrNull(schedule.TimeRangeEnd),
 		"days_of_week":     daysVal,
 	}
 
