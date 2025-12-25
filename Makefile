@@ -1,4 +1,4 @@
-.PHONY: build test testacc lint clean install
+.PHONY: build test testacc lint clean install sweep
 
 # Load .env file if it exists
 ifneq (,$(wildcard ./.env))
@@ -44,6 +44,15 @@ clean:
 install: build
 	mkdir -p ~/.terraform.d/plugins/registry.terraform.io/resnickio/unifi/0.1.0/$$(go env GOOS)_$$(go env GOARCH)
 	cp bin/terraform-provider-unifi ~/.terraform.d/plugins/registry.terraform.io/resnickio/unifi/0.1.0/$$(go env GOOS)_$$(go env GOARCH)/
+
+# Run sweepers to clean up test resources
+# Usage: make sweep
+sweep:
+	@if [ -z "$(UNIFI_BASE_URL)" ]; then \
+		echo "Error: UNIFI_BASE_URL not set. Copy .env.example to .env and configure it."; \
+		exit 1; \
+	fi
+	go test ./internal/provider -v -sweep=all -timeout 30m
 
 # Generate documentation (if using tfplugindocs)
 docs:
