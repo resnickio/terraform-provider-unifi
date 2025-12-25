@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
@@ -84,6 +86,16 @@ func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRe
 					"'WANv6_IN', 'WANv6_OUT', 'WANv6_LOCAL', 'LANv6_IN', 'LANv6_OUT', 'LANv6_LOCAL', " +
 					"'GUESTv6_IN', 'GUESTv6_OUT', 'GUESTv6_LOCAL'.",
 				Required: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"WAN_IN", "WAN_OUT", "WAN_LOCAL",
+						"LAN_IN", "LAN_OUT", "LAN_LOCAL",
+						"GUEST_IN", "GUEST_OUT", "GUEST_LOCAL",
+						"WANv6_IN", "WANv6_OUT", "WANv6_LOCAL",
+						"LANv6_IN", "LANv6_OUT", "LANv6_LOCAL",
+						"GUESTv6_IN", "GUESTv6_OUT", "GUESTv6_LOCAL",
+					),
+				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -91,6 +103,9 @@ func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRe
 			"action": schema.StringAttribute{
 				Description: "The action to take. Valid values: 'accept', 'drop', 'reject'.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("accept", "drop", "reject"),
+				},
 			},
 			"rule_index": schema.Int64Attribute{
 				Description: "The index/priority of the rule (lower numbers are evaluated first).",
@@ -103,10 +118,13 @@ func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRe
 				Default:     booldefault.StaticBool(true),
 			},
 			"protocol": schema.StringAttribute{
-				Description: "The protocol to match. Valid values: 'all', 'tcp', 'udp', 'tcp_udp', 'icmp', or protocol number.",
+				Description: "The protocol to match. Valid values: 'all', 'tcp', 'udp', 'tcp_udp', 'icmp'.",
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("all"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("all", "tcp", "udp", "tcp_udp", "icmp"),
+				},
 			},
 			"src_network_conf_type": schema.StringAttribute{
 				Description: "Source network configuration type. Valid values: 'ADDRv4', 'NETv4'.",
