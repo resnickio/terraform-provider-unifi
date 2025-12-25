@@ -10,6 +10,8 @@ import (
 	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
 
+const minAuthInterval = 5 * time.Second
+
 // AutoLoginClient wraps a NetworkManager to automatically re-authenticate on session expiration.
 type AutoLoginClient struct {
 	client       unifi.NetworkManager
@@ -43,6 +45,11 @@ func (c *AutoLoginClient) withRetry(ctx context.Context, fn func() error) error 
 	// just retry without re-authenticating again
 	if c.lastAuthTime.After(failedAt) {
 		return fn()
+	}
+
+	// Rate limit: don't re-auth more than once per minAuthInterval
+	if timeSinceLastAuth := time.Since(c.lastAuthTime); timeSinceLastAuth < minAuthInterval {
+		time.Sleep(minAuthInterval - timeSinceLastAuth)
 	}
 
 	// Re-authenticate
