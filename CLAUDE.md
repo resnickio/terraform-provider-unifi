@@ -6,9 +6,10 @@ Terraform provider for UniFi network infrastructure management.
 
 - `internal/provider/` - Provider implementation
   - `provider.go` - Provider configuration and initialization
-  - `client.go` - Auto-relogin client wrapper with retry logic
-  - `utils.go` - Pointer helpers, error handling utilities
+  - `client.go` - Auto-relogin client wrapper with retry logic and rate limiting
+  - `utils.go` - Pointer helpers, error handling utilities, `stringValueOrNull`
   - `network_resource.go` - Network/VLAN resource
+  - `network_data_source.go` - Network data source (lookup by ID or name)
   - `firewall_group_resource.go` - Address/port group resource
   - `firewall_rule_resource.go` - Legacy firewall rule resource
   - `firewall_policy_resource.go` - Zone-based firewall policy (v2 API)
@@ -17,6 +18,7 @@ Terraform provider for UniFi network infrastructure management.
   - `static_route_resource.go` - Static route resource
   - `user_group_resource.go` - User group (bandwidth profile) resource
   - `wlan_resource.go` - Wireless network (SSID) resource
+  - `sweep_test.go` - Sweeper functions for test resource cleanup
   - `*_test.go` - Acceptance tests for each resource
 - `main.go` - Provider entry point
 
@@ -24,6 +26,7 @@ Terraform provider for UniFi network infrastructure management.
 
 - [UniFi Go SDK](https://github.com/resnickio/unifi-go-sdk) - API client library
 - [terraform-plugin-framework](https://github.com/hashicorp/terraform-plugin-framework) - Provider framework (v1.17.0+)
+- [terraform-plugin-framework-validators](https://github.com/hashicorp/terraform-plugin-framework-validators) - Input validation for schema attributes
 - [terraform-plugin-testing](https://github.com/hashicorp/terraform-plugin-testing) - Acceptance test framework (v1.14.0+)
 
 ## Build & Test
@@ -40,6 +43,9 @@ make testacc
 
 # Run specific test
 make testacc-run TEST=TestAccNetworkResource_basic
+
+# Clean up leftover test resources
+make sweep
 ```
 
 ## Environment Variables
@@ -148,6 +154,9 @@ Each resource follows this pattern:
 - `unifi_static_route` - Static routing
 - `unifi_user_group` - Bandwidth/QoS groups
 - `unifi_wlan` - Wireless networks (SSID configuration)
+
+**Implemented Data Sources:**
+- `unifi_network` - Look up network by ID or name
 
 **Planned Resources:**
 - `unifi_radius_profile` - RADIUS authentication profiles
