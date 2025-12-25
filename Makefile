@@ -1,4 +1,4 @@
-.PHONY: build test testacc lint clean install sweep
+.PHONY: build test testacc lint clean install sweep docs fmt
 
 # Load .env file if it exists
 ifneq (,$(wildcard ./.env))
@@ -54,6 +54,11 @@ sweep:
 	fi
 	go test ./internal/provider -v -sweep=all -timeout 30m
 
-# Generate documentation (if using tfplugindocs)
+# Generate documentation
 docs:
-	go generate ./...
+	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name unifi
+
+# Format code
+fmt:
+	goimports -w .
+	gofmt -s -w .
