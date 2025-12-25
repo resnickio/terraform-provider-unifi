@@ -24,6 +24,19 @@ make install
 
 ## Provider Configuration
 
+### Using API Key (Recommended)
+
+```hcl
+provider "unifi" {
+  base_url = "https://192.168.1.1"
+  api_key  = "your-api-key"
+  site     = "default"    # optional, defaults to "default"
+  insecure = true         # optional, for self-signed certs
+}
+```
+
+### Using Username/Password
+
 ```hcl
 provider "unifi" {
   base_url = "https://192.168.1.1"
@@ -41,10 +54,13 @@ All configuration can be set via environment variables:
 | Variable | Description |
 |----------|-------------|
 | `UNIFI_BASE_URL` | Controller URL (e.g., `https://192.168.1.1`) |
-| `UNIFI_USERNAME` | Admin username |
-| `UNIFI_PASSWORD` | Admin password |
+| `UNIFI_API_KEY` | API key for authentication (recommended) |
+| `UNIFI_USERNAME` | Admin username (alternative to API key) |
+| `UNIFI_PASSWORD` | Admin password (alternative to API key) |
 | `UNIFI_SITE` | Site name (default: `default`) |
 | `UNIFI_INSECURE` | Skip TLS verification (`true`/`false`) |
+
+API key authentication is recommended and takes priority over username/password when both are provided.
 
 ## Resources
 
@@ -203,6 +219,29 @@ make testacc
 make install
 ```
 
+## Data Sources
+
+### unifi_network
+
+Retrieves information about an existing network by ID or name.
+
+```hcl
+data "unifi_network" "lan" {
+  name = "Default"
+}
+
+data "unifi_network" "by_id" {
+  id = "60a1b2c3d4e5f6a7b8c9d0e1"
+}
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string | no* | Network ID to look up |
+| `name` | string | no* | Network name to look up |
+
+*Either `id` or `name` must be specified.
+
 ## Status
 
 | Resource | Status |
@@ -210,7 +249,16 @@ make install
 | `unifi_network` | Complete |
 | `unifi_firewall_group` | Complete |
 | `unifi_firewall_rule` | Complete |
+| `unifi_firewall_policy` | Complete |
+| `unifi_firewall_zone` | Complete |
 | `unifi_port_forward` | Complete |
+| `unifi_static_route` | Complete |
+| `unifi_user_group` | Complete |
+| `unifi_wlan` | Complete |
+
+| Data Source | Status |
+|-------------|--------|
+| `unifi_network` | Complete |
 
 ## Related Projects
 

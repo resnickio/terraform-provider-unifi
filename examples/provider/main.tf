@@ -9,10 +9,13 @@ terraform {
 
 provider "unifi" {
   base_url = "https://192.168.1.1"
-  username = "admin"
-  password = "password"
+  api_key  = "your-api-key"  # Recommended: use API key authentication
   site     = "default"
-  insecure = true # Set to false in production with valid TLS certificate
+  insecure = true            # Set to false in production with valid TLS certificate
+
+  # Alternative: username/password authentication (not recommended)
+  # username = "admin"
+  # password = "password"
 }
 
 # Example: Create a VLAN network
