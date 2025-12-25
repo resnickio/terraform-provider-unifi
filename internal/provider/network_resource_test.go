@@ -381,14 +381,6 @@ resource "unifi_network" "test" {
 }
 
 func testAccNetworkResourceConfig_dhcpDns(name string, vlanID int, dnsServers []string) string {
-	dnsStr := ""
-	for i, dns := range dnsServers {
-		if i > 0 {
-			dnsStr += ", "
-		}
-		dnsStr += fmt.Sprintf("%q", dns)
-	}
-
 	return fmt.Sprintf(`
 %s
 
@@ -402,5 +394,5 @@ resource "unifi_network" "test" {
   dhcp_stop    = "10.%d.0.254"
   dhcp_dns     = [%s]
 }
-`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256, dnsStr)
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256, formatStringListForHCL(dnsServers))
 }

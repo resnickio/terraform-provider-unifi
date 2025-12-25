@@ -297,12 +297,12 @@ func TestAccFirewallGroupResource_commonPorts(t *testing.T) {
 			// Create with commonly used ports
 			{
 				Config: testAccFirewallGroupResourceConfig_portGroup("tf-acc-test-common-ports", []string{
-					"22",    // SSH
-					"80",    // HTTP
-					"443",   // HTTPS
-					"25",    // SMTP
-					"53",    // DNS
-					"3389",  // RDP
+					"22",   // SSH
+					"80",   // HTTP
+					"443",  // HTTPS
+					"25",   // SMTP
+					"53",   // DNS
+					"3389", // RDP
 				}),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_group.test", "name", "tf-acc-test-common-ports"),
@@ -347,14 +347,6 @@ func TestAccFirewallGroupResource_privateNetworks(t *testing.T) {
 }
 
 func testAccFirewallGroupResourceConfig_addressGroup(name string, members []string) string {
-	membersStr := ""
-	for i, m := range members {
-		if i > 0 {
-			membersStr += ", "
-		}
-		membersStr += fmt.Sprintf("%q", m)
-	}
-
 	return fmt.Sprintf(`
 %s
 
@@ -363,18 +355,10 @@ resource "unifi_firewall_group" "test" {
   group_type = "address-group"
   members    = [%s]
 }
-`, testAccProviderConfig, name, membersStr)
+`, testAccProviderConfig, name, formatStringListForHCL(members))
 }
 
 func testAccFirewallGroupResourceConfig_portGroup(name string, members []string) string {
-	membersStr := ""
-	for i, m := range members {
-		if i > 0 {
-			membersStr += ", "
-		}
-		membersStr += fmt.Sprintf("%q", m)
-	}
-
 	return fmt.Sprintf(`
 %s
 
@@ -383,5 +367,5 @@ resource "unifi_firewall_group" "test" {
   group_type = "port-group"
   members    = [%s]
 }
-`, testAccProviderConfig, name, membersStr)
+`, testAccProviderConfig, name, formatStringListForHCL(members))
 }

@@ -3,25 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
 
-// getDefaultAPGroupID fetches the first AP group ID from the controller for testing
 func getDefaultAPGroupID(t *testing.T) string {
-	config := unifi.NetworkClientConfig{
-		BaseURL:            os.Getenv("UNIFI_BASE_URL"),
-		APIKey:             os.Getenv("UNIFI_API_KEY"),
-		Site:               "default",
-		InsecureSkipVerify: os.Getenv("UNIFI_INSECURE") == "true",
-	}
-
-	client, err := unifi.NewNetworkClient(config)
-	if err != nil {
-		t.Skipf("Could not create client to fetch AP groups: %v", err)
+	client := testAccGetClient(t)
+	if client == nil {
 		return ""
 	}
 
@@ -398,14 +387,6 @@ resource "unifi_wlan" "test" {
 }
 
 func testAccWLANResourceConfig_macFilter(name, passphrase string, macs []string, apGroupID string) string {
-	macsStr := ""
-	for i, m := range macs {
-		if i > 0 {
-			macsStr += ", "
-		}
-		macsStr += fmt.Sprintf("%q", m)
-	}
-
 	return fmt.Sprintf(`
 %s
 
@@ -418,5 +399,5 @@ resource "unifi_wlan" "test" {
   mac_filter_policy  = "allow"
   mac_filter_list    = [%s]
 }
-`, testAccProviderConfig, name, passphrase, apGroupID, macsStr)
+`, testAccProviderConfig, name, passphrase, apGroupID, formatStringListForHCL(macs))
 }

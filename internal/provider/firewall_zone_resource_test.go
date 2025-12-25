@@ -9,7 +9,7 @@ import (
 
 func TestAccFirewallZoneResource_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read
@@ -32,7 +32,7 @@ func TestAccFirewallZoneResource_basic(t *testing.T) {
 
 func TestAccFirewallZoneResource_withZoneKey(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with zone_key
@@ -56,7 +56,7 @@ func TestAccFirewallZoneResource_withZoneKey(t *testing.T) {
 
 func TestAccFirewallZoneResource_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create
@@ -79,7 +79,7 @@ func TestAccFirewallZoneResource_update(t *testing.T) {
 
 func TestAccFirewallZoneResource_withNetworkIDs(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create zone and network, assign network to zone
@@ -102,7 +102,7 @@ func TestAccFirewallZoneResource_withNetworkIDs(t *testing.T) {
 
 func TestAccFirewallZoneResource_multipleNetworks(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create zone with multiple networks

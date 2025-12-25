@@ -1,53 +1,15 @@
 package provider
 
 import (
-	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
-
-func testAccFirewallZonePreCheck(t *testing.T) {
-	testAccPreCheck(t)
-
-	config := unifi.NetworkClientConfig{
-		BaseURL:            os.Getenv("UNIFI_BASE_URL"),
-		APIKey:             os.Getenv("UNIFI_API_KEY"),
-		Site:               "default",
-		InsecureSkipVerify: os.Getenv("UNIFI_INSECURE") == "true",
-	}
-
-	client, err := unifi.NewNetworkClient(config)
-	if err != nil {
-		t.Skipf("Could not create client for zone support check: %v", err)
-		return
-	}
-
-	_, err = client.CreateFirewallZone(context.Background(), &unifi.FirewallZone{
-		Name: "tf-acc-zone-test-precheck",
-	})
-	if err != nil {
-		t.Skipf("Controller does not support firewall zones: %v", err)
-		return
-	}
-
-	zones, err := client.ListFirewallZones(context.Background())
-	if err == nil {
-		for _, zone := range zones {
-			if zone.Name == "tf-acc-zone-test-precheck" {
-				_ = client.DeleteFirewallZone(context.Background(), zone.ID)
-				break
-			}
-		}
-	}
-}
 
 func TestAccFirewallPolicyResource_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read
@@ -75,7 +37,7 @@ func TestAccFirewallPolicyResource_basic(t *testing.T) {
 
 func TestAccFirewallPolicyResource_block(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create block policy
@@ -98,7 +60,7 @@ func TestAccFirewallPolicyResource_block(t *testing.T) {
 
 func TestAccFirewallPolicyResource_full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with all options
@@ -126,7 +88,7 @@ func TestAccFirewallPolicyResource_full(t *testing.T) {
 
 func TestAccFirewallPolicyResource_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create
@@ -151,7 +113,7 @@ func TestAccFirewallPolicyResource_update(t *testing.T) {
 
 func TestAccFirewallPolicyResource_disabled(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create disabled policy
@@ -174,7 +136,7 @@ func TestAccFirewallPolicyResource_disabled(t *testing.T) {
 
 func TestAccFirewallPolicyResource_tcp(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create TCP policy
@@ -197,7 +159,7 @@ func TestAccFirewallPolicyResource_tcp(t *testing.T) {
 
 func TestAccFirewallPolicyResource_udp(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create UDP policy
@@ -220,7 +182,7 @@ func TestAccFirewallPolicyResource_udp(t *testing.T) {
 
 func TestAccFirewallPolicyResource_ipv4Only(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create IPv4-only policy
@@ -243,7 +205,7 @@ func TestAccFirewallPolicyResource_ipv4Only(t *testing.T) {
 
 func TestAccFirewallPolicyResource_ipv6Only(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create IPv6-only policy
@@ -266,7 +228,7 @@ func TestAccFirewallPolicyResource_ipv6Only(t *testing.T) {
 
 func TestAccFirewallPolicyResource_withSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with source
@@ -291,7 +253,7 @@ func TestAccFirewallPolicyResource_withSource(t *testing.T) {
 
 func TestAccFirewallPolicyResource_withDestination(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with destination
@@ -316,7 +278,7 @@ func TestAccFirewallPolicyResource_withDestination(t *testing.T) {
 
 func TestAccFirewallPolicyResource_withPort(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with destination port
@@ -339,7 +301,7 @@ func TestAccFirewallPolicyResource_withPort(t *testing.T) {
 
 func TestAccFirewallPolicyResource_defaults(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with minimal config to verify defaults
@@ -360,7 +322,7 @@ func TestAccFirewallPolicyResource_defaults(t *testing.T) {
 
 func TestAccFirewallPolicyResource_withZones(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccFirewallZonePreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create policy with zones
