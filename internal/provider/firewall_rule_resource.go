@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -28,26 +30,27 @@ type FirewallRuleResource struct {
 }
 
 type FirewallRuleResourceModel struct {
-	ID                    types.String `tfsdk:"id"`
-	SiteID                types.String `tfsdk:"site_id"`
-	Name                  types.String `tfsdk:"name"`
-	Ruleset               types.String `tfsdk:"ruleset"`
-	Action                types.String `tfsdk:"action"`
-	RuleIndex             types.Int64  `tfsdk:"rule_index"`
-	Enabled               types.Bool   `tfsdk:"enabled"`
-	Protocol              types.String `tfsdk:"protocol"`
-	SrcNetworkConfType    types.String `tfsdk:"src_network_conf_type"`
-	SrcAddress            types.String `tfsdk:"src_address"`
-	SrcFirewallGroupIDs   types.List   `tfsdk:"src_firewall_group_ids"`
-	DstNetworkConfType    types.String `tfsdk:"dst_network_conf_type"`
-	DstAddress            types.String `tfsdk:"dst_address"`
-	DstFirewallGroupIDs   types.List   `tfsdk:"dst_firewall_group_ids"`
-	DstPort               types.String `tfsdk:"dst_port"`
-	Logging               types.Bool   `tfsdk:"logging"`
-	StateNew              types.Bool   `tfsdk:"state_new"`
-	StateEstablished      types.Bool   `tfsdk:"state_established"`
-	StateRelated          types.Bool   `tfsdk:"state_related"`
-	StateInvalid          types.Bool   `tfsdk:"state_invalid"`
+	ID                  types.String   `tfsdk:"id"`
+	SiteID              types.String   `tfsdk:"site_id"`
+	Name                types.String   `tfsdk:"name"`
+	Ruleset             types.String   `tfsdk:"ruleset"`
+	Action              types.String   `tfsdk:"action"`
+	RuleIndex           types.Int64    `tfsdk:"rule_index"`
+	Enabled             types.Bool     `tfsdk:"enabled"`
+	Protocol            types.String   `tfsdk:"protocol"`
+	SrcNetworkConfType  types.String   `tfsdk:"src_network_conf_type"`
+	SrcAddress          types.String   `tfsdk:"src_address"`
+	SrcFirewallGroupIDs types.List     `tfsdk:"src_firewall_group_ids"`
+	DstNetworkConfType  types.String   `tfsdk:"dst_network_conf_type"`
+	DstAddress          types.String   `tfsdk:"dst_address"`
+	DstFirewallGroupIDs types.List     `tfsdk:"dst_firewall_group_ids"`
+	DstPort             types.String   `tfsdk:"dst_port"`
+	Logging             types.Bool     `tfsdk:"logging"`
+	StateNew            types.Bool     `tfsdk:"state_new"`
+	StateEstablished    types.Bool     `tfsdk:"state_established"`
+	StateRelated        types.Bool     `tfsdk:"state_related"`
+	StateInvalid        types.Bool     `tfsdk:"state_invalid"`
+	Timeouts            timeouts.Value `tfsdk:"timeouts"`
 }
 
 func NewFirewallRuleResource() resource.Resource {
@@ -61,6 +64,14 @@ func (r *FirewallRuleResource) Metadata(ctx context.Context, req resource.Metada
 func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a UniFi legacy firewall rule.",
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The unique identifier of the firewall rule.",
@@ -215,6 +226,14 @@ func (r *FirewallRuleResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	// Convert plan to SDK struct
 	rule := r.planToSDK(ctx, &plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -245,6 +264,14 @@ func (r *FirewallRuleResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	// Get the firewall rule
 	rule, err := r.client.GetFirewallRule(ctx, state.ID.ValueString())
 	if err != nil {
@@ -272,6 +299,14 @@ func (r *FirewallRuleResource) Update(ctx context.Context, req resource.UpdateRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	var state FirewallRuleResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -312,6 +347,14 @@ func (r *FirewallRuleResource) Delete(ctx context.Context, req resource.DeleteRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	// Delete the firewall rule
 	err := r.client.DeleteFirewallRule(ctx, state.ID.ValueString())

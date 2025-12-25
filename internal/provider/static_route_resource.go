@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -28,16 +30,17 @@ type StaticRouteResource struct {
 }
 
 type StaticRouteResourceModel struct {
-	ID                   types.String `tfsdk:"id"`
-	SiteID               types.String `tfsdk:"site_id"`
-	Name                 types.String `tfsdk:"name"`
-	Enabled              types.Bool   `tfsdk:"enabled"`
-	Type                 types.String `tfsdk:"type"`
-	StaticRouteNetwork   types.String `tfsdk:"static_route_network"`
-	StaticRouteNexthop   types.String `tfsdk:"static_route_nexthop"`
-	StaticRouteDistance  types.Int64  `tfsdk:"static_route_distance"`
-	StaticRouteInterface types.String `tfsdk:"static_route_interface"`
-	StaticRouteType      types.String `tfsdk:"static_route_type"`
+	ID                   types.String   `tfsdk:"id"`
+	SiteID               types.String   `tfsdk:"site_id"`
+	Name                 types.String   `tfsdk:"name"`
+	Enabled              types.Bool     `tfsdk:"enabled"`
+	Type                 types.String   `tfsdk:"type"`
+	StaticRouteNetwork   types.String   `tfsdk:"static_route_network"`
+	StaticRouteNexthop   types.String   `tfsdk:"static_route_nexthop"`
+	StaticRouteDistance  types.Int64    `tfsdk:"static_route_distance"`
+	StaticRouteInterface types.String   `tfsdk:"static_route_interface"`
+	StaticRouteType      types.String   `tfsdk:"static_route_type"`
+	Timeouts             timeouts.Value `tfsdk:"timeouts"`
 }
 
 func NewStaticRouteResource() resource.Resource {
@@ -51,6 +54,14 @@ func (r *StaticRouteResource) Metadata(ctx context.Context, req resource.Metadat
 func (r *StaticRouteResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a UniFi static route.",
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The unique identifier of the static route.",
@@ -139,6 +150,14 @@ func (r *StaticRouteResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	route := r.planToSDK(&plan)
 
 	created, err := r.client.CreateRoute(ctx, route)
@@ -162,6 +181,14 @@ func (r *StaticRouteResource) Read(ctx context.Context, req resource.ReadRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	route, err := r.client.GetRoute(ctx, state.ID.ValueString())
 	if err != nil {
@@ -188,6 +215,14 @@ func (r *StaticRouteResource) Update(ctx context.Context, req resource.UpdateReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	var state StaticRouteResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -220,6 +255,14 @@ func (r *StaticRouteResource) Delete(ctx context.Context, req resource.DeleteReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	err := r.client.DeleteRoute(ctx, state.ID.ValueString())
 	if err != nil {

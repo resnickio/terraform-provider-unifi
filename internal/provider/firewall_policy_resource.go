@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -29,22 +31,23 @@ type FirewallPolicyResource struct {
 }
 
 type FirewallPolicyResourceModel struct {
-	ID                  types.String `tfsdk:"id"`
-	Name                types.String `tfsdk:"name"`
-	Enabled             types.Bool   `tfsdk:"enabled"`
-	Action              types.String `tfsdk:"action"`
-	Protocol            types.String `tfsdk:"protocol"`
-	IPVersion           types.String `tfsdk:"ip_version"`
-	Index               types.Int64  `tfsdk:"index"`
-	Logging             types.Bool   `tfsdk:"logging"`
-	ConnectionStateType types.String `tfsdk:"connection_state_type"`
-	ConnectionStates    types.List   `tfsdk:"connection_states"`
-	MatchIPSec          types.Bool   `tfsdk:"match_ipsec"`
-	ICMPTypename        types.String `tfsdk:"icmp_typename"`
-	ICMPV6Typename      types.String `tfsdk:"icmpv6_typename"`
-	Source              types.Object `tfsdk:"source"`
-	Destination         types.Object `tfsdk:"destination"`
-	Schedule            types.Object `tfsdk:"schedule"`
+	ID                  types.String   `tfsdk:"id"`
+	Name                types.String   `tfsdk:"name"`
+	Enabled             types.Bool     `tfsdk:"enabled"`
+	Action              types.String   `tfsdk:"action"`
+	Protocol            types.String   `tfsdk:"protocol"`
+	IPVersion           types.String   `tfsdk:"ip_version"`
+	Index               types.Int64    `tfsdk:"index"`
+	Logging             types.Bool     `tfsdk:"logging"`
+	ConnectionStateType types.String   `tfsdk:"connection_state_type"`
+	ConnectionStates    types.List     `tfsdk:"connection_states"`
+	MatchIPSec          types.Bool     `tfsdk:"match_ipsec"`
+	ICMPTypename        types.String   `tfsdk:"icmp_typename"`
+	ICMPV6Typename      types.String   `tfsdk:"icmpv6_typename"`
+	Source              types.Object   `tfsdk:"source"`
+	Destination         types.Object   `tfsdk:"destination"`
+	Schedule            types.Object   `tfsdk:"schedule"`
+	Timeouts            timeouts.Value `tfsdk:"timeouts"`
 }
 
 var endpointAttrTypes = map[string]attr.Type{
@@ -75,6 +78,14 @@ func (r *FirewallPolicyResource) Metadata(ctx context.Context, req resource.Meta
 func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a UniFi firewall policy (v2 zone-based firewall).",
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The unique identifier of the firewall policy.",
@@ -280,6 +291,14 @@ func (r *FirewallPolicyResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	policy := r.planToSDK(ctx, &plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -307,6 +326,14 @@ func (r *FirewallPolicyResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	policy, err := r.client.GetFirewallPolicy(ctx, state.ID.ValueString())
 	if err != nil {
 		if isNotFoundError(err) {
@@ -332,6 +359,14 @@ func (r *FirewallPolicyResource) Update(ctx context.Context, req resource.Update
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	var state FirewallPolicyResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -366,6 +401,14 @@ func (r *FirewallPolicyResource) Delete(ctx context.Context, req resource.Delete
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	err := r.client.DeleteFirewallPolicy(ctx, state.ID.ValueString())
 	if err != nil {

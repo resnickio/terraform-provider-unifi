@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -34,21 +36,22 @@ type NetworkResource struct {
 }
 
 type NetworkResourceModel struct {
-	ID           types.String `tfsdk:"id"`
-	SiteID       types.String `tfsdk:"site_id"`
-	Name         types.String `tfsdk:"name"`
-	Purpose      types.String `tfsdk:"purpose"`
-	VlanID       types.Int64  `tfsdk:"vlan_id"`
-	NetworkGroup types.String `tfsdk:"network_group"`
-	Subnet       types.String `tfsdk:"subnet"`
-	DHCPEnabled  types.Bool   `tfsdk:"dhcp_enabled"`
-	DHCPStart    types.String `tfsdk:"dhcp_start"`
-	DHCPStop     types.String `tfsdk:"dhcp_stop"`
-	DHCPLease    types.Int64  `tfsdk:"dhcp_lease"`
-	DHCPDNS      types.List   `tfsdk:"dhcp_dns"`
-	DomainName   types.String `tfsdk:"domain_name"`
-	IGMPSnooping types.Bool   `tfsdk:"igmp_snooping"`
-	Enabled      types.Bool   `tfsdk:"enabled"`
+	ID           types.String   `tfsdk:"id"`
+	SiteID       types.String   `tfsdk:"site_id"`
+	Name         types.String   `tfsdk:"name"`
+	Purpose      types.String   `tfsdk:"purpose"`
+	VlanID       types.Int64    `tfsdk:"vlan_id"`
+	NetworkGroup types.String   `tfsdk:"network_group"`
+	Subnet       types.String   `tfsdk:"subnet"`
+	DHCPEnabled  types.Bool     `tfsdk:"dhcp_enabled"`
+	DHCPStart    types.String   `tfsdk:"dhcp_start"`
+	DHCPStop     types.String   `tfsdk:"dhcp_stop"`
+	DHCPLease    types.Int64    `tfsdk:"dhcp_lease"`
+	DHCPDNS      types.List     `tfsdk:"dhcp_dns"`
+	DomainName   types.String   `tfsdk:"domain_name"`
+	IGMPSnooping types.Bool     `tfsdk:"igmp_snooping"`
+	Enabled      types.Bool     `tfsdk:"enabled"`
+	Timeouts     timeouts.Value `tfsdk:"timeouts"`
 }
 
 func NewNetworkResource() resource.Resource {
@@ -153,6 +156,14 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Default:     booldefault.StaticBool(true),
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 	}
 }
 
@@ -181,20 +192,25 @@ func (r *NetworkResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	// Convert plan to SDK struct
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	network := r.planToSDK(ctx, &plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Create the network
 	created, err := r.client.CreateNetwork(ctx, network)
 	if err != nil {
 		handleSDKError(&resp.Diagnostics, err, "create", "network")
 		return
 	}
 
-	// Update state with response
 	resp.Diagnostics.Append(r.sdkToState(ctx, created, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -211,7 +227,14 @@ func (r *NetworkResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	// Get the network
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	network, err := r.client.GetNetwork(ctx, state.ID.ValueString())
 	if err != nil {
 		if isNotFoundError(err) {
@@ -222,7 +245,6 @@ func (r *NetworkResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	// Update state with response
 	resp.Diagnostics.Append(r.sdkToState(ctx, network, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -245,24 +267,28 @@ func (r *NetworkResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	// Convert plan to SDK struct
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
+
 	network := r.planToSDK(ctx, &plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Preserve ID and SiteID from state
 	network.ID = state.ID.ValueString()
 	network.SiteID = state.SiteID.ValueString()
 
-	// Update the network
 	updated, err := r.client.UpdateNetwork(ctx, state.ID.ValueString(), network)
 	if err != nil {
 		handleSDKError(&resp.Diagnostics, err, "update", "network")
 		return
 	}
 
-	// Update state with response
 	resp.Diagnostics.Append(r.sdkToState(ctx, updated, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -279,7 +305,14 @@ func (r *NetworkResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	// Delete the network
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
+
 	err := r.client.DeleteNetwork(ctx, state.ID.ValueString())
 	if err != nil {
 		if isNotFoundError(err) {

@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -24,11 +26,12 @@ type FirewallGroupResource struct {
 }
 
 type FirewallGroupResourceModel struct {
-	ID        types.String `tfsdk:"id"`
-	SiteID    types.String `tfsdk:"site_id"`
-	Name      types.String `tfsdk:"name"`
-	GroupType types.String `tfsdk:"group_type"`
-	Members   types.List   `tfsdk:"members"`
+	ID        types.String   `tfsdk:"id"`
+	SiteID    types.String   `tfsdk:"site_id"`
+	Name      types.String   `tfsdk:"name"`
+	GroupType types.String   `tfsdk:"group_type"`
+	Members   types.List     `tfsdk:"members"`
+	Timeouts  timeouts.Value `tfsdk:"timeouts"`
 }
 
 func NewFirewallGroupResource() resource.Resource {
@@ -78,6 +81,14 @@ func (r *FirewallGroupResource) Schema(ctx context.Context, req resource.SchemaR
 				ElementType: types.StringType,
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 	}
 }
 
@@ -106,7 +117,14 @@ func (r *FirewallGroupResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	// Convert plan to SDK struct
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	var members []string
 	resp.Diagnostics.Append(plan.Members.ElementsAs(ctx, &members, false)...)
 	if resp.Diagnostics.HasError() {
@@ -119,14 +137,12 @@ func (r *FirewallGroupResource) Create(ctx context.Context, req resource.CreateR
 		GroupMembers: members,
 	}
 
-	// Create the firewall group
 	created, err := r.client.CreateFirewallGroup(ctx, group)
 	if err != nil {
 		handleSDKError(&resp.Diagnostics, err, "create", "firewall group")
 		return
 	}
 
-	// Update state with response
 	resp.Diagnostics.Append(r.sdkToState(ctx, created, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -143,7 +159,14 @@ func (r *FirewallGroupResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	// Get the firewall group
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	group, err := r.client.GetFirewallGroup(ctx, state.ID.ValueString())
 	if err != nil {
 		if isNotFoundError(err) {
@@ -154,7 +177,6 @@ func (r *FirewallGroupResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	// Update state with response
 	resp.Diagnostics.Append(r.sdkToState(ctx, group, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -177,7 +199,14 @@ func (r *FirewallGroupResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	// Convert plan to SDK struct
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
+
 	var members []string
 	resp.Diagnostics.Append(plan.Members.ElementsAs(ctx, &members, false)...)
 	if resp.Diagnostics.HasError() {
@@ -192,14 +221,12 @@ func (r *FirewallGroupResource) Update(ctx context.Context, req resource.UpdateR
 		GroupMembers: members,
 	}
 
-	// Update the firewall group
 	updated, err := r.client.UpdateFirewallGroup(ctx, state.ID.ValueString(), group)
 	if err != nil {
 		handleSDKError(&resp.Diagnostics, err, "update", "firewall group")
 		return
 	}
 
-	// Update state with response
 	resp.Diagnostics.Append(r.sdkToState(ctx, updated, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -216,11 +243,17 @@ func (r *FirewallGroupResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	// Delete the firewall group
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
+
 	err := r.client.DeleteFirewallGroup(ctx, state.ID.ValueString())
 	if err != nil {
 		if isNotFoundError(err) {
-			// Already deleted, nothing to do
 			return
 		}
 		handleSDKError(&resp.Diagnostics, err, "delete", "firewall group")

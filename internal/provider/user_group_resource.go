@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -24,11 +26,12 @@ type UserGroupResource struct {
 }
 
 type UserGroupResourceModel struct {
-	ID             types.String `tfsdk:"id"`
-	SiteID         types.String `tfsdk:"site_id"`
-	Name           types.String `tfsdk:"name"`
-	QosRateMaxDown types.Int64  `tfsdk:"qos_rate_max_down"`
-	QosRateMaxUp   types.Int64  `tfsdk:"qos_rate_max_up"`
+	ID             types.String   `tfsdk:"id"`
+	SiteID         types.String   `tfsdk:"site_id"`
+	Name           types.String   `tfsdk:"name"`
+	QosRateMaxDown types.Int64    `tfsdk:"qos_rate_max_down"`
+	QosRateMaxUp   types.Int64    `tfsdk:"qos_rate_max_up"`
+	Timeouts       timeouts.Value `tfsdk:"timeouts"`
 }
 
 func NewUserGroupResource() resource.Resource {
@@ -42,6 +45,14 @@ func (r *UserGroupResource) Metadata(ctx context.Context, req resource.MetadataR
 func (r *UserGroupResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a UniFi user group (bandwidth profile). User groups define bandwidth limits for clients.",
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The unique identifier of the user group.",
@@ -98,6 +109,14 @@ func (r *UserGroupResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	group := r.planToSDK(&plan)
 
 	created, err := r.client.CreateUserGroup(ctx, group)
@@ -121,6 +140,14 @@ func (r *UserGroupResource) Read(ctx context.Context, req resource.ReadRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	group, err := r.client.GetUserGroup(ctx, state.ID.ValueString())
 	if err != nil {
@@ -147,6 +174,14 @@ func (r *UserGroupResource) Update(ctx context.Context, req resource.UpdateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	var state UserGroupResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -179,6 +214,14 @@ func (r *UserGroupResource) Delete(ctx context.Context, req resource.DeleteReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	err := r.client.DeleteUserGroup(ctx, state.ID.ValueString())
 	if err != nil {

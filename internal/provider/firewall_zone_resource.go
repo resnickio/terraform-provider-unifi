@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -24,10 +26,11 @@ type FirewallZoneResource struct {
 }
 
 type FirewallZoneResourceModel struct {
-	ID         types.String `tfsdk:"id"`
-	Name       types.String `tfsdk:"name"`
-	ZoneKey    types.String `tfsdk:"zone_key"`
-	NetworkIDs types.List   `tfsdk:"network_ids"`
+	ID         types.String   `tfsdk:"id"`
+	Name       types.String   `tfsdk:"name"`
+	ZoneKey    types.String   `tfsdk:"zone_key"`
+	NetworkIDs types.List     `tfsdk:"network_ids"`
+	Timeouts   timeouts.Value `tfsdk:"timeouts"`
 }
 
 func NewFirewallZoneResource() resource.Resource {
@@ -41,6 +44,14 @@ func (r *FirewallZoneResource) Metadata(ctx context.Context, req resource.Metada
 func (r *FirewallZoneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a UniFi firewall zone (v2 zone-based firewall).",
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The unique identifier of the firewall zone.",
@@ -91,6 +102,14 @@ func (r *FirewallZoneResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	zone := r.planToSDK(ctx, &plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -118,6 +137,14 @@ func (r *FirewallZoneResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
+
 	zone, err := r.client.GetFirewallZone(ctx, state.ID.ValueString())
 	if err != nil {
 		if isNotFoundError(err) {
@@ -143,6 +170,14 @@ func (r *FirewallZoneResource) Update(ctx context.Context, req resource.UpdateRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	var state FirewallZoneResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -177,6 +212,14 @@ func (r *FirewallZoneResource) Delete(ctx context.Context, req resource.DeleteRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	err := r.client.DeleteFirewallZone(ctx, state.ID.ValueString())
 	if err != nil {

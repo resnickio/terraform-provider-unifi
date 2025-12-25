@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -32,17 +34,18 @@ type PortForwardResource struct {
 }
 
 type PortForwardResourceModel struct {
-	ID            types.String `tfsdk:"id"`
-	SiteID        types.String `tfsdk:"site_id"`
-	Name          types.String `tfsdk:"name"`
-	Enabled       types.Bool   `tfsdk:"enabled"`
-	Protocol      types.String `tfsdk:"protocol"`
-	DstPort       types.String `tfsdk:"dst_port"`
-	FwdPort       types.String `tfsdk:"fwd_port"`
-	FwdIP         types.String `tfsdk:"fwd_ip"`
-	Src           types.String `tfsdk:"src"`
-	PfwdInterface types.String `tfsdk:"pfwd_interface"`
-	Log           types.Bool   `tfsdk:"log"`
+	ID            types.String   `tfsdk:"id"`
+	SiteID        types.String   `tfsdk:"site_id"`
+	Name          types.String   `tfsdk:"name"`
+	Enabled       types.Bool     `tfsdk:"enabled"`
+	Protocol      types.String   `tfsdk:"protocol"`
+	DstPort       types.String   `tfsdk:"dst_port"`
+	FwdPort       types.String   `tfsdk:"fwd_port"`
+	FwdIP         types.String   `tfsdk:"fwd_ip"`
+	Src           types.String   `tfsdk:"src"`
+	PfwdInterface types.String   `tfsdk:"pfwd_interface"`
+	Log           types.Bool     `tfsdk:"log"`
+	Timeouts      timeouts.Value `tfsdk:"timeouts"`
 }
 
 func NewPortForwardResource() resource.Resource {
@@ -56,6 +59,14 @@ func (r *PortForwardResource) Metadata(ctx context.Context, req resource.Metadat
 func (r *PortForwardResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a UniFi port forwarding rule.",
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The unique identifier of the port forward rule.",
@@ -150,6 +161,14 @@ func (r *PortForwardResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	// Convert plan to SDK struct
 	pf := r.planToSDK(&plan)
 
@@ -176,6 +195,14 @@ func (r *PortForwardResource) Read(ctx context.Context, req resource.ReadRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	// Get the port forward
 	pf, err := r.client.GetPortForward(ctx, state.ID.ValueString())
@@ -204,6 +231,14 @@ func (r *PortForwardResource) Update(ctx context.Context, req resource.UpdateReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
 
 	var state PortForwardResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -241,6 +276,14 @@ func (r *PortForwardResource) Delete(ctx context.Context, req resource.DeleteReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	// Delete the port forward
 	err := r.client.DeletePortForward(ctx, state.ID.ValueString())

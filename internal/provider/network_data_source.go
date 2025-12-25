@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
@@ -51,6 +54,9 @@ func (d *NetworkDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description: "The unique identifier of the network. Specify either id or name.",
 				Optional:    true,
 				Computed:    true,
+				Validators: []validator.String{
+					stringvalidator.AtLeastOneOf(path.MatchRoot("name")),
+				},
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the network. Specify either id or name.",

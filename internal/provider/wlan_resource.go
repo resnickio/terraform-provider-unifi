@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -28,36 +30,37 @@ type WLANResource struct {
 }
 
 type WLANResourceModel struct {
-	ID               types.String `tfsdk:"id"`
-	SiteID           types.String `tfsdk:"site_id"`
-	Name             types.String `tfsdk:"name"`
-	Enabled          types.Bool   `tfsdk:"enabled"`
-	Security         types.String `tfsdk:"security"`
-	WPAMode          types.String `tfsdk:"wpa_mode"`
-	WPAEnc           types.String `tfsdk:"wpa_enc"`
-	Passphrase       types.String `tfsdk:"passphrase"`
-	NetworkID        types.String `tfsdk:"network_id"`
-	UserGroupID      types.String `tfsdk:"user_group_id"`
-	APGroupIDs       types.List   `tfsdk:"ap_group_ids"`
-	IsGuest          types.Bool   `tfsdk:"is_guest"`
-	HideSsid         types.Bool   `tfsdk:"hide_ssid"`
-	WLANBand         types.String `tfsdk:"wlan_band"`
-	WLANBands        types.List   `tfsdk:"wlan_bands"`
-	Vlan             types.Int64  `tfsdk:"vlan"`
-	VlanEnabled      types.Bool   `tfsdk:"vlan_enabled"`
-	MacFilterEnabled types.Bool   `tfsdk:"mac_filter_enabled"`
-	MacFilterList    types.List   `tfsdk:"mac_filter_list"`
-	MacFilterPolicy  types.String `tfsdk:"mac_filter_policy"`
-	ScheduleEnabled  types.Bool   `tfsdk:"schedule_enabled"`
-	Schedule         types.List   `tfsdk:"schedule"`
-	L2Isolation      types.Bool   `tfsdk:"l2_isolation"`
-	FastRoaming      types.Bool   `tfsdk:"fast_roaming_enabled"`
-	ProxyArp         types.Bool   `tfsdk:"proxy_arp"`
-	BssTransition    types.Bool   `tfsdk:"bss_transition"`
-	Uapsd            types.Bool   `tfsdk:"uapsd_enabled"`
-	PmfMode          types.String `tfsdk:"pmf_mode"`
-	WPA3Support      types.Bool   `tfsdk:"wpa3_support"`
-	WPA3Transition   types.Bool   `tfsdk:"wpa3_transition"`
+	ID               types.String   `tfsdk:"id"`
+	SiteID           types.String   `tfsdk:"site_id"`
+	Name             types.String   `tfsdk:"name"`
+	Enabled          types.Bool     `tfsdk:"enabled"`
+	Security         types.String   `tfsdk:"security"`
+	WPAMode          types.String   `tfsdk:"wpa_mode"`
+	WPAEnc           types.String   `tfsdk:"wpa_enc"`
+	Passphrase       types.String   `tfsdk:"passphrase"`
+	NetworkID        types.String   `tfsdk:"network_id"`
+	UserGroupID      types.String   `tfsdk:"user_group_id"`
+	APGroupIDs       types.List     `tfsdk:"ap_group_ids"`
+	IsGuest          types.Bool     `tfsdk:"is_guest"`
+	HideSsid         types.Bool     `tfsdk:"hide_ssid"`
+	WLANBand         types.String   `tfsdk:"wlan_band"`
+	WLANBands        types.List     `tfsdk:"wlan_bands"`
+	Vlan             types.Int64    `tfsdk:"vlan"`
+	VlanEnabled      types.Bool     `tfsdk:"vlan_enabled"`
+	MacFilterEnabled types.Bool     `tfsdk:"mac_filter_enabled"`
+	MacFilterList    types.List     `tfsdk:"mac_filter_list"`
+	MacFilterPolicy  types.String   `tfsdk:"mac_filter_policy"`
+	ScheduleEnabled  types.Bool     `tfsdk:"schedule_enabled"`
+	Schedule         types.List     `tfsdk:"schedule"`
+	L2Isolation      types.Bool     `tfsdk:"l2_isolation"`
+	FastRoaming      types.Bool     `tfsdk:"fast_roaming_enabled"`
+	ProxyArp         types.Bool     `tfsdk:"proxy_arp"`
+	BssTransition    types.Bool     `tfsdk:"bss_transition"`
+	Uapsd            types.Bool     `tfsdk:"uapsd_enabled"`
+	PmfMode          types.String   `tfsdk:"pmf_mode"`
+	WPA3Support      types.Bool     `tfsdk:"wpa3_support"`
+	WPA3Transition   types.Bool     `tfsdk:"wpa3_transition"`
+	Timeouts         timeouts.Value `tfsdk:"timeouts"`
 }
 
 func NewWLANResource() resource.Resource {
@@ -124,6 +127,9 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description: "The wireless passphrase (required for wpapsk security).",
 				Optional:    true,
 				Sensitive:   true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"network_id": schema.StringAttribute{
 				Description: "The network ID (VLAN) to assign to this WLAN.",
@@ -258,6 +264,14 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Default:     booldefault.StaticBool(false),
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
+		},
 	}
 }
 
@@ -286,6 +300,14 @@ func (r *WLANResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, createTimeout)
+	defer cancel()
+
 	wlan := r.planToSDK(ctx, &plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -312,6 +334,14 @@ func (r *WLANResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	readTimeout, diags := state.Timeouts.Read(ctx, 2*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, readTimeout)
+	defer cancel()
 
 	priorState := state
 
@@ -347,6 +377,14 @@ func (r *WLANResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
+	updateTimeout, diags := plan.Timeouts.Update(ctx, 5*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, updateTimeout)
+	defer cancel()
+
 	wlan := r.planToSDK(ctx, &plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
@@ -375,6 +413,14 @@ func (r *WLANResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, 10*time.Minute)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
+	defer cancel()
 
 	err := r.client.DeleteWLAN(ctx, state.ID.ValueString())
 	if err != nil {
