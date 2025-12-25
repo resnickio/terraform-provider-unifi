@@ -18,13 +18,15 @@ type AutoLoginClient struct {
 	config       unifi.NetworkClientConfig
 	mu           sync.Mutex
 	lastAuthTime time.Time
+	authSem      chan struct{}
 }
 
 // NewAutoLoginClient creates a new auto-login wrapper around the SDK client.
 func NewAutoLoginClient(client unifi.NetworkManager, config unifi.NetworkClientConfig) *AutoLoginClient {
 	return &AutoLoginClient{
-		client: client,
-		config: config,
+		client:  client,
+		config:  config,
+		authSem: make(chan struct{}, 1),
 	}
 }
 
@@ -38,25 +40,49 @@ func (c *AutoLoginClient) withRetry(ctx context.Context, fn func() error) error 
 	// Record when this request failed
 	failedAt := time.Now()
 
+	// Try to acquire the semaphore for re-authentication
+	select {
+	case c.authSem <- struct{}{}:
+		// We got the semaphore, we'll handle re-auth
+		defer func() { <-c.authSem }()
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(minAuthInterval):
+		// Another goroutine is handling auth or we waited long enough, just retry
+		return fn()
+	}
+
 	c.mu.Lock()
-	defer c.mu.Unlock()
 
 	// Double-check: if we already re-authenticated after this request started,
 	// just retry without re-authenticating again
 	if c.lastAuthTime.After(failedAt) {
+		c.mu.Unlock()
 		return fn()
 	}
 
-	// Rate limit: don't re-auth more than once per minAuthInterval
+	// Rate limit: context-aware wait if needed
 	if timeSinceLastAuth := time.Since(c.lastAuthTime); timeSinceLastAuth < minAuthInterval {
-		time.Sleep(minAuthInterval - timeSinceLastAuth)
+		waitTime := minAuthInterval - timeSinceLastAuth
+		c.mu.Unlock()
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(waitTime):
+		}
+
+		c.mu.Lock()
 	}
 
 	// Re-authenticate
-	if loginErr := c.client.Login(ctx); loginErr != nil {
+	loginErr := c.client.Login(ctx)
+	if loginErr != nil {
+		c.mu.Unlock()
 		return fmt.Errorf("re-authentication failed: %w", loginErr)
 	}
 	c.lastAuthTime = time.Now()
+	c.mu.Unlock()
 
 	// Retry the operation
 	return fn()
