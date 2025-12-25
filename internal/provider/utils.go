@@ -139,12 +139,10 @@ func intPtr(i int64) *int {
 	return &v
 }
 
-// boolPtr converts a bool to a pointer.
 func boolPtr(b bool) *bool {
 	return &b
 }
 
-// derefString safely dereferences a string pointer, returning empty string if nil.
 func derefString(s *string) string {
 	if s == nil {
 		return ""
@@ -152,10 +150,6 @@ func derefString(s *string) string {
 	return *s
 }
 
-// derefInt converts a UniFi SDK int pointer to a Terraform int64.
-// Terraform uses int64 for all integers, while the UniFi SDK uses int.
-// This function bridges that type difference for Terraform state population.
-// Returns 0 if the pointer is nil.
 func derefInt(i *int) int64 {
 	if i == nil {
 		return 0
@@ -163,7 +157,6 @@ func derefInt(i *int) int64 {
 	return int64(*i)
 }
 
-// derefBool safely dereferences a bool pointer, returning false if nil.
 func derefBool(b *bool) bool {
 	if b == nil {
 		return false
