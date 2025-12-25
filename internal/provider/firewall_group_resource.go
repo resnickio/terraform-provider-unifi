@@ -241,16 +241,12 @@ func (r *FirewallGroupResource) sdkToState(ctx context.Context, group *unifi.Fir
 	state.Name = types.StringValue(group.Name)
 	state.GroupType = types.StringValue(group.GroupType)
 
-	if len(group.GroupMembers) > 0 {
-		members, d := types.ListValueFrom(ctx, types.StringType, group.GroupMembers)
-		diags.Append(d...)
-		if diags.HasError() {
-			return diags
-		}
-		state.Members = members
-	} else {
-		state.Members = types.ListNull(types.StringType)
+	members, d := types.ListValueFrom(ctx, types.StringType, group.GroupMembers)
+	diags.Append(d...)
+	if diags.HasError() {
+		return diags
 	}
+	state.Members = members
 
 	return diags
 }
