@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
@@ -82,6 +84,9 @@ func (r *PortForwardResource) Schema(ctx context.Context, req resource.SchemaReq
 			"protocol": schema.StringAttribute{
 				Description: "The protocol for port forwarding. Valid values: 'tcp', 'udp', 'tcp_udp'.",
 				Required:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("tcp", "udp", "tcp_udp"),
+				},
 			},
 			"dst_port": schema.StringAttribute{
 				Description: "The destination port to forward from (external port).",
@@ -106,6 +111,9 @@ func (r *PortForwardResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString(defaultPfwdInterface),
+				Validators: []validator.String{
+					stringvalidator.OneOf("wan", "wan2", "both"),
+				},
 			},
 			"log": schema.BoolAttribute{
 				Description: "Whether to log forwarded traffic. Defaults to false.",

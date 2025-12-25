@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
@@ -79,6 +81,9 @@ func (r *StaticRouteResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("static-route"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("static-route", "interface-route"),
+				},
 			},
 			"static_route_network": schema.StringAttribute{
 				Description: "The destination network in CIDR notation (e.g., '10.0.0.0/24').",
@@ -101,6 +106,9 @@ func (r *StaticRouteResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("nexthop-route"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("nexthop-route", "interface-route", "blackhole"),
+				},
 			},
 		},
 	}
