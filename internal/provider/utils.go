@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
 
@@ -130,7 +131,9 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-// intPtr converts an int64 to an int pointer.
+// intPtr converts a Terraform int64 to a UniFi SDK int pointer.
+// Terraform uses int64 for all integers, while the UniFi SDK uses int.
+// This function bridges that type difference for SDK struct population.
 func intPtr(i int64) *int {
 	v := int(i)
 	return &v
@@ -149,7 +152,10 @@ func derefString(s *string) string {
 	return *s
 }
 
-// derefInt safely dereferences an int pointer, returning 0 if nil.
+// derefInt converts a UniFi SDK int pointer to a Terraform int64.
+// Terraform uses int64 for all integers, while the UniFi SDK uses int.
+// This function bridges that type difference for Terraform state population.
+// Returns 0 if the pointer is nil.
 func derefInt(i *int) int64 {
 	if i == nil {
 		return 0
@@ -163,4 +169,14 @@ func derefBool(b *bool) bool {
 		return false
 	}
 	return *b
+}
+
+// stringValueOrNull returns types.StringNull() for empty strings,
+// otherwise returns types.StringValue(s). Use this for optional string
+// fields in SDK responses to prevent drift from empty string vs null.
+func stringValueOrNull(s string) types.String {
+	if s == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(s)
 }
