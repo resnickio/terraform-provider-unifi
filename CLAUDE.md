@@ -18,6 +18,7 @@ Terraform provider for UniFi network infrastructure management.
   - `static_route_resource.go` - Static route resource
   - `user_group_resource.go` - User group (bandwidth profile) resource
   - `wlan_resource.go` - Wireless network (SSID) resource
+  - `testutils_test.go` - Shared test utilities and helpers
   - `sweep_test.go` - Sweeper functions for test resource cleanup
   - `*_test.go` - Acceptance tests for each resource
 - `main.go` - Provider entry point
@@ -27,7 +28,9 @@ Terraform provider for UniFi network infrastructure management.
 - [UniFi Go SDK](https://github.com/resnickio/unifi-go-sdk) - API client library
 - [terraform-plugin-framework](https://github.com/hashicorp/terraform-plugin-framework) - Provider framework (v1.17.0+)
 - [terraform-plugin-framework-validators](https://github.com/hashicorp/terraform-plugin-framework-validators) - Input validation for schema attributes
+- [terraform-plugin-framework-timeouts](https://github.com/hashicorp/terraform-plugin-framework-timeouts) - Configurable timeout support
 - [terraform-plugin-testing](https://github.com/hashicorp/terraform-plugin-testing) - Acceptance test framework (v1.14.0+)
+- [terraform-plugin-docs](https://github.com/hashicorp/terraform-plugin-docs) - Documentation generation
 
 ## Build & Test
 
@@ -46,6 +49,12 @@ make testacc-run TEST=TestAccNetworkResource_basic
 
 # Clean up leftover test resources
 make sweep
+
+# Generate documentation
+make docs
+
+# Format code
+make fmt
 ```
 
 ## Environment Variables
@@ -104,10 +113,11 @@ type AutoLoginClient struct {
     config       unifi.NetworkClientConfig
     mu           sync.Mutex
     lastAuthTime time.Time
+    authSem      chan struct{}
 }
 ```
 
-Uses double-checked locking pattern to handle concurrent re-authentication safely.
+Uses channel-based semaphore for context-aware rate limiting and concurrent re-authentication handling.
 
 ### Resource Pattern
 
