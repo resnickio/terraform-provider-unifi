@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -29,7 +30,7 @@ type FirewallZoneResourceModel struct {
 	ID         types.String   `tfsdk:"id"`
 	Name       types.String   `tfsdk:"name"`
 	ZoneKey    types.String   `tfsdk:"zone_key"`
-	NetworkIDs types.List     `tfsdk:"network_ids"`
+	NetworkIDs types.Set      `tfsdk:"network_ids"`
 	Timeouts   timeouts.Value `tfsdk:"timeouts"`
 }
 
@@ -67,11 +68,19 @@ func (r *FirewallZoneResource) Schema(ctx context.Context, req resource.SchemaRe
 			"zone_key": schema.StringAttribute{
 				Description: "The zone key for built-in zones. Valid values: 'internal', 'external', 'gateway', 'vpn', 'hotspot', 'dmz'. Leave empty for custom zones.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
-			"network_ids": schema.ListAttribute{
-				Description: "List of network IDs assigned to this zone.",
+			"network_ids": schema.SetAttribute{
+				Description: "Set of network IDs assigned to this zone.",
 				Optional:    true,
+				Computed:    true,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -110,12 +119,12 @@ func (r *FirewallZoneResource) Create(ctx context.Context, req resource.CreateRe
 	ctx, cancel := context.WithTimeout(ctx, createTimeout)
 	defer cancel()
 
-	zone := r.planToSDK(ctx, &plan, &resp.Diagnostics)
+	createReq := r.planToCreateRequest(ctx, &plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	created, err := r.client.CreateFirewallZone(ctx, zone)
+	created, err := r.client.CreateFirewallZone(ctx, createReq)
 	if err != nil {
 		handleSDKError(&resp.Diagnostics, err, "create", "firewall zone")
 		return
@@ -185,13 +194,12 @@ func (r *FirewallZoneResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	zone := r.planToSDK(ctx, &plan, &resp.Diagnostics)
+	updateReq := r.planToUpdateRequest(ctx, &plan, state.ID.ValueString(), &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	zone.ID = state.ID.ValueString()
 
-	updated, err := r.client.UpdateFirewallZone(ctx, state.ID.ValueString(), zone)
+	updated, err := r.client.UpdateFirewallZone(ctx, state.ID.ValueString(), updateReq)
 	if err != nil {
 		handleSDKError(&resp.Diagnostics, err, "update", "firewall zone")
 		return
@@ -235,14 +243,10 @@ func (r *FirewallZoneResource) ImportState(ctx context.Context, req resource.Imp
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func (r *FirewallZoneResource) planToSDK(ctx context.Context, plan *FirewallZoneResourceModel, diags *diag.Diagnostics) *unifi.FirewallZone {
-	zone := &unifi.FirewallZone{
-		Name: plan.Name.ValueString(),
-	}
-
-	if !plan.ZoneKey.IsNull() && !plan.ZoneKey.IsUnknown() {
-		zoneKey := plan.ZoneKey.ValueString()
-		zone.ZoneKey = &zoneKey
+func (r *FirewallZoneResource) planToCreateRequest(ctx context.Context, plan *FirewallZoneResourceModel, diags *diag.Diagnostics) *unifi.FirewallZoneCreateRequest {
+	req := &unifi.FirewallZoneCreateRequest{
+		Name:       plan.Name.ValueString(),
+		NetworkIDs: []string{},
 	}
 
 	if !plan.NetworkIDs.IsNull() && !plan.NetworkIDs.IsUnknown() {
@@ -251,10 +255,29 @@ func (r *FirewallZoneResource) planToSDK(ctx context.Context, plan *FirewallZone
 		if diags.HasError() {
 			return nil
 		}
-		zone.NetworkIDs = networkIDs
+		req.NetworkIDs = networkIDs
 	}
 
-	return zone
+	return req
+}
+
+func (r *FirewallZoneResource) planToUpdateRequest(ctx context.Context, plan *FirewallZoneResourceModel, id string, diags *diag.Diagnostics) *unifi.FirewallZoneUpdateRequest {
+	req := &unifi.FirewallZoneUpdateRequest{
+		ID:         id,
+		Name:       plan.Name.ValueString(),
+		NetworkIDs: []string{},
+	}
+
+	if !plan.NetworkIDs.IsNull() && !plan.NetworkIDs.IsUnknown() {
+		var networkIDs []string
+		diags.Append(plan.NetworkIDs.ElementsAs(ctx, &networkIDs, false)...)
+		if diags.HasError() {
+			return nil
+		}
+		req.NetworkIDs = networkIDs
+	}
+
+	return req
 }
 
 func (r *FirewallZoneResource) sdkToState(ctx context.Context, zone *unifi.FirewallZone, state *FirewallZoneResourceModel) diag.Diagnostics {
@@ -270,14 +293,14 @@ func (r *FirewallZoneResource) sdkToState(ctx context.Context, zone *unifi.Firew
 	}
 
 	if len(zone.NetworkIDs) > 0 {
-		networkIDsList, d := types.ListValueFrom(ctx, types.StringType, zone.NetworkIDs)
+		networkIDsSet, d := types.SetValueFrom(ctx, types.StringType, zone.NetworkIDs)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.NetworkIDs = networkIDsList
+		state.NetworkIDs = networkIDsSet
 	} else {
-		state.NetworkIDs = types.ListNull(types.StringType)
+		state.NetworkIDs = types.SetNull(types.StringType)
 	}
 
 	return diags

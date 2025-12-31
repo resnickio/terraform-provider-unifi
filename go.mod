@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
 	github.com/hashicorp/terraform-plugin-go v0.29.0
 	github.com/hashicorp/terraform-plugin-testing v1.14.0
-	github.com/resnickio/unifi-go-sdk v0.2.3
+	github.com/resnickio/unifi-go-sdk v0.4.0
 )
 
 require (

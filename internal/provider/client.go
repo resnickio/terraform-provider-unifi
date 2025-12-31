@@ -398,21 +398,21 @@ func (c *AutoLoginClient) GetFirewallZone(ctx context.Context, id string) (*unif
 	return result, err
 }
 
-func (c *AutoLoginClient) CreateFirewallZone(ctx context.Context, zone *unifi.FirewallZone) (*unifi.FirewallZone, error) {
+func (c *AutoLoginClient) CreateFirewallZone(ctx context.Context, req *unifi.FirewallZoneCreateRequest) (*unifi.FirewallZone, error) {
 	var result *unifi.FirewallZone
 	err := c.withRetry(ctx, func() error {
 		var err error
-		result, err = c.client.CreateFirewallZone(ctx, zone)
+		result, err = c.client.CreateFirewallZone(ctx, req)
 		return err
 	})
 	return result, err
 }
 
-func (c *AutoLoginClient) UpdateFirewallZone(ctx context.Context, id string, zone *unifi.FirewallZone) (*unifi.FirewallZone, error) {
+func (c *AutoLoginClient) UpdateFirewallZone(ctx context.Context, id string, req *unifi.FirewallZoneUpdateRequest) (*unifi.FirewallZone, error) {
 	var result *unifi.FirewallZone
 	err := c.withRetry(ctx, func() error {
 		var err error
-		result, err = c.client.UpdateFirewallZone(ctx, id, zone)
+		result, err = c.client.UpdateFirewallZone(ctx, id, req)
 		return err
 	})
 	return result, err

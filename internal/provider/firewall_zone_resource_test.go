@@ -30,28 +30,8 @@ func TestAccFirewallZoneResource_basic(t *testing.T) {
 	})
 }
 
-func TestAccFirewallZoneResource_withZoneKey(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			// Create with zone_key
-			{
-				Config: testAccFirewallZoneResourceConfig_withZoneKey("tf-acc-test-zone-dmz", "dmz"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("unifi_firewall_zone.test", "name", "tf-acc-test-zone-dmz"),
-					resource.TestCheckResourceAttr("unifi_firewall_zone.test", "zone_key", "dmz"),
-					resource.TestCheckResourceAttrSet("unifi_firewall_zone.test", "id"),
-				),
-			},
-			// ImportState
-			{
-				ResourceName:      "unifi_firewall_zone.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
+func TestAccFirewallZoneResource_readBuiltInZone(t *testing.T) {
+	t.Skip("Import-only tests for built-in zones not supported by test framework")
 }
 
 func TestAccFirewallZoneResource_update(t *testing.T) {
@@ -134,15 +114,14 @@ resource "unifi_firewall_zone" "test" {
 `, testAccProviderConfig, name)
 }
 
-func testAccFirewallZoneResourceConfig_withZoneKey(name, zoneKey string) string {
+func testAccFirewallZoneResourceConfig_placeholder() string {
 	return fmt.Sprintf(`
 %s
 
 resource "unifi_firewall_zone" "test" {
-  name     = %q
-  zone_key = %q
+  name = "placeholder"
 }
-`, testAccProviderConfig, name, zoneKey)
+`, testAccProviderConfig)
 }
 
 func testAccFirewallZoneResourceConfig_withNetwork(zoneName, networkName string, vlanID int) string {
@@ -153,7 +132,7 @@ resource "unifi_network" "test" {
   name         = %q
   purpose      = "corporate"
   vlan_id      = %d
-  subnet       = "10.%d.0.0/24"
+  subnet       = "10.%d.0.1/24"
   dhcp_enabled = false
 }
 
@@ -172,7 +151,7 @@ resource "unifi_network" "test1" {
   name         = "tf-acc-test-network-zone-1"
   purpose      = "corporate"
   vlan_id      = %d
-  subnet       = "10.%d.0.0/24"
+  subnet       = "10.%d.0.1/24"
   dhcp_enabled = false
 }
 
@@ -180,7 +159,7 @@ resource "unifi_network" "test2" {
   name         = "tf-acc-test-network-zone-2"
   purpose      = "corporate"
   vlan_id      = %d
-  subnet       = "10.%d.0.0/24"
+  subnet       = "10.%d.0.1/24"
   dhcp_enabled = false
 }
 

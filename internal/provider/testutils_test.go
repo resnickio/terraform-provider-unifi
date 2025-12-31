@@ -48,8 +48,9 @@ func testAccCheckControllerSupportsZones(t *testing.T) {
 		return
 	}
 
-	_, err := client.CreateFirewallZone(context.Background(), &unifi.FirewallZone{
-		Name: "tf-acc-zone-test-precheck",
+	_, err := client.CreateFirewallZone(context.Background(), &unifi.FirewallZoneCreateRequest{
+		Name:       "tf-acc-zone-test-precheck",
+		NetworkIDs: []string{},
 	})
 	if err != nil {
 		t.Skipf("Controller does not support firewall zones: %v", err)
@@ -65,21 +66,6 @@ func testAccCheckControllerSupportsZones(t *testing.T) {
 			}
 		}
 	}
-}
-
-// testAccNetworkConfigBasic returns a basic network configuration for use as a dependency.
-func testAccNetworkConfigBasic(resourceName, name string, vlanID int) string {
-	return fmt.Sprintf(`
-resource "unifi_network" %q {
-  name         = %q
-  purpose      = "corporate"
-  vlan_id      = %d
-  subnet       = "10.%d.0.1/24"
-  dhcp_enabled = true
-  dhcp_start   = "10.%d.0.10"
-  dhcp_stop    = "10.%d.0.254"
-}
-`, resourceName, name, vlanID, vlanID%256, vlanID%256, vlanID%256)
 }
 
 // testAccFirewallZonePairConfig returns configuration for a pair of firewall zones.
