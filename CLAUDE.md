@@ -148,7 +148,7 @@ Each resource follows this pattern:
   - Import state verification
 - **Resource naming**: Test resources use `tf-acc-test-` prefix for easy identification
 - **VLAN IDs**: Use 3900+ range in tests to avoid production conflicts
-- **Rule indices**: Use 4000+ range in tests to avoid production conflicts
+- **Rule indices**: Use 2000+ range in tests (must start with 2 or 4 per API validation)
 - **Context7 MCP**: When generating code that uses external libraries, use Context7 MCP tools to fetch current documentation
 - **Playwright MCP**: Use for browser automation tasks when needed
 

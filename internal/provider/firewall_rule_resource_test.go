@@ -14,12 +14,12 @@ func TestAccFirewallRuleResource_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read
 			{
-				Config: testAccFirewallRuleResourceConfig_basic("tf-acc-test-rule", 4001),
+				Config: testAccFirewallRuleResourceConfig_basic("tf-acc-test-rule", 2001),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "ruleset", "LAN_IN"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "action", "drop"),
-					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "rule_index", "4001"),
+					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "rule_index", "2001"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "protocol", "tcp"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "dst_port", "22"),
@@ -44,7 +44,7 @@ func TestAccFirewallRuleResource_withGroups(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create rule with firewall groups
 			{
-				Config: testAccFirewallRuleResourceConfig_withDstGroups("tf-acc-test-rule-groups", 4002),
+				Config: testAccFirewallRuleResourceConfig_withDstGroups("tf-acc-test-rule-groups", 2002),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-groups"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "action", "accept"),
@@ -69,7 +69,7 @@ func TestAccFirewallRuleResource_withSrcGroups(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create rule with source firewall groups
 			{
-				Config: testAccFirewallRuleResourceConfig_withSrcGroups("tf-acc-test-rule-srcgroups", 4003),
+				Config: testAccFirewallRuleResourceConfig_withSrcGroups("tf-acc-test-rule-srcgroups", 2003),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-srcgroups"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "action", "drop"),
@@ -94,7 +94,7 @@ func TestAccFirewallRuleResource_update(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create
 			{
-				Config: testAccFirewallRuleResourceConfig_basic("tf-acc-test-rule-update", 4004),
+				Config: testAccFirewallRuleResourceConfig_basic("tf-acc-test-rule-update", 2004),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-update"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "action", "drop"),
@@ -103,7 +103,7 @@ func TestAccFirewallRuleResource_update(t *testing.T) {
 			},
 			// Update - change action and disable
 			{
-				Config: testAccFirewallRuleResourceConfig_updated("tf-acc-test-rule-update", 4004),
+				Config: testAccFirewallRuleResourceConfig_updated("tf-acc-test-rule-update", 2004),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-update"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "action", "reject"),
@@ -122,7 +122,7 @@ func TestAccFirewallRuleResource_allProtocol(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create rule with protocol "all" (no dst_port)
 			{
-				Config: testAccFirewallRuleResourceConfig_allProtocol("tf-acc-test-rule-all", 4005),
+				Config: testAccFirewallRuleResourceConfig_allProtocol("tf-acc-test-rule-all", 2005),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-all"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "protocol", "all"),
@@ -147,7 +147,7 @@ func TestAccFirewallRuleResource_defaults(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create with minimal config to verify defaults
 			{
-				Config: testAccFirewallRuleResourceConfig_minimal("tf-acc-test-rule-defaults", 4006),
+				Config: testAccFirewallRuleResourceConfig_minimal("tf-acc-test-rule-defaults", 2006),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-defaults"),
 					// Verify defaults are applied
@@ -171,7 +171,7 @@ func TestAccFirewallRuleResource_withSrcAddress(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create rule with source address
 			{
-				Config: testAccFirewallRuleResourceConfig_withSrcAddress("tf-acc-test-rule-srcaddr", 4007, "192.168.1.100"),
+				Config: testAccFirewallRuleResourceConfig_withSrcAddress("tf-acc-test-rule-srcaddr", 2007, "192.168.1.100"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-srcaddr"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "src_address", "192.168.1.100"),
@@ -180,7 +180,7 @@ func TestAccFirewallRuleResource_withSrcAddress(t *testing.T) {
 			},
 			// Update - change to CIDR
 			{
-				Config: testAccFirewallRuleResourceConfig_withSrcNetwork("tf-acc-test-rule-srcaddr", 4007, "192.168.1.0/24"),
+				Config: testAccFirewallRuleResourceConfig_withSrcNetwork("tf-acc-test-rule-srcaddr", 2007, "192.168.1.0/24"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "src_address", "192.168.1.0/24"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "src_network_conf_type", "NETv4"),
@@ -203,7 +203,7 @@ func TestAccFirewallRuleResource_withDstAddress(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create rule with destination address
 			{
-				Config: testAccFirewallRuleResourceConfig_withDstAddress("tf-acc-test-rule-dstaddr", 4008, "10.0.0.50"),
+				Config: testAccFirewallRuleResourceConfig_withDstAddress("tf-acc-test-rule-dstaddr", 2008, "10.0.0.50"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-dstaddr"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "dst_address", "10.0.0.50"),
@@ -212,7 +212,7 @@ func TestAccFirewallRuleResource_withDstAddress(t *testing.T) {
 			},
 			// Update - change to network
 			{
-				Config: testAccFirewallRuleResourceConfig_withDstNetwork("tf-acc-test-rule-dstaddr", 4008, "10.0.0.0/24"),
+				Config: testAccFirewallRuleResourceConfig_withDstNetwork("tf-acc-test-rule-dstaddr", 2008, "10.0.0.0/24"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "dst_address", "10.0.0.0/24"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "dst_network_conf_type", "NETv4"),
@@ -235,7 +235,7 @@ func TestAccFirewallRuleResource_stateTracking(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create with custom state tracking
 			{
-				Config: testAccFirewallRuleResourceConfig_stateTracking("tf-acc-test-rule-state", 4009),
+				Config: testAccFirewallRuleResourceConfig_stateTracking("tf-acc-test-rule-state", 2009),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-state"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "state_new", "true"),
@@ -261,7 +261,7 @@ func TestAccFirewallRuleResource_withLogging(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create with logging enabled
 			{
-				Config: testAccFirewallRuleResourceConfig_withLogging("tf-acc-test-rule-log", 4010),
+				Config: testAccFirewallRuleResourceConfig_withLogging("tf-acc-test-rule-log", 2010),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-log"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "logging", "true"),
@@ -269,7 +269,7 @@ func TestAccFirewallRuleResource_withLogging(t *testing.T) {
 			},
 			// Update - disable logging
 			{
-				Config: testAccFirewallRuleResourceConfig_basic("tf-acc-test-rule-log", 4010),
+				Config: testAccFirewallRuleResourceConfig_basic("tf-acc-test-rule-log", 2010),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "logging", "false"),
 				),
@@ -291,7 +291,7 @@ func TestAccFirewallRuleResource_udpProtocol(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create UDP rule
 			{
-				Config: testAccFirewallRuleResourceConfig_udp("tf-acc-test-rule-udp", 4011),
+				Config: testAccFirewallRuleResourceConfig_udp("tf-acc-test-rule-udp", 2011),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-udp"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "protocol", "udp"),
@@ -315,7 +315,7 @@ func TestAccFirewallRuleResource_tcpUdpProtocol(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create TCP+UDP rule
 			{
-				Config: testAccFirewallRuleResourceConfig_tcpUdp("tf-acc-test-rule-tcpudp", 4012),
+				Config: testAccFirewallRuleResourceConfig_tcpUdp("tf-acc-test-rule-tcpudp", 2012),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-tcpudp"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "protocol", "tcp_udp"),
@@ -339,7 +339,7 @@ func TestAccFirewallRuleResource_icmpProtocol(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create ICMP rule (no port)
 			{
-				Config: testAccFirewallRuleResourceConfig_icmp("tf-acc-test-rule-icmp", 4013),
+				Config: testAccFirewallRuleResourceConfig_icmp("tf-acc-test-rule-icmp", 2013),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-icmp"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "protocol", "icmp"),
@@ -363,7 +363,7 @@ func TestAccFirewallRuleResource_wanRuleset(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create WAN_IN rule
 			{
-				Config: testAccFirewallRuleResourceConfig_wanIn("tf-acc-test-rule-wanin", 4014),
+				Config: testAccFirewallRuleResourceConfig_wanIn("tf-acc-test-rule-wanin", 2014),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-wanin"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "ruleset", "WAN_IN"),
@@ -387,7 +387,7 @@ func TestAccFirewallRuleResource_wanLocalRuleset(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create WAN_LOCAL rule
 			{
-				Config: testAccFirewallRuleResourceConfig_wanLocal("tf-acc-test-rule-wanlocal", 4015),
+				Config: testAccFirewallRuleResourceConfig_wanLocal("tf-acc-test-rule-wanlocal", 2015),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-wanlocal"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "ruleset", "WAN_LOCAL"),
@@ -411,7 +411,7 @@ func TestAccFirewallRuleResource_acceptAction(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create accept rule
 			{
-				Config: testAccFirewallRuleResourceConfig_accept("tf-acc-test-rule-accept", 4016),
+				Config: testAccFirewallRuleResourceConfig_accept("tf-acc-test-rule-accept", 2016),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-accept"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "action", "accept"),
@@ -434,7 +434,7 @@ func TestAccFirewallRuleResource_rejectAction(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create reject rule
 			{
-				Config: testAccFirewallRuleResourceConfig_reject("tf-acc-test-rule-reject", 4017),
+				Config: testAccFirewallRuleResourceConfig_reject("tf-acc-test-rule-reject", 2017),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-reject"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "action", "reject"),
@@ -457,7 +457,7 @@ func TestAccFirewallRuleResource_portRange(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create rule with port range
 			{
-				Config: testAccFirewallRuleResourceConfig_portRange("tf-acc-test-rule-portrange", 4018, "8080-8090"),
+				Config: testAccFirewallRuleResourceConfig_portRange("tf-acc-test-rule-portrange", 2018, "8080-8090"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-portrange"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "dst_port", "8080-8090"),
@@ -480,12 +480,12 @@ func TestAccFirewallRuleResource_full(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create with all options
 			{
-				Config: testAccFirewallRuleResourceConfig_full("tf-acc-test-rule-full", 4019),
+				Config: testAccFirewallRuleResourceConfig_full("tf-acc-test-rule-full", 2019),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "name", "tf-acc-test-rule-full"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "ruleset", "LAN_IN"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "action", "drop"),
-					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "rule_index", "4019"),
+					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "rule_index", "2019"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "protocol", "tcp"),
 					resource.TestCheckResourceAttr("unifi_firewall_rule.test", "src_network_conf_type", "NETv4"),
