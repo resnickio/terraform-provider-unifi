@@ -115,7 +115,9 @@ func (r *PortForwardResource) Schema(ctx context.Context, req resource.SchemaReq
 				Description: "Restrict forwarding to traffic from this source IP/CIDR. Leave empty for any source.",
 				Optional:    true,
 				Computed:    true,
-				Default:     stringdefault.StaticString(""),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"pfwd_interface": schema.StringAttribute{
 				Description: "The WAN interface for the port forward. Valid values: 'wan', 'wan2', 'both'. Defaults to 'wan'.",

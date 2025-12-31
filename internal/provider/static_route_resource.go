@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -103,14 +104,26 @@ func (r *StaticRouteResource) Schema(ctx context.Context, req resource.SchemaReq
 			"static_route_nexthop": schema.StringAttribute{
 				Description: "The next hop IP address for the route.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"static_route_distance": schema.Int64Attribute{
 				Description: "The administrative distance (metric) for the route.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"static_route_interface": schema.StringAttribute{
 				Description: "The interface for the route (for interface routes).",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"static_route_type": schema.StringAttribute{
 				Description: "The static route type. Valid values: 'nexthop-route', 'interface-route', 'blackhole'. Defaults to 'nexthop-route'.",

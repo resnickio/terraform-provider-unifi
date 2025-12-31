@@ -64,14 +64,6 @@ func (r *FirewallRuleResource) Metadata(ctx context.Context, req resource.Metada
 func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a UniFi legacy firewall rule.",
-		Blocks: map[string]schema.Block{
-			"timeouts": timeouts.Block(ctx, timeouts.Opts{
-				Create: true,
-				Read:   true,
-				Update: true,
-				Delete: true,
-			}),
-		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The unique identifier of the firewall rule.",
@@ -197,6 +189,14 @@ func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRe
 				Computed:    true,
 				Default:     booldefault.StaticBool(false),
 			},
+		},
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
 		},
 	}
 }
@@ -440,6 +440,8 @@ func (r *FirewallRuleResource) sdkToState(ctx context.Context, rule *unifi.Firew
 
 	if rule.RuleIndex != nil {
 		state.RuleIndex = types.Int64Value(int64(*rule.RuleIndex))
+	} else {
+		state.RuleIndex = types.Int64Null()
 	}
 
 	state.Enabled = types.BoolValue(derefBool(rule.Enabled))

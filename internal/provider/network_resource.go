@@ -3,9 +3,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -14,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -98,6 +101,12 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description: "The VLAN ID for this network. Must be between 1 and 4095.",
 				Optional:    true,
 				Computed:    true,
+				Validators: []validator.Int64{
+					int64validator.Between(1, 4095),
+				},
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"network_group": schema.StringAttribute{
 				Description: "The network group. Defaults to 'LAN'.",
@@ -119,11 +128,17 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description: "The start of the DHCP IP range.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"dhcp_stop": schema.StringAttribute{
 				Description: "The end of the DHCP IP range.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"dhcp_lease": schema.Int64Attribute{
 				Description: "The DHCP lease time in seconds. Defaults to 86400 (24 hours).",
@@ -132,11 +147,17 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Default:     int64default.StaticInt64(defaultDHCPLease),
 			},
 			"dhcp_dns": schema.ListAttribute{
-				Description: "List of DNS servers to provide via DHCP (maximum 4).",
+				Description: "List of DNS servers to provide via DHCP (maximum 4). Must be valid IPv4 addresses.",
 				Optional:    true,
 				ElementType: types.StringType,
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(4),
+					listvalidator.ValueStringsAre(
+						stringvalidator.RegexMatches(
+							regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}$`),
+							"must be a valid IPv4 address",
+						),
+					),
 				},
 			},
 			"domain_name": schema.StringAttribute{

@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -135,11 +137,17 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Description: "The network ID (VLAN) to assign to this WLAN.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"user_group_id": schema.StringAttribute{
 				Description: "The user group ID for bandwidth limiting.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"ap_group_ids": schema.ListAttribute{
 				Description: "List of AP group IDs this WLAN should be broadcast on. Required.",
@@ -169,11 +177,17 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"vlan": schema.Int64Attribute{
 				Description: "The VLAN ID for this WLAN. Note: On modern UniFi controllers (v8+), VLAN tagging is done by associating the WLAN with a network that has the desired VLAN ID.",
 				Optional:    true,
 				Computed:    true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"vlan_enabled": schema.BoolAttribute{
 				Description: "Whether VLAN tagging is enabled. Defaults to false.",

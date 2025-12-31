@@ -78,14 +78,6 @@ func (r *FirewallPolicyResource) Metadata(ctx context.Context, req resource.Meta
 func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a UniFi firewall policy (v2 zone-based firewall).",
-		Blocks: map[string]schema.Block{
-			"timeouts": timeouts.Block(ctx, timeouts.Opts{
-				Create: true,
-				Read:   true,
-				Update: true,
-				Delete: true,
-			}),
-		},
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The unique identifier of the firewall policy.",
@@ -262,6 +254,14 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 					},
 				},
 			},
+		},
+		Blocks: map[string]schema.Block{
+			"timeouts": timeouts.Block(ctx, timeouts.Opts{
+				Create: true,
+				Read:   true,
+				Update: true,
+				Delete: true,
+			}),
 		},
 	}
 }
