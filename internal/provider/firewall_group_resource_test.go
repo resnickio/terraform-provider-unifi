@@ -94,7 +94,7 @@ func TestAccFirewallGroupResource_singleMember(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_group.test", "name", "tf-acc-test-single"),
 					resource.TestCheckResourceAttr("unifi_firewall_group.test", "members.#", "1"),
-					resource.TestCheckResourceAttr("unifi_firewall_group.test", "members.0", "192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr("unifi_firewall_group.test", "members.*", "192.168.1.1"),
 				),
 			},
 			// ImportState

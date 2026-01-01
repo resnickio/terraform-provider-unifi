@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,7 +33,7 @@ type FirewallGroupResourceModel struct {
 	SiteID    types.String   `tfsdk:"site_id"`
 	Name      types.String   `tfsdk:"name"`
 	GroupType types.String   `tfsdk:"group_type"`
-	Members   types.List     `tfsdk:"members"`
+	Members   types.Set      `tfsdk:"members"`
 	Timeouts  timeouts.Value `tfsdk:"timeouts"`
 }
 
@@ -79,11 +80,14 @@ func (r *FirewallGroupResource) Schema(ctx context.Context, req resource.SchemaR
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"members": schema.ListAttribute{
-				Description: "The members of the firewall group. For address groups, this is a list of " +
-					"IP addresses or CIDR ranges. For port groups, this is a list of port numbers or ranges (e.g., '80', '8080-8090').",
+			"members": schema.SetAttribute{
+				Description: "The members of the firewall group. For address groups, this is a set of " +
+					"IP addresses or CIDR ranges. For port groups, this is a set of port numbers or ranges (e.g., '80', '8080-8090').",
 				Required:    true,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -279,7 +283,7 @@ func (r *FirewallGroupResource) sdkToState(ctx context.Context, group *unifi.Fir
 	state.Name = types.StringValue(group.Name)
 	state.GroupType = types.StringValue(group.GroupType)
 
-	members, d := types.ListValueFrom(ctx, types.StringType, group.GroupMembers)
+	members, d := types.SetValueFrom(ctx, types.StringType, group.GroupMembers)
 	diags.Append(d...)
 	if diags.HasError() {
 		return diags
