@@ -331,7 +331,7 @@ func (r *PortForwardResource) sdkToState(pf *unifi.PortForward, state *PortForwa
 	state.DstPort = types.StringValue(pf.DstPort)
 	state.FwdPort = types.StringValue(pf.FwdPort)
 	state.FwdIP = types.StringValue(pf.Fwd)
-	state.Src = types.StringValue(pf.Src)
+	state.Src = stringValueOrNull(pf.Src)
 
 	if pf.PfwdInterface != "" {
 		state.PfwdInterface = types.StringValue(pf.PfwdInterface)

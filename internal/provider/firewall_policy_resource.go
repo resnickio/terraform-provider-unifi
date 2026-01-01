@@ -563,6 +563,8 @@ func (r *FirewallPolicyResource) sdkToState(ctx context.Context, policy *unifi.F
 
 	if policy.Index != nil {
 		state.Index = types.Int64Value(int64(*policy.Index))
+	} else {
+		state.Index = types.Int64Null()
 	}
 
 	state.Logging = types.BoolValue(derefBool(policy.Logging))

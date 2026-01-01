@@ -441,7 +441,8 @@ func (r *FirewallRuleResource) sdkToState(ctx context.Context, rule *unifi.Firew
 	if rule.RuleIndex != nil {
 		state.RuleIndex = types.Int64Value(int64(*rule.RuleIndex))
 	} else {
-		state.RuleIndex = types.Int64Null()
+		diags.AddError("Invalid API Response", "rule_index is required but API returned nil")
+		return diags
 	}
 
 	state.Enabled = types.BoolValue(derefBool(rule.Enabled))

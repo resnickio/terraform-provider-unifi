@@ -128,7 +128,7 @@ func TestAccPortForwardResource_defaults(t *testing.T) {
 					resource.TestCheckResourceAttr("unifi_port_forward.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("unifi_port_forward.test", "pfwd_interface", "wan"),
 					resource.TestCheckResourceAttr("unifi_port_forward.test", "log", "false"),
-					resource.TestCheckResourceAttr("unifi_port_forward.test", "src", ""),
+					resource.TestCheckNoResourceAttr("unifi_port_forward.test", "src"),
 				),
 			},
 		},
