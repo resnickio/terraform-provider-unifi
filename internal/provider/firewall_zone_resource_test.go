@@ -114,16 +114,6 @@ resource "unifi_firewall_zone" "test" {
 `, testAccProviderConfig, name)
 }
 
-func testAccFirewallZoneResourceConfig_placeholder() string {
-	return fmt.Sprintf(`
-%s
-
-resource "unifi_firewall_zone" "test" {
-  name = "placeholder"
-}
-`, testAccProviderConfig)
-}
-
 func testAccFirewallZoneResourceConfig_withNetwork(zoneName, networkName string, vlanID int) string {
 	return fmt.Sprintf(`
 %s
