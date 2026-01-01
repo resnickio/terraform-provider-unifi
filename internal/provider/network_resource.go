@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
@@ -153,10 +152,7 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(4),
 					listvalidator.ValueStringsAre(
-						stringvalidator.RegexMatches(
-							regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}$`),
-							"must be a valid IPv4 address",
-						),
+						IPv4Address(),
 					),
 				},
 			},

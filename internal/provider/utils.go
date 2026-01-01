@@ -1,10 +1,13 @@
 package provider
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/resnickio/unifi-go-sdk/pkg/unifi"
 )
@@ -123,14 +126,6 @@ func isNotFoundError(err error) bool {
 	return errors.Is(err, unifi.ErrNotFound)
 }
 
-// stringPtr converts a string to a pointer, returning nil for empty strings.
-func stringPtr(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
-}
-
 // intPtr converts a Terraform int64 to a UniFi SDK int pointer.
 // Terraform uses int64 for all integers, while the UniFi SDK uses int.
 // This function bridges that type difference for SDK struct population.
@@ -172,4 +167,36 @@ func stringValueOrNull(s string) types.String {
 		return types.StringNull()
 	}
 	return types.StringValue(s)
+}
+
+// ipv4Validator validates that a string is a valid IPv4 address.
+type ipv4Validator struct{}
+
+func (v ipv4Validator) Description(ctx context.Context) string {
+	return "must be a valid IPv4 address"
+}
+
+func (v ipv4Validator) MarkdownDescription(ctx context.Context) string {
+	return "must be a valid IPv4 address"
+}
+
+func (v ipv4Validator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	value := req.ConfigValue.ValueString()
+	ip := net.ParseIP(value)
+	if ip == nil || ip.To4() == nil {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Invalid IPv4 Address",
+			fmt.Sprintf("The value %q is not a valid IPv4 address.", value),
+		)
+	}
+}
+
+// IPv4Address returns a validator that checks if a string is a valid IPv4 address.
+func IPv4Address() validator.String {
+	return ipv4Validator{}
 }
