@@ -132,6 +132,9 @@ func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRe
 			"src_network_conf_type": schema.StringAttribute{
 				Description: "Source network configuration type. Valid values: 'ADDRv4', 'NETv4'.",
 				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("ADDRv4", "NETv4"),
+				},
 			},
 			"src_address": schema.StringAttribute{
 				Description: "Source IP address or CIDR.",
@@ -145,6 +148,9 @@ func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRe
 			"dst_network_conf_type": schema.StringAttribute{
 				Description: "Destination network configuration type. Valid values: 'ADDRv4', 'NETv4'.",
 				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("ADDRv4", "NETv4"),
+				},
 			},
 			"dst_address": schema.StringAttribute{
 				Description: "Destination IP address or CIDR.",
