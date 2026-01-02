@@ -40,10 +40,10 @@ type FirewallRuleResourceModel struct {
 	Protocol            types.String   `tfsdk:"protocol"`
 	SrcNetworkConfType  types.String   `tfsdk:"src_network_conf_type"`
 	SrcAddress          types.String   `tfsdk:"src_address"`
-	SrcFirewallGroupIDs types.List     `tfsdk:"src_firewall_group_ids"`
+	SrcFirewallGroupIDs types.Set      `tfsdk:"src_firewall_group_ids"`
 	DstNetworkConfType  types.String   `tfsdk:"dst_network_conf_type"`
 	DstAddress          types.String   `tfsdk:"dst_address"`
-	DstFirewallGroupIDs types.List     `tfsdk:"dst_firewall_group_ids"`
+	DstFirewallGroupIDs types.Set      `tfsdk:"dst_firewall_group_ids"`
 	DstPort             types.String   `tfsdk:"dst_port"`
 	Logging             types.Bool     `tfsdk:"logging"`
 	StateNew            types.Bool     `tfsdk:"state_new"`
@@ -140,8 +140,8 @@ func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description: "Source IP address or CIDR.",
 				Optional:    true,
 			},
-			"src_firewall_group_ids": schema.ListAttribute{
-				Description: "List of source firewall group IDs.",
+			"src_firewall_group_ids": schema.SetAttribute{
+				Description: "Set of source firewall group IDs.",
 				Optional:    true,
 				ElementType: types.StringType,
 			},
@@ -156,8 +156,8 @@ func (r *FirewallRuleResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description: "Destination IP address or CIDR.",
 				Optional:    true,
 			},
-			"dst_firewall_group_ids": schema.ListAttribute{
-				Description: "List of destination firewall group IDs.",
+			"dst_firewall_group_ids": schema.SetAttribute{
+				Description: "Set of destination firewall group IDs.",
 				Optional:    true,
 				ElementType: types.StringType,
 			},
@@ -467,14 +467,14 @@ func (r *FirewallRuleResource) sdkToState(ctx context.Context, rule *unifi.Firew
 	}
 
 	if len(rule.SrcFirewallGroupIDs) > 0 {
-		srcList, d := types.ListValueFrom(ctx, types.StringType, rule.SrcFirewallGroupIDs)
+		srcSet, d := types.SetValueFrom(ctx, types.StringType, rule.SrcFirewallGroupIDs)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.SrcFirewallGroupIDs = srcList
+		state.SrcFirewallGroupIDs = srcSet
 	} else {
-		state.SrcFirewallGroupIDs = types.ListNull(types.StringType)
+		state.SrcFirewallGroupIDs = types.SetNull(types.StringType)
 	}
 
 	if rule.DstNetworkConfType != "" {
@@ -490,14 +490,14 @@ func (r *FirewallRuleResource) sdkToState(ctx context.Context, rule *unifi.Firew
 	}
 
 	if len(rule.DstFirewallGroupIDs) > 0 {
-		dstList, d := types.ListValueFrom(ctx, types.StringType, rule.DstFirewallGroupIDs)
+		dstSet, d := types.SetValueFrom(ctx, types.StringType, rule.DstFirewallGroupIDs)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.DstFirewallGroupIDs = dstList
+		state.DstFirewallGroupIDs = dstSet
 	} else {
-		state.DstFirewallGroupIDs = types.ListNull(types.StringType)
+		state.DstFirewallGroupIDs = types.SetNull(types.StringType)
 	}
 
 	if rule.DstPort != "" {
