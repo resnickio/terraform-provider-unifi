@@ -126,7 +126,7 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Default:     stringdefault.StaticString("ccmp"),
 			},
 			"passphrase": schema.StringAttribute{
-				Description: "The wireless passphrase (required for wpapsk security).",
+				Description: "The wireless passphrase (required for wpapsk security). Note: This value is write-only and cannot be read back from the controller.",
 				Optional:    true,
 				Sensitive:   true,
 				PlanModifiers: []planmodifier.String{
@@ -333,6 +333,8 @@ func (r *WLANResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	// The UniFi API does not return the passphrase on read operations for security.
+	// We preserve the passphrase from the plan to avoid drift.
 	originalPassphrase := plan.Passphrase
 
 	resp.Diagnostics.Append(r.sdkToState(ctx, created, &plan, nil)...)
@@ -546,6 +548,8 @@ func (r *WLANResource) sdkToState(ctx context.Context, wlan *unifi.WLANConf, sta
 	state.WPAMode = types.StringValue(wlan.WPAMode)
 	state.WPAEnc = types.StringValue(wlan.WPAEnc)
 
+	// The UniFi API typically does not return the passphrase for security.
+	// Preserve from prior state to prevent drift.
 	if wlan.XPassphrase != "" {
 		state.Passphrase = types.StringValue(wlan.XPassphrase)
 	} else if priorState != nil && !priorState.Passphrase.IsNull() {
