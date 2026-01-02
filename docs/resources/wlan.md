@@ -17,7 +17,7 @@ Manages a UniFi wireless network (SSID) configuration.
 
 ### Required
 
-- `ap_group_ids` (List of String) List of AP group IDs this WLAN should be broadcast on. Required.
+- `ap_group_ids` (Set of String) Set of AP group IDs this WLAN should be broadcast on. Required.
 - `name` (String) The SSID name of the wireless network.
 
 ### Optional
@@ -29,13 +29,13 @@ Manages a UniFi wireless network (SSID) configuration.
 - `is_guest` (Boolean) Whether this is a guest network. Defaults to false.
 - `l2_isolation` (Boolean) Whether L2 isolation is enabled. Defaults to false.
 - `mac_filter_enabled` (Boolean) Whether MAC filtering is enabled. Defaults to false.
-- `mac_filter_list` (List of String) List of MAC addresses for filtering.
+- `mac_filter_list` (Set of String) Set of MAC addresses for filtering.
 - `mac_filter_policy` (String) MAC filter policy. Valid values: 'allow', 'deny'. Defaults to 'deny'.
 - `network_id` (String) The network ID (VLAN) to assign to this WLAN.
 - `passphrase` (String, Sensitive) The wireless passphrase (required for wpapsk security).
 - `pmf_mode` (String) Protected Management Frames mode. Valid values: 'disabled', 'optional', 'required'. Defaults to 'optional'.
 - `proxy_arp` (Boolean) Whether proxy ARP is enabled. Defaults to false.
-- `schedule` (List of String) Schedule configuration.
+- `schedule` (Set of String) Schedule configuration.
 - `schedule_enabled` (Boolean) Whether scheduling is enabled. Defaults to false.
 - `security` (String) The security mode. Valid values: 'open', 'wep', 'wpapsk', 'wpaeap'. Defaults to 'wpapsk'.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
@@ -44,7 +44,7 @@ Manages a UniFi wireless network (SSID) configuration.
 - `vlan` (Number) The VLAN ID for this WLAN. Note: On modern UniFi controllers (v8+), VLAN tagging is done by associating the WLAN with a network that has the desired VLAN ID.
 - `vlan_enabled` (Boolean) Whether VLAN tagging is enabled. Defaults to false.
 - `wlan_band` (String) The wireless band. Valid values: '2g', '5g', 'both'. Defaults to 'both'.
-- `wlan_bands` (List of String) List of wireless bands to enable (e.g., '2g', '5g', '6g').
+- `wlan_bands` (Set of String) Set of wireless bands to enable (e.g., '2g', '5g', '6g').
 - `wpa3_support` (Boolean) Whether WPA3 support is enabled. Defaults to false.
 - `wpa3_transition` (Boolean) Whether WPA3 transition mode is enabled. Defaults to false.
 - `wpa_enc` (String) The WPA encryption type. Valid values: 'ccmp', 'gcmp', 'auto'. Defaults to 'ccmp'.
@@ -64,11 +64,3 @@ Optional:
 - `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Read operations occur during any refresh or planning operation when refresh is enabled.
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
-
-## Import
-
-Import existing WLANs using the resource ID:
-
-```shell
-terraform import unifi_wlan.example 60a1b2c3d4e5f6789abcdef0
-```

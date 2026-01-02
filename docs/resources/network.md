@@ -22,7 +22,7 @@ Manages a UniFi network/VLAN configuration.
 
 ### Optional
 
-- `dhcp_dns` (List of String) List of DNS servers to provide via DHCP (maximum 4).
+- `dhcp_dns` (Set of String) Set of DNS servers to provide via DHCP (maximum 4). Must be valid IPv4 addresses.
 - `dhcp_enabled` (Boolean) Whether DHCP is enabled on this network. Defaults to true.
 - `dhcp_lease` (Number) The DHCP lease time in seconds. Defaults to 86400 (24 hours).
 - `dhcp_start` (String) The start of the DHCP IP range.
@@ -49,11 +49,3 @@ Optional:
 - `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Read operations occur during any refresh or planning operation when refresh is enabled.
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
-
-## Import
-
-Import existing networks using the resource ID:
-
-```shell
-terraform import unifi_network.example 60a1b2c3d4e5f6789abcdef0
-```

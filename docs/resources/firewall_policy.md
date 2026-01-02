@@ -24,7 +24,7 @@ Manages a UniFi firewall policy (v2 zone-based firewall).
 ### Optional
 
 - `connection_state_type` (String) Connection state matching type. Valid values: 'ALL', 'RESPOND_ONLY', 'CUSTOM'. Defaults to 'ALL'.
-- `connection_states` (List of String) List of connection states to match (when connection_state_type is 'CUSTOM').
+- `connection_states` (Set of String) Set of connection states to match (when connection_state_type is 'CUSTOM').
 - `destination` (Attributes) Destination matching criteria. (see [below for nested schema](#nestedatt--destination))
 - `enabled` (Boolean) Whether the policy is enabled. Defaults to true.
 - `icmp_typename` (String) ICMP type name (for ICMP protocol).
@@ -46,8 +46,8 @@ Manages a UniFi firewall policy (v2 zone-based firewall).
 
 Optional:
 
-- `client_macs` (List of String) List of client MAC addresses to match.
-- `ips` (List of String) List of IP addresses or CIDR ranges to match.
+- `client_macs` (Set of String) Set of client MAC addresses to match.
+- `ips` (Set of String) Set of IP addresses or CIDR ranges to match.
 - `mac` (String) MAC address to match.
 - `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'.
 - `network_id` (String) Network ID to match.
@@ -60,7 +60,7 @@ Optional:
 
 Optional:
 
-- `days_of_week` (List of String) Days of the week. Valid values: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'.
+- `days_of_week` (Set of String) Days of the week. Valid values: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'.
 - `mode` (String) Schedule mode. Valid values: 'ALWAYS', 'CUSTOM'.
 - `time_range_end` (String) End time in HH:MM format.
 - `time_range_start` (String) Start time in HH:MM format.
@@ -71,8 +71,8 @@ Optional:
 
 Optional:
 
-- `client_macs` (List of String) List of client MAC addresses to match.
-- `ips` (List of String) List of IP addresses or CIDR ranges to match.
+- `client_macs` (Set of String) Set of client MAC addresses to match.
+- `ips` (Set of String) Set of IP addresses or CIDR ranges to match.
 - `mac` (String) MAC address to match.
 - `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'.
 - `network_id` (String) Network ID to match.
@@ -89,11 +89,3 @@ Optional:
 - `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Read operations occur during any refresh or planning operation when refresh is enabled.
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
-
-## Import
-
-Import existing firewall policies using the resource ID:
-
-```shell
-terraform import unifi_firewall_policy.example 60a1b2c3d4e5f6789abcdef0
-```

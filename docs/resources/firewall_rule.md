@@ -25,14 +25,14 @@ Manages a UniFi legacy firewall rule.
 ### Optional
 
 - `dst_address` (String) Destination IP address or CIDR.
-- `dst_firewall_group_ids` (List of String) List of destination firewall group IDs.
+- `dst_firewall_group_ids` (Set of String) Set of destination firewall group IDs.
 - `dst_network_conf_type` (String) Destination network configuration type. Valid values: 'ADDRv4', 'NETv4'.
 - `dst_port` (String) Destination port or port range (e.g., '80' or '8080-8090').
 - `enabled` (Boolean) Whether the rule is enabled. Defaults to true.
 - `logging` (Boolean) Whether to log matching packets. Defaults to false.
 - `protocol` (String) The protocol to match. Valid values: 'all', 'tcp', 'udp', 'tcp_udp', 'icmp'.
 - `src_address` (String) Source IP address or CIDR.
-- `src_firewall_group_ids` (List of String) List of source firewall group IDs.
+- `src_firewall_group_ids` (Set of String) Set of source firewall group IDs.
 - `src_network_conf_type` (String) Source network configuration type. Valid values: 'ADDRv4', 'NETv4'.
 - `state_established` (Boolean) Match established connections. Defaults to true.
 - `state_invalid` (Boolean) Match invalid connections. Defaults to false.
@@ -54,11 +54,3 @@ Optional:
 - `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Read operations occur during any refresh or planning operation when refresh is enabled.
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
-
-## Import
-
-Import existing firewall rules using the resource ID:
-
-```shell
-terraform import unifi_firewall_rule.example 60a1b2c3d4e5f6789abcdef0
-```

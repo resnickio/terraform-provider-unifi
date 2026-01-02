@@ -18,7 +18,7 @@ Manages a UniFi firewall group (IP address group, port group, or IPv6 address gr
 ### Required
 
 - `group_type` (String) The type of the firewall group. Valid values are: 'address-group' (IPv4 addresses/CIDRs), 'port-group' (port numbers/ranges), 'ipv6-address-group' (IPv6 addresses/CIDRs).
-- `members` (List of String) The members of the firewall group. For address groups, this is a list of IP addresses or CIDR ranges. For port groups, this is a list of port numbers or ranges (e.g., '80', '8080-8090').
+- `members` (Set of String) The members of the firewall group. For address groups, this is a set of IP addresses or CIDR ranges. For port groups, this is a set of port numbers or ranges (e.g., '80', '8080-8090').
 - `name` (String) The name of the firewall group.
 
 ### Optional
@@ -39,11 +39,3 @@ Optional:
 - `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Read operations occur during any refresh or planning operation when refresh is enabled.
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
-
-## Import
-
-Import existing firewall groups using the resource ID:
-
-```shell
-terraform import unifi_firewall_group.example 60a1b2c3d4e5f6789abcdef0
-```

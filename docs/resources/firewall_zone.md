@@ -21,7 +21,7 @@ Manages a UniFi firewall zone (v2 zone-based firewall).
 
 ### Optional
 
-- `network_ids` (List of String) List of network IDs assigned to this zone.
+- `network_ids` (Set of String) Set of network IDs assigned to this zone.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `zone_key` (String) The zone key for built-in zones. Valid values: 'internal', 'external', 'gateway', 'vpn', 'hotspot', 'dmz'. Leave empty for custom zones.
 
@@ -38,11 +38,3 @@ Optional:
 - `delete` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.
 - `read` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours). Read operations occur during any refresh or planning operation when refresh is enabled.
 - `update` (String) A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as "30s" or "2h45m". Valid time units are "s" (seconds), "m" (minutes), "h" (hours).
-
-## Import
-
-Import existing firewall zones using the resource ID:
-
-```shell
-terraform import unifi_firewall_zone.example 60a1b2c3d4e5f6789abcdef0
-```
