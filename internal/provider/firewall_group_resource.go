@@ -279,6 +279,10 @@ func (r *FirewallGroupResource) sdkToState(ctx context.Context, group *unifi.Fir
 	state.Name = types.StringValue(group.Name)
 	state.GroupType = types.StringValue(group.GroupType)
 
+	// Ensure GroupMembers is not nil to avoid issues with SetValueFrom
+	if group.GroupMembers == nil {
+		group.GroupMembers = []string{}
+	}
 	members, d := types.SetValueFrom(ctx, types.StringType, group.GroupMembers)
 	diags.Append(d...)
 	if diags.HasError() {
