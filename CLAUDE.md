@@ -141,16 +141,31 @@ Each resource follows this pattern:
 - **Commits**: Do not include Claude Code citations or co-author tags
 - **Code style**: Minimal comments, no inline comments unless truly necessary
 - **Over-engineering**: Avoid. Don't add abstractions, helpers, or features beyond what's requested
-- **Testing**: Comprehensive acceptance tests for all attributes. Tests should cover:
+- **Resource naming**: Test resources use `tf-acc-test-` prefix for easy identification
+- **VLAN IDs**: Use 3900+ range in tests to avoid production conflicts
+- **Rule indices**: Use 2000+ range in tests (must start with 2 or 4 per API validation)
+- **Context7 MCP**: When generating code that uses external libraries, or when needing up-to-date API documentation, configuration examples, or setup steps for any library/framework, automatically use Context7 MCP tools (`resolve-library-id` then `get-library-docs`) to fetch current documentation. Do not rely solely on training data for library APIs.
+- **Playwright MCP**: Use Playwright MCP tools for browser automation tasks: testing web UIs, scraping dynamic content, filling forms, taking screenshots, or interacting with web applications. Prefer `browser_snapshot` over screenshots for actionable page state. Use `browser_fill_form` for multiple fields, `browser_click`/`browser_type` for interactions, and `browser_evaluate` for custom JavaScript. Always call `browser_close` when finished.
+
+## Testing Conventions
+
+- **Acceptance tests**: Comprehensive coverage for all attributes including:
   - All attribute combinations
   - Default value verification
   - Update/modification scenarios
   - Import state verification
-- **Resource naming**: Test resources use `tf-acc-test-` prefix for easy identification
-- **VLAN IDs**: Use 3900+ range in tests to avoid production conflicts
-- **Rule indices**: Use 2000+ range in tests (must start with 2 or 4 per API validation)
-- **Context7 MCP**: When generating code that uses external libraries, use Context7 MCP tools to fetch current documentation
-- **Playwright MCP**: Use for browser automation tasks when needed
+- **Test helpers**: Use shared helpers from `testutils_test.go` (`testAccPreCheck`, `testAccCheckResourceDestroy`, etc.)
+- **Controller compatibility**: Use `testAccPreCheckZoneBasedFirewall` or similar prechecks for controller-specific features
+- **Resource cleanup**: Implement sweeper functions in `sweep_test.go` for test resource cleanup
+- **Naming**: Test resources use `tf-acc-test-` prefix, test functions use `TestAcc{Resource}_{scenario}` pattern
+- **Config builders**: Use helper functions to build test configs with consistent patterns
+
+## Post-Implementation Summaries
+
+After completing a planned task, provide a concise summary including:
+- **Files Created**: New files with brief descriptions
+- **Files Modified**: Existing files and what changed
+- **Key Details**: Coverage, scope, or other relevant metrics
 
 ## Status
 
@@ -173,6 +188,45 @@ Each resource follows this pattern:
 - `unifi_dynamic_dns` - Dynamic DNS configuration
 - `unifi_port_profile` - Switch port profiles
 
+## Versioning and Releases
+
+This provider follows [Semantic Versioning](https://semver.org/):
+- **v0.x.x** - Development phase, breaking changes allowed between minor versions
+- **v1.0.0+** - Stable API, breaking changes only in major versions
+
+### Current Status
+
+- Provider is in **v0.x** development phase
+- Breaking changes should increment minor version (v0.1.0 → v0.2.0)
+- Bug fixes increment patch version (v0.1.0 → v0.1.1)
+
+### Branching Strategy
+
+- **main** - Always deployable, protected branch
+- **feature/*** - Short-lived feature branches, merge via PR
+- Tags mark releases (e.g., `v0.1.0`, `v0.2.0`)
+
+### Release Process
+
+1. Ensure all tests pass: `make test && make testacc`
+2. Ensure build succeeds: `make build`
+3. Regenerate docs: `make docs`
+4. Create annotated tag: `git tag -a vX.Y.Z -m "Release description"`
+5. Push tag: `git push origin vX.Y.Z`
+
+### Registry Publishing
+
+For Terraform Registry publication:
+- Ensure all resources have import documentation
+- Ensure all resources have example configurations in `examples/`
+- Verify generated docs in `docs/` are complete
+- Follow HashiCorp's [publishing requirements](https://developer.hashicorp.com/terraform/registry/providers/publishing)
+
 ## Related Projects
 
 - [UniFi Go SDK](https://github.com/resnickio/unifi-go-sdk) - Sister project, the underlying API client
+
+Reference for patterns and lessons learned (not for copying code):
+- **paultyng/terraform-provider-unifi**: Original community provider (abandoned). Uses older SDK patterns.
+- **ubiquiti-community fork**: Maintenance-only fork. Validates need for fresh implementation.
+- **filipowm/unifi**: Has known data loss bugs. Demonstrates importance of proper state handling.
