@@ -32,7 +32,7 @@ type NetworkDataSourceModel struct {
 	DHCPStart    types.String `tfsdk:"dhcp_start"`
 	DHCPStop     types.String `tfsdk:"dhcp_stop"`
 	DHCPLease    types.Int64  `tfsdk:"dhcp_lease"`
-	DHCPDNS      types.List   `tfsdk:"dhcp_dns"`
+	DHCPDNS      types.Set    `tfsdk:"dhcp_dns"`
 	DomainName   types.String `tfsdk:"domain_name"`
 	IGMPSnooping types.Bool   `tfsdk:"igmp_snooping"`
 	Enabled      types.Bool   `tfsdk:"enabled"`
@@ -99,8 +99,8 @@ func (d *NetworkDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Description: "The DHCP lease time in seconds.",
 				Computed:    true,
 			},
-			"dhcp_dns": schema.ListAttribute{
-				Description: "List of DNS servers provided via DHCP.",
+			"dhcp_dns": schema.SetAttribute{
+				Description: "Set of DNS servers provided via DHCP.",
 				Computed:    true,
 				ElementType: types.StringType,
 			},
@@ -252,14 +252,14 @@ func (d *NetworkDataSource) sdkToState(ctx context.Context, network *unifi.Netwo
 	}
 
 	if len(dnsServers) > 0 {
-		dnsList, d := types.ListValueFrom(ctx, types.StringType, dnsServers)
+		dnsSet, d := types.SetValueFrom(ctx, types.StringType, dnsServers)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.DHCPDNS = dnsList
+		state.DHCPDNS = dnsSet
 	} else {
-		state.DHCPDNS = types.ListNull(types.StringType)
+		state.DHCPDNS = types.SetNull(types.StringType)
 	}
 
 	if network.DomainName != "" {

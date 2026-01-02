@@ -41,7 +41,7 @@ data "unifi_network" "by_id" {
 
 ### Read-Only
 
-- `dhcp_dns` (List of String) List of DNS servers provided via DHCP.
+- `dhcp_dns` (Set of String) Set of DNS servers provided via DHCP.
 - `dhcp_enabled` (Boolean) Whether DHCP is enabled on this network.
 - `dhcp_lease` (Number) The DHCP lease time in seconds.
 - `dhcp_start` (String) The start of the DHCP IP range.
