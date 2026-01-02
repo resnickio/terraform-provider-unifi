@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi network/VLAN configuration.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi network/VLAN configuration.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_network/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Networks can be imported using their ID:
+
+```shell
+terraform import unifi_network.example 60a1b2c3d4e5f67890123456
+```

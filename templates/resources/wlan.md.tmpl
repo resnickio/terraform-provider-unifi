@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi wireless network (SSID) configuration.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi wireless network (SSID) configuration.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_wlan/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+WLANs can be imported using their ID:
+
+```shell
+terraform import unifi_wlan.example 60a1b2c3d4e5f67890123456
+```

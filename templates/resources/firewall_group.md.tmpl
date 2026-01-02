@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi firewall group (IP address group, port group, or IPv6 address group).
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi firewall group (IP address group, port group, or IPv6 address group).
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_firewall_group/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Firewall groups can be imported using their ID:
+
+```shell
+terraform import unifi_firewall_group.example 60a1b2c3d4e5f67890123456
+```

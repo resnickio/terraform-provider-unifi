@@ -1,0 +1,26 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi firewall policy (v2 zone-based firewall).
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi firewall policy (v2 zone-based firewall).
+
+~> **Note:** This resource requires UDM devices with Network 10.x+ that support zone-based firewall. For legacy controllers, use `unifi_firewall_rule` instead.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_firewall_policy/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Firewall policies can be imported using their ID:
+
+```shell
+terraform import unifi_firewall_policy.example 60a1b2c3d4e5f67890123456
+```

@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi port forwarding rule.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi port forwarding rule.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_port_forward/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Port forwarding rules can be imported using their ID:
+
+```shell
+terraform import unifi_port_forward.example 60a1b2c3d4e5f67890123456
+```

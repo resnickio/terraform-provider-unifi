@@ -1,0 +1,26 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi firewall zone (v2 zone-based firewall).
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi firewall zone (v2 zone-based firewall).
+
+~> **Note:** This resource requires UDM devices with Network 10.x+ that support zone-based firewall.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_firewall_zone/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Firewall zones can be imported using their ID:
+
+```shell
+terraform import unifi_firewall_zone.example 60a1b2c3d4e5f67890123456
+```
