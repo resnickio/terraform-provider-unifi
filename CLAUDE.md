@@ -101,6 +101,15 @@ The SDK handles path differences. Both use session-based authentication.
 - Standalone Network Application may not support zone-based firewall
 - Tests auto-skip on unsupported controllers
 
+### Known Limitations
+
+| Resource | Limitation | Reason |
+|----------|------------|--------|
+| `unifi_firewall_zone` | No `site_id` attribute | UniFi API doesn't return site_id for zones |
+| `unifi_firewall_policy` | No `site_id` attribute | UniFi API doesn't return site_id for policies |
+
+These resources still work correctly - the site is determined by the provider's `site` configuration.
+
 ## Provider Architecture
 
 ### Auto-Relogin Client

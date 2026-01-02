@@ -134,7 +134,7 @@ func (r *UserGroupResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	resp.Diagnostics.Append(r.sdkToState(created, &plan)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, created, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -168,7 +168,7 @@ func (r *UserGroupResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	resp.Diagnostics.Append(r.sdkToState(group, &state)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, group, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -208,7 +208,7 @@ func (r *UserGroupResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	resp.Diagnostics.Append(r.sdkToState(updated, &plan)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, updated, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -262,7 +262,7 @@ func (r *UserGroupResource) planToSDK(plan *UserGroupResourceModel) *unifi.UserG
 	return group
 }
 
-func (r *UserGroupResource) sdkToState(group *unifi.UserGroup, state *UserGroupResourceModel) diag.Diagnostics {
+func (r *UserGroupResource) sdkToState(ctx context.Context, group *unifi.UserGroup, state *UserGroupResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	state.ID = types.StringValue(group.ID)
