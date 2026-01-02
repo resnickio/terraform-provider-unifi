@@ -182,7 +182,7 @@ func (r *PortForwardResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	// Update state with response
-	resp.Diagnostics.Append(r.sdkToState(created, &plan)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, created, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -218,7 +218,7 @@ func (r *PortForwardResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	// Update state with response
-	resp.Diagnostics.Append(r.sdkToState(pf, &state)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, pf, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -263,7 +263,7 @@ func (r *PortForwardResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	// Update state with response
-	resp.Diagnostics.Append(r.sdkToState(updated, &plan)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, updated, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -320,7 +320,7 @@ func (r *PortForwardResource) planToSDK(plan *PortForwardResourceModel) *unifi.P
 }
 
 // sdkToState updates the Terraform state from an SDK PortForward struct.
-func (r *PortForwardResource) sdkToState(pf *unifi.PortForward, state *PortForwardResourceModel) diag.Diagnostics {
+func (r *PortForwardResource) sdkToState(ctx context.Context, pf *unifi.PortForward, state *PortForwardResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	state.ID = types.StringValue(pf.ID)

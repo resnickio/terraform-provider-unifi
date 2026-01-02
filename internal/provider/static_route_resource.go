@@ -179,7 +179,7 @@ func (r *StaticRouteResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	resp.Diagnostics.Append(r.sdkToState(created, &plan)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, created, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -213,7 +213,7 @@ func (r *StaticRouteResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	resp.Diagnostics.Append(r.sdkToState(route, &state)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, route, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -253,7 +253,7 @@ func (r *StaticRouteResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	resp.Diagnostics.Append(r.sdkToState(updated, &plan)...)
+	resp.Diagnostics.Append(r.sdkToState(ctx, updated, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -315,7 +315,7 @@ func (r *StaticRouteResource) planToSDK(plan *StaticRouteResourceModel) *unifi.R
 	return route
 }
 
-func (r *StaticRouteResource) sdkToState(route *unifi.Routing, state *StaticRouteResourceModel) diag.Diagnostics {
+func (r *StaticRouteResource) sdkToState(ctx context.Context, route *unifi.Routing, state *StaticRouteResourceModel) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	state.ID = types.StringValue(route.ID)
