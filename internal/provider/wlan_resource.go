@@ -13,8 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -42,18 +42,18 @@ type WLANResourceModel struct {
 	Passphrase       types.String   `tfsdk:"passphrase"`
 	NetworkID        types.String   `tfsdk:"network_id"`
 	UserGroupID      types.String   `tfsdk:"user_group_id"`
-	APGroupIDs       types.List     `tfsdk:"ap_group_ids"`
+	APGroupIDs       types.Set      `tfsdk:"ap_group_ids"`
 	IsGuest          types.Bool     `tfsdk:"is_guest"`
 	HideSsid         types.Bool     `tfsdk:"hide_ssid"`
 	WLANBand         types.String   `tfsdk:"wlan_band"`
-	WLANBands        types.List     `tfsdk:"wlan_bands"`
+	WLANBands        types.Set      `tfsdk:"wlan_bands"`
 	Vlan             types.Int64    `tfsdk:"vlan"`
 	VlanEnabled      types.Bool     `tfsdk:"vlan_enabled"`
 	MacFilterEnabled types.Bool     `tfsdk:"mac_filter_enabled"`
-	MacFilterList    types.List     `tfsdk:"mac_filter_list"`
+	MacFilterList    types.Set      `tfsdk:"mac_filter_list"`
 	MacFilterPolicy  types.String   `tfsdk:"mac_filter_policy"`
 	ScheduleEnabled  types.Bool     `tfsdk:"schedule_enabled"`
-	Schedule         types.List     `tfsdk:"schedule"`
+	Schedule         types.Set      `tfsdk:"schedule"`
 	L2Isolation      types.Bool     `tfsdk:"l2_isolation"`
 	FastRoaming      types.Bool     `tfsdk:"fast_roaming_enabled"`
 	ProxyArp         types.Bool     `tfsdk:"proxy_arp"`
@@ -149,8 +149,8 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"ap_group_ids": schema.ListAttribute{
-				Description: "List of AP group IDs this WLAN should be broadcast on. Required.",
+			"ap_group_ids": schema.SetAttribute{
+				Description: "Set of AP group IDs this WLAN should be broadcast on. Required.",
 				Required:    true,
 				ElementType: types.StringType,
 			},
@@ -172,13 +172,13 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Computed:    true,
 				Default:     stringdefault.StaticString("both"),
 			},
-			"wlan_bands": schema.ListAttribute{
-				Description: "List of wireless bands to enable (e.g., '2g', '5g', '6g').",
+			"wlan_bands": schema.SetAttribute{
+				Description: "Set of wireless bands to enable (e.g., '2g', '5g', '6g').",
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"vlan": schema.Int64Attribute{
@@ -201,8 +201,8 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Computed:    true,
 				Default:     booldefault.StaticBool(false),
 			},
-			"mac_filter_list": schema.ListAttribute{
-				Description: "List of MAC addresses for filtering.",
+			"mac_filter_list": schema.SetAttribute{
+				Description: "Set of MAC addresses for filtering.",
 				Optional:    true,
 				ElementType: types.StringType,
 			},
@@ -221,7 +221,7 @@ func (r *WLANResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Computed:    true,
 				Default:     booldefault.StaticBool(false),
 			},
-			"schedule": schema.ListAttribute{
+			"schedule": schema.SetAttribute{
 				Description: "Schedule configuration.",
 				Optional:    true,
 				ElementType: types.StringType,
@@ -567,14 +567,14 @@ func (r *WLANResource) sdkToState(ctx context.Context, wlan *unifi.WLANConf, sta
 	}
 
 	if len(wlan.APGroupIDs) > 0 {
-		apGroupList, d := types.ListValueFrom(ctx, types.StringType, wlan.APGroupIDs)
+		apGroupSet, d := types.SetValueFrom(ctx, types.StringType, wlan.APGroupIDs)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.APGroupIDs = apGroupList
+		state.APGroupIDs = apGroupSet
 	} else {
-		state.APGroupIDs = types.ListNull(types.StringType)
+		state.APGroupIDs = types.SetNull(types.StringType)
 	}
 
 	state.IsGuest = types.BoolValue(derefBool(wlan.IsGuest))
@@ -582,14 +582,14 @@ func (r *WLANResource) sdkToState(ctx context.Context, wlan *unifi.WLANConf, sta
 	state.WLANBand = types.StringValue(wlan.WLANBand)
 
 	if len(wlan.WLANBands) > 0 {
-		bandsList, d := types.ListValueFrom(ctx, types.StringType, wlan.WLANBands)
+		bandsSet, d := types.SetValueFrom(ctx, types.StringType, wlan.WLANBands)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.WLANBands = bandsList
+		state.WLANBands = bandsSet
 	} else {
-		state.WLANBands = types.ListNull(types.StringType)
+		state.WLANBands = types.SetNull(types.StringType)
 	}
 
 	if wlan.Vlan != nil {
@@ -602,28 +602,28 @@ func (r *WLANResource) sdkToState(ctx context.Context, wlan *unifi.WLANConf, sta
 	state.MacFilterEnabled = types.BoolValue(derefBool(wlan.MacFilterEnabled))
 
 	if len(wlan.MacFilterList) > 0 {
-		macList, d := types.ListValueFrom(ctx, types.StringType, wlan.MacFilterList)
+		macSet, d := types.SetValueFrom(ctx, types.StringType, wlan.MacFilterList)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.MacFilterList = macList
+		state.MacFilterList = macSet
 	} else {
-		state.MacFilterList = types.ListNull(types.StringType)
+		state.MacFilterList = types.SetNull(types.StringType)
 	}
 
 	state.MacFilterPolicy = types.StringValue(wlan.MacFilterPolicy)
 	state.ScheduleEnabled = types.BoolValue(derefBool(wlan.ScheduleEnabled))
 
 	if len(wlan.Schedule) > 0 {
-		scheduleList, d := types.ListValueFrom(ctx, types.StringType, wlan.Schedule)
+		scheduleSet, d := types.SetValueFrom(ctx, types.StringType, wlan.Schedule)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.Schedule = scheduleList
+		state.Schedule = scheduleSet
 	} else {
-		state.Schedule = types.ListNull(types.StringType)
+		state.Schedule = types.SetNull(types.StringType)
 	}
 
 	state.L2Isolation = types.BoolValue(derefBool(wlan.L2Isolation))
