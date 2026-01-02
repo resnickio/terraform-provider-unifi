@@ -1,0 +1,21 @@
+---
+page_title: "{{.ProviderShortName}} Provider"
+description: |-
+  The UniFi provider allows you to manage UniFi network infrastructure resources.
+---
+
+# {{.ProviderShortName}} Provider
+
+The UniFi provider allows you to manage UniFi network infrastructure resources.
+
+## Example Usage
+
+```hcl
+provider "unifi" {
+  base_url = "https://192.168.1.1"
+  api_key  = var.unifi_api_key
+  insecure = true  # For self-signed certificates
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
