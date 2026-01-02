@@ -40,7 +40,7 @@ type FirewallPolicyResourceModel struct {
 	Index               types.Int64    `tfsdk:"index"`
 	Logging             types.Bool     `tfsdk:"logging"`
 	ConnectionStateType types.String   `tfsdk:"connection_state_type"`
-	ConnectionStates    types.List     `tfsdk:"connection_states"`
+	ConnectionStates    types.Set      `tfsdk:"connection_states"`
 	MatchIPSec          types.Bool     `tfsdk:"match_ipsec"`
 	ICMPTypename        types.String   `tfsdk:"icmp_typename"`
 	ICMPV6Typename      types.String   `tfsdk:"icmpv6_typename"`
@@ -53,18 +53,18 @@ type FirewallPolicyResourceModel struct {
 var endpointAttrTypes = map[string]attr.Type{
 	"zone_id":         types.StringType,
 	"matching_target": types.StringType,
-	"ips":             types.ListType{ElemType: types.StringType},
+	"ips":             types.SetType{ElemType: types.StringType},
 	"mac":             types.StringType,
 	"port":            types.StringType,
 	"network_id":      types.StringType,
-	"client_macs":     types.ListType{ElemType: types.StringType},
+	"client_macs":     types.SetType{ElemType: types.StringType},
 }
 
 var scheduleAttrTypes = map[string]attr.Type{
 	"mode":             types.StringType,
 	"time_range_start": types.StringType,
 	"time_range_end":   types.StringType,
-	"days_of_week":     types.ListType{ElemType: types.StringType},
+	"days_of_week":     types.SetType{ElemType: types.StringType},
 }
 
 func NewFirewallPolicyResource() resource.Resource {
@@ -140,8 +140,8 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 					stringvalidator.OneOf("ALL", "RESPOND_ONLY", "CUSTOM"),
 				},
 			},
-			"connection_states": schema.ListAttribute{
-				Description: "List of connection states to match (when connection_state_type is 'CUSTOM').",
+			"connection_states": schema.SetAttribute{
+				Description: "Set of connection states to match (when connection_state_type is 'CUSTOM').",
 				Optional:    true,
 				ElementType: types.StringType,
 			},
@@ -171,8 +171,8 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'.",
 						Optional:    true,
 					},
-					"ips": schema.ListAttribute{
-						Description: "List of IP addresses or CIDR ranges to match.",
+					"ips": schema.SetAttribute{
+						Description: "Set of IP addresses or CIDR ranges to match.",
 						Optional:    true,
 						ElementType: types.StringType,
 					},
@@ -188,8 +188,8 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description: "Network ID to match.",
 						Optional:    true,
 					},
-					"client_macs": schema.ListAttribute{
-						Description: "List of client MAC addresses to match.",
+					"client_macs": schema.SetAttribute{
+						Description: "Set of client MAC addresses to match.",
 						Optional:    true,
 						ElementType: types.StringType,
 					},
@@ -207,8 +207,8 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'.",
 						Optional:    true,
 					},
-					"ips": schema.ListAttribute{
-						Description: "List of IP addresses or CIDR ranges to match.",
+					"ips": schema.SetAttribute{
+						Description: "Set of IP addresses or CIDR ranges to match.",
 						Optional:    true,
 						ElementType: types.StringType,
 					},
@@ -224,8 +224,8 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description: "Network ID to match.",
 						Optional:    true,
 					},
-					"client_macs": schema.ListAttribute{
-						Description: "List of client MAC addresses to match.",
+					"client_macs": schema.SetAttribute{
+						Description: "Set of client MAC addresses to match.",
 						Optional:    true,
 						ElementType: types.StringType,
 					},
@@ -247,7 +247,7 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description: "End time in HH:MM format.",
 						Optional:    true,
 					},
-					"days_of_week": schema.ListAttribute{
+					"days_of_week": schema.SetAttribute{
 						Description: "Days of the week. Valid values: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'.",
 						Optional:    true,
 						ElementType: types.StringType,
@@ -506,7 +506,7 @@ func (r *FirewallPolicyResource) endpointFromObject(ctx context.Context, obj typ
 	if v, ok := attrs["network_id"].(types.String); ok && !v.IsNull() {
 		endpoint.NetworkID = v.ValueString()
 	}
-	if v, ok := attrs["ips"].(types.List); ok && !v.IsNull() {
+	if v, ok := attrs["ips"].(types.Set); ok && !v.IsNull() {
 		var ips []string
 		diags.Append(v.ElementsAs(ctx, &ips, false)...)
 		if diags.HasError() {
@@ -514,7 +514,7 @@ func (r *FirewallPolicyResource) endpointFromObject(ctx context.Context, obj typ
 		}
 		endpoint.IPs = ips
 	}
-	if v, ok := attrs["client_macs"].(types.List); ok && !v.IsNull() {
+	if v, ok := attrs["client_macs"].(types.Set); ok && !v.IsNull() {
 		var macs []string
 		diags.Append(v.ElementsAs(ctx, &macs, false)...)
 		if diags.HasError() {
@@ -539,7 +539,7 @@ func (r *FirewallPolicyResource) scheduleFromObject(ctx context.Context, obj typ
 	if v, ok := attrs["time_range_end"].(types.String); ok && !v.IsNull() {
 		schedule.TimeRangeEnd = v.ValueString()
 	}
-	if v, ok := attrs["days_of_week"].(types.List); ok && !v.IsNull() {
+	if v, ok := attrs["days_of_week"].(types.Set); ok && !v.IsNull() {
 		var days []string
 		diags.Append(v.ElementsAs(ctx, &days, false)...)
 		if diags.HasError() {
@@ -571,14 +571,14 @@ func (r *FirewallPolicyResource) sdkToState(ctx context.Context, policy *unifi.F
 	state.ConnectionStateType = types.StringValue(policy.ConnectionStateType)
 
 	if len(policy.ConnectionStates) > 0 {
-		statesList, d := types.ListValueFrom(ctx, types.StringType, policy.ConnectionStates)
+		statesSet, d := types.SetValueFrom(ctx, types.StringType, policy.ConnectionStates)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.ConnectionStates = statesList
+		state.ConnectionStates = statesSet
 	} else {
-		state.ConnectionStates = types.ListNull(types.StringType)
+		state.ConnectionStates = types.SetNull(types.StringType)
 	}
 
 	state.MatchIPSec = types.BoolValue(derefBool(policy.MatchIPSec))
@@ -634,28 +634,28 @@ func (r *FirewallPolicyResource) sdkToState(ctx context.Context, policy *unifi.F
 func (r *FirewallPolicyResource) endpointToObject(ctx context.Context, endpoint *unifi.PolicyEndpoint) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var ipsVal types.List
+	var ipsVal types.Set
 	if len(endpoint.IPs) > 0 {
-		ipsList, d := types.ListValueFrom(ctx, types.StringType, endpoint.IPs)
+		ipsSet, d := types.SetValueFrom(ctx, types.StringType, endpoint.IPs)
 		diags.Append(d...)
 		if diags.HasError() {
 			return types.ObjectNull(endpointAttrTypes), diags
 		}
-		ipsVal = ipsList
+		ipsVal = ipsSet
 	} else {
-		ipsVal = types.ListNull(types.StringType)
+		ipsVal = types.SetNull(types.StringType)
 	}
 
-	var clientMacsVal types.List
+	var clientMacsVal types.Set
 	if len(endpoint.ClientMACs) > 0 {
-		macsList, d := types.ListValueFrom(ctx, types.StringType, endpoint.ClientMACs)
+		macsSet, d := types.SetValueFrom(ctx, types.StringType, endpoint.ClientMACs)
 		diags.Append(d...)
 		if diags.HasError() {
 			return types.ObjectNull(endpointAttrTypes), diags
 		}
-		clientMacsVal = macsList
+		clientMacsVal = macsSet
 	} else {
-		clientMacsVal = types.ListNull(types.StringType)
+		clientMacsVal = types.SetNull(types.StringType)
 	}
 
 	attrs := map[string]attr.Value{
@@ -676,16 +676,16 @@ func (r *FirewallPolicyResource) endpointToObject(ctx context.Context, endpoint 
 func (r *FirewallPolicyResource) scheduleToObject(ctx context.Context, schedule *unifi.PolicySchedule) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var daysVal types.List
+	var daysVal types.Set
 	if len(schedule.DaysOfWeek) > 0 {
-		daysList, d := types.ListValueFrom(ctx, types.StringType, schedule.DaysOfWeek)
+		daysSet, d := types.SetValueFrom(ctx, types.StringType, schedule.DaysOfWeek)
 		diags.Append(d...)
 		if diags.HasError() {
 			return types.ObjectNull(scheduleAttrTypes), diags
 		}
-		daysVal = daysList
+		daysVal = daysSet
 	} else {
-		daysVal = types.ListNull(types.StringType)
+		daysVal = types.SetNull(types.StringType)
 	}
 
 	attrs := map[string]attr.Value{
