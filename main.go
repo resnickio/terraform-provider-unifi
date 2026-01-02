@@ -8,7 +8,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/resnickio/unifi-terraform-provider/internal/provider"
+	"github.com/resnickio/terraform-provider-unifi/internal/provider"
 )
 
 var (

@@ -1,4 +1,4 @@
-module github.com/resnickio/unifi-terraform-provider
+module github.com/resnickio/terraform-provider-unifi
 
 go 1.25.5
 

@@ -1,5 +1,9 @@
 # UniFi Terraform Provider
 
+[![CI](https://github.com/resnickio/terraform-provider-unifi/actions/workflows/ci.yml/badge.svg)](https://github.com/resnickio/terraform-provider-unifi/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/resnickio/terraform-provider-unifi)](https://goreportcard.com/report/github.com/resnickio/terraform-provider-unifi)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Terraform provider for managing UniFi network infrastructure using the [UniFi Go SDK](https://github.com/resnickio/unifi-go-sdk).
 
 ## Purpose
@@ -17,8 +21,8 @@ This provider enables declarative infrastructure-as-code management of UniFi net
 ### From Source
 
 ```bash
-git clone https://github.com/resnickio/unifi-terraform-provider.git
-cd unifi-terraform-provider
+git clone https://github.com/resnickio/terraform-provider-unifi.git
+cd terraform-provider-unifi
 make install
 ```
 
@@ -270,4 +274,4 @@ MIT
 
 ## Development
 
-This provider was developed with AI assistance. If you encounter bugs or have feature requests, please [open an issue](https://github.com/resnickio/unifi-terraform-provider/issues).
+This provider was developed with AI assistance. If you encounter bugs or have feature requests, please [open an issue](https://github.com/resnickio/terraform-provider-unifi/issues).
