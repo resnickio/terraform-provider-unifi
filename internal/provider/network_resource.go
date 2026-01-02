@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -49,7 +49,7 @@ type NetworkResourceModel struct {
 	DHCPStart    types.String   `tfsdk:"dhcp_start"`
 	DHCPStop     types.String   `tfsdk:"dhcp_stop"`
 	DHCPLease    types.Int64    `tfsdk:"dhcp_lease"`
-	DHCPDNS      types.List     `tfsdk:"dhcp_dns"`
+	DHCPDNS      types.Set      `tfsdk:"dhcp_dns"`
 	DomainName   types.String   `tfsdk:"domain_name"`
 	IGMPSnooping types.Bool     `tfsdk:"igmp_snooping"`
 	Enabled      types.Bool     `tfsdk:"enabled"`
@@ -145,13 +145,13 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Computed:    true,
 				Default:     int64default.StaticInt64(defaultDHCPLease),
 			},
-			"dhcp_dns": schema.ListAttribute{
-				Description: "List of DNS servers to provide via DHCP (maximum 4). Must be valid IPv4 addresses.",
+			"dhcp_dns": schema.SetAttribute{
+				Description: "Set of DNS servers to provide via DHCP (maximum 4). Must be valid IPv4 addresses.",
 				Optional:    true,
 				ElementType: types.StringType,
-				Validators: []validator.List{
-					listvalidator.SizeAtMost(4),
-					listvalidator.ValueStringsAre(
+				Validators: []validator.Set{
+					setvalidator.SizeAtMost(4),
+					setvalidator.ValueStringsAre(
 						IPv4Address(),
 					),
 				},
@@ -469,14 +469,14 @@ func (r *NetworkResource) sdkToState(ctx context.Context, network *unifi.Network
 	}
 
 	if len(dnsServers) > 0 {
-		dnsList, d := types.ListValueFrom(ctx, types.StringType, dnsServers)
+		dnsSet, d := types.SetValueFrom(ctx, types.StringType, dnsServers)
 		diags.Append(d...)
 		if diags.HasError() {
 			return diags
 		}
-		state.DHCPDNS = dnsList
+		state.DHCPDNS = dnsSet
 	} else {
-		state.DHCPDNS = types.ListNull(types.StringType)
+		state.DHCPDNS = types.SetNull(types.StringType)
 	}
 
 	if network.DomainName != "" {
