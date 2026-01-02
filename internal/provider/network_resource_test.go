@@ -165,7 +165,7 @@ func TestAccNetworkResource_igmpSnooping(t *testing.T) {
 
 func TestAccNetworkResource_guest(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsGuestNetworks(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create guest network
@@ -357,15 +357,11 @@ func testAccNetworkResourceConfig_guest(name string, vlanID int) string {
 %s
 
 resource "unifi_network" "test" {
-  name         = %q
-  purpose      = "guest"
-  vlan_id      = %d
-  subnet       = "10.%d.0.1/24"
-  dhcp_enabled = true
-  dhcp_start   = "10.%d.0.10"
-  dhcp_stop    = "10.%d.0.254"
+  name    = %q
+  purpose = "guest"
+  vlan_id = %d
 }
-`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256)
+`, testAccProviderConfig, name, vlanID)
 }
 
 func testAccNetworkResourceConfig_vlanOnly(name string, vlanID int) string {

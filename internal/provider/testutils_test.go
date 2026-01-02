@@ -68,6 +68,38 @@ func testAccCheckControllerSupportsZones(t *testing.T) {
 	}
 }
 
+// testAccCheckControllerSupportsGuestNetworks checks if the controller supports guest networks.
+// Some controllers (like UDM) may convert guest networks to corporate.
+func testAccCheckControllerSupportsGuestNetworks(t *testing.T) {
+	testAccPreCheck(t)
+
+	client := testAccGetClient(t)
+	if client == nil {
+		return
+	}
+
+	ctx := context.Background()
+
+	network := &unifi.Network{
+		Name:    "tf-acc-guest-test-precheck",
+		Purpose: "guest",
+	}
+
+	created, err := client.CreateNetwork(ctx, network)
+	if err != nil {
+		t.Skipf("Controller does not support guest network creation: %v", err)
+		return
+	}
+
+	defer func() {
+		_ = client.DeleteNetwork(ctx, created.ID)
+	}()
+
+	if created.Purpose != "guest" {
+		t.Skipf("Controller does not support guest networks: purpose was changed from 'guest' to '%s'", created.Purpose)
+	}
+}
+
 // testAccFirewallZonePairConfig returns configuration for a pair of firewall zones.
 func testAccFirewallZonePairConfig(baseName string) string {
 	return fmt.Sprintf(`
