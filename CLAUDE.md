@@ -11,6 +11,8 @@ Terraform provider for UniFi network infrastructure management.
   - `network_resource.go` - Network/VLAN resource
   - `network_data_source.go` - Network data source (lookup by ID or name)
   - `firewall_group_resource.go` - Address/port group resource
+  - `firewall_group_data_source.go` - Firewall group data source (lookup by ID or name)
+  - `firewall_zone_data_source.go` - Firewall zone data source (lookup by ID or name)
   - `firewall_rule_resource.go` - Legacy firewall rule resource
   - `firewall_policy_resource.go` - Zone-based firewall policy (v2 API)
   - `firewall_zone_resource.go` - Firewall zone resource (v2 API)
@@ -191,6 +193,8 @@ After completing a planned task, provide a concise summary including:
 
 **Implemented Data Sources:**
 - `unifi_network` - Look up network by ID or name
+- `unifi_firewall_group` - Look up firewall group (address/port) by ID or name
+- `unifi_firewall_zone` - Look up firewall zone by ID or name
 
 **Planned Resources:**
 - `unifi_radius_profile` - RADIUS authentication profiles
