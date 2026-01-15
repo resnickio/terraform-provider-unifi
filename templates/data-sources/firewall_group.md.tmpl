@@ -1,0 +1,56 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi firewall group. Lookup by either id or name.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi firewall group. Lookup by either id or name.
+
+## Example Usage
+
+### Lookup by Name
+
+```hcl
+data "unifi_firewall_group" "blocked_ips" {
+  name = "Blocked IPs"
+}
+
+output "blocked_ip_count" {
+  value = length(data.unifi_firewall_group.blocked_ips.members)
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_firewall_group" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+### Use with Firewall Rule
+
+```hcl
+data "unifi_firewall_group" "blocked_ips" {
+  name = "Blocked IPs"
+}
+
+data "unifi_firewall_group" "web_ports" {
+  name = "Web Ports"
+}
+
+resource "unifi_firewall_rule" "block_bad_ips" {
+  name                   = "Block Bad IPs"
+  action                 = "drop"
+  ruleset                = "LAN_IN"
+  rule_index             = 2001
+  protocol               = "all"
+  src_firewall_group_ids = [data.unifi_firewall_group.blocked_ips.id]
+  dst_firewall_group_ids = [data.unifi_firewall_group.web_ports.id]
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
