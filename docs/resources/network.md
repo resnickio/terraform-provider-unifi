@@ -43,17 +43,37 @@ resource "unifi_network" "vlan_only" {
 
 ### Optional
 
+- `dhcp_boot_enabled` (Boolean) Whether DHCP network boot (PXE) is enabled. When enabled, DHCP will provide boot options to clients.
+- `dhcp_boot_filename` (String) The boot filename to provide to clients (DHCP Option 67). This is the path to the boot file on the TFTP server.
+- `dhcp_boot_server` (String) The IP address of the boot server (DHCP Option 66). Also used as the TFTP server address.
 - `dhcp_dns` (Set of String) Set of DNS servers to provide via DHCP (maximum 4). Must be valid IPv4 addresses.
 - `dhcp_enabled` (Boolean) Whether DHCP is enabled on this network. Defaults to true.
+- `dhcp_gateway` (String) Custom gateway IP address to provide via DHCP (Option 3). Requires dhcp_gateway_enabled to be true.
+- `dhcp_gateway_enabled` (Boolean) Whether to override the default gateway provided via DHCP (Option 3).
+- `dhcp_guarding_enabled` (Boolean) Whether DHCP guarding is enabled. Protects against rogue DHCP servers on the network.
 - `dhcp_lease` (Number) The DHCP lease time in seconds. Defaults to 86400 (24 hours).
+- `dhcp_ntp` (Set of String) Set of NTP servers to provide via DHCP (maximum 2). Must be valid IPv4 addresses.
+- `dhcp_ntp_enabled` (Boolean) Whether to provide NTP servers via DHCP (Option 42).
+- `dhcp_relay_enabled` (Boolean) Whether DHCP relay is enabled. When enabled, DHCP requests are forwarded to another DHCP server instead of using the built-in server.
 - `dhcp_start` (String) The start of the DHCP IP range.
 - `dhcp_stop` (String) The end of the DHCP IP range.
+- `dhcp_time_offset_enabled` (Boolean) Whether to provide time offset via DHCP (Option 2).
+- `dhcp_unifi_controller` (String) UniFi controller IP address to provide via DHCP (Option 43). Used for UniFi device adoption.
+- `dhcp_wpad_url` (String) Web Proxy Auto-Discovery (WPAD) URL to provide via DHCP (Option 252).
 - `domain_name` (String) The domain name for this network.
 - `enabled` (Boolean) Whether the network is enabled. Defaults to true.
+- `firewall_zone_id` (String) The firewall zone ID to associate with this network.
+- `igmp_proxy_upstream` (Boolean) Whether this network acts as an IGMP proxy upstream interface.
 - `igmp_snooping` (Boolean) Whether IGMP snooping is enabled. Defaults to false.
-- `network_group` (String) The network group. Defaults to 'LAN'.
+- `internet_access_enabled` (Boolean) Whether internet access is enabled for this network. Defaults to true.
+- `intra_network_access_enabled` (Boolean) Whether devices on this network can communicate with devices on other networks.
+- `ipv6_setting_preference` (String) IPv6 configuration preference. Valid values: 'auto', 'manual'.
+- `mdns_enabled` (Boolean) Whether mDNS (Bonjour/Avahi) is enabled for this network.
+- `nat_enabled` (Boolean) Whether NAT is enabled for this network. Defaults to true.
+- `network_group` (String) The network group. Valid values: 'LAN', 'WAN', 'WAN2'. Defaults to 'LAN'.
 - `subnet` (String) The subnet in CIDR notation (e.g., '10.0.100.0/24').
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `upnp_lan_enabled` (Boolean) Whether UPnP is enabled on this LAN network.
 - `vlan_id` (Number) The VLAN ID for this network. Must be between 1 and 4095.
 
 ### Read-Only

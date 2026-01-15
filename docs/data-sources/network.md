@@ -41,16 +41,36 @@ data "unifi_network" "by_id" {
 
 ### Read-Only
 
+- `dhcp_boot_enabled` (Boolean) Whether DHCP network boot (PXE) is enabled.
+- `dhcp_boot_filename` (String) The boot filename provided to clients (DHCP Option 67).
+- `dhcp_boot_server` (String) The IP address of the boot server (DHCP Option 66).
 - `dhcp_dns` (Set of String) Set of DNS servers provided via DHCP.
 - `dhcp_enabled` (Boolean) Whether DHCP is enabled on this network.
+- `dhcp_gateway` (String) Custom gateway IP address provided via DHCP (Option 3).
+- `dhcp_gateway_enabled` (Boolean) Whether a custom gateway is provided via DHCP (Option 3).
+- `dhcp_guarding_enabled` (Boolean) Whether DHCP guarding is enabled.
 - `dhcp_lease` (Number) The DHCP lease time in seconds.
+- `dhcp_ntp` (Set of String) Set of NTP servers provided via DHCP.
+- `dhcp_ntp_enabled` (Boolean) Whether NTP servers are provided via DHCP (Option 42).
+- `dhcp_relay_enabled` (Boolean) Whether DHCP relay is enabled.
 - `dhcp_start` (String) The start of the DHCP IP range.
 - `dhcp_stop` (String) The end of the DHCP IP range.
+- `dhcp_time_offset_enabled` (Boolean) Whether time offset is provided via DHCP (Option 2).
+- `dhcp_unifi_controller` (String) UniFi controller IP address provided via DHCP (Option 43).
+- `dhcp_wpad_url` (String) Web Proxy Auto-Discovery (WPAD) URL provided via DHCP (Option 252).
 - `domain_name` (String) The domain name for this network.
 - `enabled` (Boolean) Whether the network is enabled.
+- `firewall_zone_id` (String) The firewall zone ID associated with this network.
+- `igmp_proxy_upstream` (Boolean) Whether this network acts as an IGMP proxy upstream interface.
 - `igmp_snooping` (Boolean) Whether IGMP snooping is enabled.
-- `network_group` (String) The network group.
+- `internet_access_enabled` (Boolean) Whether internet access is enabled for this network.
+- `intra_network_access_enabled` (Boolean) Whether devices on this network can communicate with devices on other networks.
+- `ipv6_setting_preference` (String) IPv6 configuration preference (auto, manual).
+- `mdns_enabled` (Boolean) Whether mDNS (Bonjour/Avahi) is enabled for this network.
+- `nat_enabled` (Boolean) Whether NAT is enabled for this network.
+- `network_group` (String) The network group (LAN, WAN, WAN2).
 - `purpose` (String) The purpose of the network (corporate, guest, wan, vlan-only).
 - `site_id` (String) The site ID where the network exists.
 - `subnet` (String) The subnet in CIDR notation.
+- `upnp_lan_enabled` (Boolean) Whether UPnP is enabled on this LAN network.
 - `vlan_id` (Number) The VLAN ID for this network.
