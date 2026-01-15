@@ -1,0 +1,53 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi firewall zone. Lookup by either id or name.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi firewall zone. Lookup by either id or name.
+
+## Example Usage
+
+### Lookup by Name
+
+```hcl
+data "unifi_firewall_zone" "internal" {
+  name = "Internal"
+}
+
+output "internal_zone_id" {
+  value = data.unifi_firewall_zone.internal.id
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_firewall_zone" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+### Use with Firewall Policy
+
+```hcl
+data "unifi_firewall_zone" "internal" {
+  name = "Internal"
+}
+
+data "unifi_firewall_zone" "external" {
+  name = "External"
+}
+
+resource "unifi_firewall_policy" "block_external" {
+  name            = "Block External Access"
+  action          = "BLOCK"
+  source_zone_id  = data.unifi_firewall_zone.external.id
+  dest_zone_id    = data.unifi_firewall_zone.internal.id
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
