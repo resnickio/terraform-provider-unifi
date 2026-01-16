@@ -579,3 +579,291 @@ func (c *AutoLoginClient) DeletePortProfile(ctx context.Context, id string) erro
 		return c.client.DeletePortConf(ctx, id)
 	})
 }
+
+// Static DNS operations
+
+func (c *AutoLoginClient) ListStaticDNS(ctx context.Context) ([]unifi.StaticDNS, error) {
+	var result []unifi.StaticDNS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListStaticDNS(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetStaticDNS(ctx context.Context, id string) (*unifi.StaticDNS, error) {
+	var result *unifi.StaticDNS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetStaticDNS(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreateStaticDNS(ctx context.Context, dns *unifi.StaticDNS) (*unifi.StaticDNS, error) {
+	var result *unifi.StaticDNS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreateStaticDNS(ctx, dns)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateStaticDNS(ctx context.Context, id string, dns *unifi.StaticDNS) (*unifi.StaticDNS, error) {
+	var result *unifi.StaticDNS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateStaticDNS(ctx, id, dns)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) DeleteStaticDNS(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteStaticDNS(ctx, id)
+	})
+}
+
+// Dynamic DNS operations
+
+func (c *AutoLoginClient) ListDynamicDNS(ctx context.Context) ([]unifi.DynamicDNS, error) {
+	var result []unifi.DynamicDNS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListDynamicDNS(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetDynamicDNS(ctx context.Context, id string) (*unifi.DynamicDNS, error) {
+	var result *unifi.DynamicDNS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetDynamicDNS(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreateDynamicDNS(ctx context.Context, dns *unifi.DynamicDNS) (*unifi.DynamicDNS, error) {
+	var result *unifi.DynamicDNS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreateDynamicDNS(ctx, dns)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateDynamicDNS(ctx context.Context, id string, dns *unifi.DynamicDNS) (*unifi.DynamicDNS, error) {
+	var result *unifi.DynamicDNS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateDynamicDNS(ctx, id, dns)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) DeleteDynamicDNS(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteDynamicDNS(ctx, id)
+	})
+}
+
+// NAT Rule operations
+
+func (c *AutoLoginClient) ListNatRules(ctx context.Context) ([]unifi.NatRule, error) {
+	var result []unifi.NatRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListNatRules(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetNatRule(ctx context.Context, id string) (*unifi.NatRule, error) {
+	var result *unifi.NatRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetNatRule(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreateNatRule(ctx context.Context, rule *unifi.NatRule) (*unifi.NatRule, error) {
+	var result *unifi.NatRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreateNatRule(ctx, rule)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateNatRule(ctx context.Context, id string, rule *unifi.NatRule) (*unifi.NatRule, error) {
+	var result *unifi.NatRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateNatRule(ctx, id, rule)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) DeleteNatRule(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteNatRule(ctx, id)
+	})
+}
+
+// Traffic Rule operations
+
+func (c *AutoLoginClient) ListTrafficRules(ctx context.Context) ([]unifi.TrafficRule, error) {
+	var result []unifi.TrafficRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListTrafficRules(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetTrafficRule(ctx context.Context, id string) (*unifi.TrafficRule, error) {
+	var result *unifi.TrafficRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetTrafficRule(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreateTrafficRule(ctx context.Context, rule *unifi.TrafficRule) (*unifi.TrafficRule, error) {
+	var result *unifi.TrafficRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreateTrafficRule(ctx, rule)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateTrafficRule(ctx context.Context, id string, rule *unifi.TrafficRule) (*unifi.TrafficRule, error) {
+	var result *unifi.TrafficRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateTrafficRule(ctx, id, rule)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) DeleteTrafficRule(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteTrafficRule(ctx, id)
+	})
+}
+
+// Traffic Route operations
+
+func (c *AutoLoginClient) ListTrafficRoutes(ctx context.Context) ([]unifi.TrafficRoute, error) {
+	var result []unifi.TrafficRoute
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListTrafficRoutes(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetTrafficRoute(ctx context.Context, id string) (*unifi.TrafficRoute, error) {
+	var result *unifi.TrafficRoute
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetTrafficRoute(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreateTrafficRoute(ctx context.Context, route *unifi.TrafficRoute) (*unifi.TrafficRoute, error) {
+	var result *unifi.TrafficRoute
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreateTrafficRoute(ctx, route)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateTrafficRoute(ctx context.Context, id string, route *unifi.TrafficRoute) (*unifi.TrafficRoute, error) {
+	var result *unifi.TrafficRoute
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateTrafficRoute(ctx, id, route)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) DeleteTrafficRoute(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteTrafficRoute(ctx, id)
+	})
+}
+
+// RADIUS Profile operations
+
+func (c *AutoLoginClient) ListRADIUSProfiles(ctx context.Context) ([]unifi.RADIUSProfile, error) {
+	var result []unifi.RADIUSProfile
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListRADIUSProfiles(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetRADIUSProfile(ctx context.Context, id string) (*unifi.RADIUSProfile, error) {
+	var result *unifi.RADIUSProfile
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetRADIUSProfile(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreateRADIUSProfile(ctx context.Context, profile *unifi.RADIUSProfile) (*unifi.RADIUSProfile, error) {
+	var result *unifi.RADIUSProfile
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreateRADIUSProfile(ctx, profile)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateRADIUSProfile(ctx context.Context, id string, profile *unifi.RADIUSProfile) (*unifi.RADIUSProfile, error) {
+	var result *unifi.RADIUSProfile
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateRADIUSProfile(ctx, id, profile)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) DeleteRADIUSProfile(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteRADIUSProfile(ctx, id)
+	})
+}
