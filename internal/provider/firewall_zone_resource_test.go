@@ -53,6 +53,12 @@ func TestAccFirewallZoneResource_update(t *testing.T) {
 					resource.TestCheckResourceAttr("unifi_firewall_zone.test", "name", "tf-acc-test-zone-updated"),
 				),
 			},
+			// ImportState
+			{
+				ResourceName:      "unifi_firewall_zone.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
