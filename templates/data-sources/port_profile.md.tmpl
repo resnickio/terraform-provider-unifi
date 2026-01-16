@@ -1,0 +1,34 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi switch port profile. Lookup by either id or name.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi switch port profile. Lookup by either id or name.
+
+## Example Usage
+
+### Lookup by Name
+
+```hcl
+data "unifi_port_profile" "trunk" {
+  name = "All"
+}
+
+output "profile_vlan_mode" {
+  value = data.unifi_port_profile.trunk.tagged_vlan_mgmt
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_port_profile" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
