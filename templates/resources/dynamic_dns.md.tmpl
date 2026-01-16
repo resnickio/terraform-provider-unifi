@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi dynamic DNS (DDNS) configuration.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi dynamic DNS (DDNS) configuration.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_dynamic_dns/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Dynamic DNS configurations can be imported using their ID:
+
+```shell
+terraform import unifi_dynamic_dns.example 60a1b2c3d4e5f67890123456
+```

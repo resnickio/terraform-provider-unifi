@@ -1,0 +1,34 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi dynamic DNS configuration. Lookup by either id or hostname.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi dynamic DNS configuration. Lookup by either id or hostname.
+
+## Example Usage
+
+### Lookup by Hostname
+
+```hcl
+data "unifi_dynamic_dns" "home" {
+  hostname = "home.example.com"
+}
+
+output "ddns_service" {
+  value = data.unifi_dynamic_dns.home.service
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_dynamic_dns" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
