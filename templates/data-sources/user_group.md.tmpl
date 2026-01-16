@@ -1,0 +1,34 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi user group (bandwidth profile). Lookup by either id or name.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi user group (bandwidth profile). Lookup by either id or name.
+
+## Example Usage
+
+### Lookup by Name
+
+```hcl
+data "unifi_user_group" "default" {
+  name = "Default"
+}
+
+output "default_down_kbps" {
+  value = data.unifi_user_group.default.qos_rate_max_down
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_user_group" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
