@@ -1,0 +1,36 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi traffic route (policy-based routing). Lookup by either id or name.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi traffic route (policy-based routing). Lookup by either id or name.
+
+~> **Note:** This data source uses the v2 API and requires a UDM device.
+
+## Example Usage
+
+### Lookup by Name
+
+```hcl
+data "unifi_traffic_route" "vpn_route" {
+  name = "VPN Traffic Route"
+}
+
+output "route_enabled" {
+  value = data.unifi_traffic_route.vpn_route.enabled
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_traffic_route" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}

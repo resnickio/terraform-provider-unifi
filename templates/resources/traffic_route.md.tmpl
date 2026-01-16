@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi traffic route for policy-based routing.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi traffic route for policy-based routing.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_traffic_route/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Traffic routes can be imported using their ID:
+
+```shell
+terraform import unifi_traffic_route.example 60a1b2c3d4e5f67890123456
+```
