@@ -1,0 +1,36 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi legacy firewall rule. Lookup by either id or name.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi legacy firewall rule. Lookup by either id or name.
+
+~> **Note:** This data source is for legacy firewall rules. For zone-based firewall on UDM devices with Network 10.x, use `unifi_firewall_policy` instead.
+
+## Example Usage
+
+### Lookup by Name
+
+```hcl
+data "unifi_firewall_rule" "block_rule" {
+  name = "Block External Access"
+}
+
+output "rule_action" {
+  value = data.unifi_firewall_rule.block_rule.action
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_firewall_rule" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
