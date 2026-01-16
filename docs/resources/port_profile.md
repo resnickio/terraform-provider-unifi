@@ -1,5 +1,5 @@
 ---
-page_title: "unifi_port_profile Resource - terraform-provider-unifi"
+page_title: "unifi_port_profile Resource - unifi"
 subcategory: ""
 description: |-
   Manages a UniFi switch port profile (PortConf) for configuring switch port settings including VLANs, PoE, 802.1X, and storm control.
