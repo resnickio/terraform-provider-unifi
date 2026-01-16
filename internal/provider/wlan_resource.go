@@ -420,9 +420,15 @@ func (r *WLANResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
+	originalPassphrase := plan.Passphrase
+
 	resp.Diagnostics.Append(r.sdkToState(ctx, updated, &plan, nil)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if !originalPassphrase.IsNull() && plan.Passphrase.IsNull() {
+		plan.Passphrase = originalPassphrase
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
