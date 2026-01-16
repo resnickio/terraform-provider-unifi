@@ -1,0 +1,34 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi port forward rule. Lookup by either id or name.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi port forward rule. Lookup by either id or name.
+
+## Example Usage
+
+### Lookup by Name
+
+```hcl
+data "unifi_port_forward" "web_server" {
+  name = "Web Server"
+}
+
+output "web_server_fwd_ip" {
+  value = data.unifi_port_forward.web_server.fwd_ip
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_port_forward" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
