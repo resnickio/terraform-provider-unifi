@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi traffic rule for QoS and traffic management.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi traffic rule for QoS and traffic management.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_traffic_rule/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Traffic rules can be imported using their ID:
+
+```shell
+terraform import unifi_traffic_rule.example 60a1b2c3d4e5f67890123456
+```
