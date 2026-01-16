@@ -211,14 +211,20 @@ func (p *UnifiProvider) Configure(ctx context.Context, req provider.ConfigureReq
 
 func (p *UnifiProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		NewDynamicDNSResource,
 		NewFirewallGroupResource,
 		NewFirewallPolicyResource,
 		NewFirewallRuleResource,
 		NewFirewallZoneResource,
+		NewNatRuleResource,
 		NewNetworkResource,
 		NewPortForwardResource,
 		NewPortProfileResource,
+		NewRADIUSProfileResource,
+		NewStaticDNSResource,
 		NewStaticRouteResource,
+		NewTrafficRouteResource,
+		NewTrafficRuleResource,
 		NewUserGroupResource,
 		NewWLANResource,
 	}
@@ -226,8 +232,20 @@ func (p *UnifiProvider) Resources(ctx context.Context) []func() resource.Resourc
 
 func (p *UnifiProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewDynamicDNSDataSource,
 		NewFirewallGroupDataSource,
+		NewFirewallPolicyDataSource,
+		NewFirewallRuleDataSource,
 		NewFirewallZoneDataSource,
+		NewNatRuleDataSource,
 		NewNetworkDataSource,
+		NewPortForwardDataSource,
+		NewPortProfileDataSource,
+		NewStaticDNSDataSource,
+		NewStaticRouteDataSource,
+		NewTrafficRouteDataSource,
+		NewTrafficRuleDataSource,
+		NewUserGroupDataSource,
+		NewWLANDataSource,
 	}
 }

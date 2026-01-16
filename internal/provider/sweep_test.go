@@ -67,6 +67,36 @@ func init() {
 		F:            sweepPortProfiles,
 		Dependencies: []string{"unifi_network"},
 	})
+
+	resource.AddTestSweepers("unifi_static_dns", &resource.Sweeper{
+		Name: "unifi_static_dns",
+		F:    sweepStaticDNS,
+	})
+
+	resource.AddTestSweepers("unifi_dynamic_dns", &resource.Sweeper{
+		Name: "unifi_dynamic_dns",
+		F:    sweepDynamicDNS,
+	})
+
+	resource.AddTestSweepers("unifi_nat_rule", &resource.Sweeper{
+		Name: "unifi_nat_rule",
+		F:    sweepNatRules,
+	})
+
+	resource.AddTestSweepers("unifi_traffic_rule", &resource.Sweeper{
+		Name: "unifi_traffic_rule",
+		F:    sweepTrafficRules,
+	})
+
+	resource.AddTestSweepers("unifi_traffic_route", &resource.Sweeper{
+		Name: "unifi_traffic_route",
+		F:    sweepTrafficRoutes,
+	})
+
+	resource.AddTestSweepers("unifi_radius_profile", &resource.Sweeper{
+		Name: "unifi_radius_profile",
+		F:    sweepRADIUSProfiles,
+	})
 }
 
 func getSweeperClient() (*unifi.NetworkClient, error) {
@@ -323,6 +353,144 @@ func sweepPortProfiles(region string) error {
 	for _, profile := range profiles {
 		if strings.HasPrefix(profile.Name, testResourcePrefix) {
 			if err := client.DeletePortConf(ctx, profile.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepStaticDNS(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	records, err := client.ListStaticDNS(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, record := range records {
+		if strings.HasPrefix(record.Key, testResourcePrefix) {
+			if err := client.DeleteStaticDNS(ctx, record.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepDynamicDNS(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	records, err := client.ListDynamicDNS(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, record := range records {
+		if strings.HasPrefix(record.HostName, testResourcePrefix) {
+			if err := client.DeleteDynamicDNS(ctx, record.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepNatRules(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	rules, err := client.ListNatRules(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, rule := range rules {
+		if strings.HasPrefix(rule.Description, testResourcePrefix) {
+			if err := client.DeleteNatRule(ctx, rule.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepTrafficRules(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	rules, err := client.ListTrafficRules(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, rule := range rules {
+		if strings.HasPrefix(rule.Name, testResourcePrefix) {
+			if err := client.DeleteTrafficRule(ctx, rule.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepTrafficRoutes(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	routes, err := client.ListTrafficRoutes(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, route := range routes {
+		if strings.HasPrefix(route.Name, testResourcePrefix) {
+			if err := client.DeleteTrafficRoute(ctx, route.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepRADIUSProfiles(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	profiles, err := client.ListRADIUSProfiles(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, profile := range profiles {
+		if strings.HasPrefix(profile.Name, testResourcePrefix) {
+			if err := client.DeleteRADIUSProfile(ctx, profile.ID); err != nil {
 				return err
 			}
 		}
