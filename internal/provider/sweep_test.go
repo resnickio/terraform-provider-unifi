@@ -61,6 +61,12 @@ func init() {
 		F:            sweepWLANs,
 		Dependencies: []string{"unifi_user_group"},
 	})
+
+	resource.AddTestSweepers("unifi_port_profile", &resource.Sweeper{
+		Name:         "unifi_port_profile",
+		F:            sweepPortProfiles,
+		Dependencies: []string{"unifi_network"},
+	})
 }
 
 func getSweeperClient() (*unifi.NetworkClient, error) {
@@ -294,6 +300,29 @@ func sweepWLANs(region string) error {
 	for _, wlan := range wlans {
 		if strings.HasPrefix(wlan.Name, testResourcePrefix) {
 			if err := client.DeleteWLAN(ctx, wlan.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepPortProfiles(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	profiles, err := client.ListPortConfs(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, profile := range profiles {
+		if strings.HasPrefix(profile.Name, testResourcePrefix) {
+			if err := client.DeletePortConf(ctx, profile.ID); err != nil {
 				return err
 			}
 		}

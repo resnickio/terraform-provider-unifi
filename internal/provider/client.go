@@ -531,3 +531,51 @@ func (c *AutoLoginClient) ListAPGroups(ctx context.Context) ([]unifi.APGroup, er
 	})
 	return result, err
 }
+
+// Port Profile operations
+
+func (c *AutoLoginClient) ListPortProfiles(ctx context.Context) ([]unifi.PortConf, error) {
+	var result []unifi.PortConf
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListPortConfs(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetPortProfile(ctx context.Context, id string) (*unifi.PortConf, error) {
+	var result *unifi.PortConf
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetPortConf(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreatePortProfile(ctx context.Context, p *unifi.PortConf) (*unifi.PortConf, error) {
+	var result *unifi.PortConf
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreatePortConf(ctx, p)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdatePortProfile(ctx context.Context, id string, p *unifi.PortConf) (*unifi.PortConf, error) {
+	var result *unifi.PortConf
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdatePortConf(ctx, id, p)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) DeletePortProfile(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeletePortConf(ctx, id)
+	})
+}
