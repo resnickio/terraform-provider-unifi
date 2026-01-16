@@ -8,18 +8,38 @@ Terraform provider for UniFi network infrastructure management.
   - `provider.go` - Provider configuration and initialization
   - `client.go` - Auto-relogin client wrapper with retry logic and rate limiting
   - `utils.go` - Pointer helpers, error handling utilities, `stringValueOrNull`
-  - `network_resource.go` - Network/VLAN resource
-  - `network_data_source.go` - Network data source (lookup by ID or name)
+  - `traffic_types.go` - Shared nested types for traffic rules/routes
+  - `dynamic_dns_resource.go` - Dynamic DNS configuration resource
+  - `dynamic_dns_data_source.go` - Dynamic DNS data source (lookup by ID or hostname)
   - `firewall_group_resource.go` - Address/port group resource
   - `firewall_group_data_source.go` - Firewall group data source (lookup by ID or name)
-  - `firewall_zone_data_source.go` - Firewall zone data source (lookup by ID or name)
-  - `firewall_rule_resource.go` - Legacy firewall rule resource
   - `firewall_policy_resource.go` - Zone-based firewall policy (v2 API)
+  - `firewall_policy_data_source.go` - Firewall policy data source (lookup by ID or name)
+  - `firewall_rule_resource.go` - Legacy firewall rule resource
+  - `firewall_rule_data_source.go` - Firewall rule data source (lookup by ID or name)
+  - `firewall_zone_data_source.go` - Firewall zone data source (lookup by ID or name)
   - `firewall_zone_resource.go` - Firewall zone resource (v2 API)
+  - `nat_rule_resource.go` - NAT rule resource (v2 API)
+  - `nat_rule_data_source.go` - NAT rule data source (lookup by ID or description)
+  - `network_data_source.go` - Network data source (lookup by ID or name)
+  - `network_resource.go` - Network/VLAN resource
   - `port_forward_resource.go` - Port forwarding resource
+  - `port_forward_data_source.go` - Port forward data source (lookup by ID or name)
+  - `port_profile_resource.go` - Switch port profile resource
+  - `port_profile_data_source.go` - Port profile data source (lookup by ID or name)
+  - `radius_profile_resource.go` - RADIUS authentication profile resource
+  - `static_dns_resource.go` - Static DNS record resource (v2 API)
+  - `static_dns_data_source.go` - Static DNS data source (lookup by ID or key)
   - `static_route_resource.go` - Static route resource
+  - `static_route_data_source.go` - Static route data source (lookup by ID or name)
+  - `traffic_route_resource.go` - Traffic route (policy-based routing, v2 API)
+  - `traffic_route_data_source.go` - Traffic route data source (lookup by ID or name)
+  - `traffic_rule_resource.go` - Traffic rule (QoS/blocking, v2 API)
+  - `traffic_rule_data_source.go` - Traffic rule data source (lookup by ID or name)
   - `user_group_resource.go` - User group (bandwidth profile) resource
+  - `user_group_data_source.go` - User group data source (lookup by ID or name)
   - `wlan_resource.go` - Wireless network (SSID) resource
+  - `wlan_data_source.go` - WLAN data source (lookup by ID or name)
   - `testutils_test.go` - Shared test utilities and helpers
   - `sweep_test.go` - Sweeper functions for test resource cleanup
   - `*_test.go` - Acceptance tests for each resource
@@ -88,13 +108,20 @@ The SDK handles path differences. Both use session-based authentication.
 
 | Resource | UDM (Network 10.x) | Standalone Network App |
 |----------|-------------------|------------------------|
-| `unifi_network` | ✅ | ✅ |
+| `unifi_dynamic_dns` | ✅ | ✅ |
 | `unifi_firewall_group` | ✅ | ✅ |
-| `unifi_firewall_rule` | ❌ (use zone-based) | ✅ |
 | `unifi_firewall_policy` | ✅ | ❌ (500 errors) |
+| `unifi_firewall_rule` | ❌ (use zone-based) | ✅ |
 | `unifi_firewall_zone` | ✅ | ❌ (500 errors) |
+| `unifi_nat_rule` | ✅ | ❌ (v2 API) |
+| `unifi_network` | ✅ | ✅ |
 | `unifi_port_forward` | ✅ | ✅ |
+| `unifi_port_profile` | ✅ | ✅ |
+| `unifi_radius_profile` | ✅ | ✅ |
+| `unifi_static_dns` | ✅ | ❌ (v2 API) |
 | `unifi_static_route` | ✅ | ✅ |
+| `unifi_traffic_route` | ✅ | ❌ (v2 API) |
+| `unifi_traffic_rule` | ✅ | ❌ (v2 API) |
 | `unifi_user_group` | ✅ | ✅ |
 | `unifi_wlan` | ✅ | ✅ |
 
@@ -109,8 +136,13 @@ The SDK handles path differences. Both use session-based authentication.
 |----------|------------|--------|
 | `unifi_firewall_zone` | No `site_id` attribute | UniFi API doesn't return site_id for zones |
 | `unifi_firewall_policy` | No `site_id` attribute | UniFi API doesn't return site_id for policies |
+| `unifi_wlan` | Import loses passphrase | API never returns passphrase (write-only) |
+| `unifi_radius_profile` | Import loses server secrets | API never returns secret field (write-only) |
+| `unifi_dynamic_dns` | Import loses password | API never returns password (write-only) |
 
-These resources still work correctly - the site is determined by the provider's `site` configuration.
+Site limitations: Resources still work correctly - the site is determined by the provider's `site` configuration.
+
+Write-only limitations: After import, users must re-apply configuration to set these values, or use `terraform state` commands to manually populate them.
 
 ## Provider Architecture
 
@@ -147,6 +179,29 @@ Each resource follows this pattern:
 - `planToSDK()` accepts `*diag.Diagnostics` for propagating conversion errors
 - `sdkToState()` returns `diag.Diagnostics` for propagating conversion errors
 
+### Write-Only Fields
+
+Some API fields (passwords, secrets, passphrases) are write-only - the API accepts them but never returns them. These require special handling to prevent state drift:
+
+1. **Schema**: Mark as `Sensitive: true` and add `UseStateForUnknown()` plan modifier
+2. **Create/Update**: Save value from plan before calling `sdkToState()`, restore after
+3. **Read**: Pass `priorState` to `sdkToState()` to preserve value
+4. **sdkToState()**: Check if API returned value, otherwise preserve from prior state
+
+Resources using this pattern:
+- `unifi_wlan` - `passphrase` field
+- `unifi_radius_profile` - `secret` field in auth/acct server blocks
+- `unifi_dynamic_dns` - `password` field
+
+### Data Source Pattern
+
+Each data source follows this pattern:
+
+1. **Model struct** - Same as resource model but all fields are Computed
+2. **Schema** - Uses `AtLeastOneOf` validator for id/lookup-field (name, key, hostname, description)
+3. **Read method** - Fetches by ID directly, or lists all and filters by lookup field
+4. **sdkToState()** - Reuses resource's conversion function where possible
+
 ## Preferences
 
 - **Commits**: Do not include Claude Code citations or co-author tags
@@ -181,25 +236,39 @@ After completing a planned task, provide a concise summary including:
 ## Status
 
 **Implemented Resources:**
-- `unifi_network` - VLAN networks with DHCP
+- `unifi_dynamic_dns` - Dynamic DNS configuration
 - `unifi_firewall_group` - Address and port groups
-- `unifi_firewall_rule` - Legacy firewall rules
 - `unifi_firewall_policy` - Zone-based firewall (v2 API)
+- `unifi_firewall_rule` - Legacy firewall rules
 - `unifi_firewall_zone` - Firewall zones (v2 API)
+- `unifi_nat_rule` - NAT rules (v2 API)
+- `unifi_network` - VLAN networks with DHCP
 - `unifi_port_forward` - Port forwarding rules
+- `unifi_port_profile` - Switch port profiles (VLAN, PoE, 802.1X, storm control)
+- `unifi_radius_profile` - RADIUS authentication profiles for 802.1X
+- `unifi_static_dns` - Static DNS records (v2 API)
 - `unifi_static_route` - Static routing
+- `unifi_traffic_route` - Traffic routes/policy-based routing (v2 API)
+- `unifi_traffic_rule` - Traffic rules for QoS/blocking (v2 API)
 - `unifi_user_group` - Bandwidth/QoS groups
 - `unifi_wlan` - Wireless networks (SSID configuration)
 
 **Implemented Data Sources:**
-- `unifi_network` - Look up network by ID or name
+- `unifi_dynamic_dns` - Look up dynamic DNS configuration by ID or hostname
 - `unifi_firewall_group` - Look up firewall group (address/port) by ID or name
+- `unifi_firewall_policy` - Look up firewall policy by ID or name
+- `unifi_firewall_rule` - Look up firewall rule by ID or name
 - `unifi_firewall_zone` - Look up firewall zone by ID or name
-
-**Planned Resources:**
-- `unifi_radius_profile` - RADIUS authentication profiles
-- `unifi_dynamic_dns` - Dynamic DNS configuration
-- `unifi_port_profile` - Switch port profiles
+- `unifi_nat_rule` - Look up NAT rule by ID or description
+- `unifi_network` - Look up network by ID or name
+- `unifi_port_forward` - Look up port forward by ID or name
+- `unifi_port_profile` - Look up port profile by ID or name
+- `unifi_static_dns` - Look up static DNS record by ID or key (hostname)
+- `unifi_static_route` - Look up static route by ID or name
+- `unifi_traffic_route` - Look up traffic route by ID or name
+- `unifi_traffic_rule` - Look up traffic rule by ID or name
+- `unifi_user_group` - Look up user group by ID or name
+- `unifi_wlan` - Look up WLAN by ID or name
 
 ## Versioning and Releases
 

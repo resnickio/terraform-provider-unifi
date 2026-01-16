@@ -225,44 +225,75 @@ make install
 
 ## Data Sources
 
-### unifi_network
-
-Retrieves information about an existing network by ID or name.
+All data sources support lookup by ID or a resource-specific field (usually `name`).
 
 ```hcl
+# Look up by name
 data "unifi_network" "lan" {
   name = "Default"
 }
 
+# Or look up by ID
 data "unifi_network" "by_id" {
   id = "60a1b2c3d4e5f6a7b8c9d0e1"
 }
 ```
 
-| Attribute | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `id` | string | no* | Network ID to look up |
-| `name` | string | no* | Network name to look up |
+| Data Source | Lookup Fields | Description |
+|-------------|---------------|-------------|
+| `unifi_network` | `id`, `name` | Network/VLAN configuration |
+| `unifi_firewall_group` | `id`, `name` | Address and port groups |
+| `unifi_firewall_zone` | `id`, `name` | Firewall zones (v2 API) |
+| `unifi_firewall_rule` | `id`, `name` | Legacy firewall rules |
+| `unifi_firewall_policy` | `id`, `name` | Zone-based policies (v2 API) |
+| `unifi_port_forward` | `id`, `name` | Port forwarding rules |
+| `unifi_port_profile` | `id`, `name` | Switch port profiles |
+| `unifi_static_route` | `id`, `name` | Static routes |
+| `unifi_static_dns` | `id`, `key` | Static DNS records (v2 API) |
+| `unifi_dynamic_dns` | `id`, `hostname` | Dynamic DNS configuration |
+| `unifi_nat_rule` | `id`, `description` | NAT rules (v2 API) |
+| `unifi_traffic_route` | `id`, `description` | Traffic routes (v2 API) |
+| `unifi_traffic_rule` | `id`, `description` | Traffic rules (v2 API) |
+| `unifi_user_group` | `id`, `name` | User/bandwidth groups |
+| `unifi_wlan` | `id`, `name` | Wireless networks |
 
-*Either `id` or `name` must be specified.
+See `docs/data-sources/` for detailed attribute documentation.
 
 ## Status
 
-| Resource | Status |
-|----------|--------|
-| `unifi_network` | Complete |
-| `unifi_firewall_group` | Complete |
-| `unifi_firewall_rule` | Complete |
-| `unifi_firewall_policy` | Complete |
-| `unifi_firewall_zone` | Complete |
-| `unifi_port_forward` | Complete |
-| `unifi_static_route` | Complete |
-| `unifi_user_group` | Complete |
-| `unifi_wlan` | Complete |
+### Resources (16)
 
-| Data Source | Status |
-|-------------|--------|
-| `unifi_network` | Complete |
+| Resource | Description | API |
+|----------|-------------|-----|
+| `unifi_network` | VLAN networks with DHCP | v1 |
+| `unifi_firewall_group` | Address and port groups | v1 |
+| `unifi_firewall_zone` | Firewall zones | v2 |
+| `unifi_firewall_policy` | Zone-based firewall rules | v2 |
+| `unifi_firewall_rule` | Legacy firewall rules | v1 |
+| `unifi_port_forward` | Port forwarding | v1 |
+| `unifi_port_profile` | Switch port profiles | v1 |
+| `unifi_static_route` | Static routing | v1 |
+| `unifi_static_dns` | Static DNS records | v2 |
+| `unifi_dynamic_dns` | Dynamic DNS | v1 |
+| `unifi_nat_rule` | NAT rules | v2 |
+| `unifi_traffic_route` | Policy-based routing | v2 |
+| `unifi_traffic_rule` | QoS and traffic blocking | v2 |
+| `unifi_radius_profile` | RADIUS authentication | v1 |
+| `unifi_user_group` | Bandwidth/QoS groups | v1 |
+| `unifi_wlan` | Wireless networks (SSIDs) | v1 |
+
+### Data Sources (15)
+
+All resources above (except `unifi_radius_profile`) have corresponding data sources.
+
+### Controller Compatibility
+
+| API Version | UDM/Cloud Key | Standalone Controller |
+|-------------|---------------|----------------------|
+| v1 resources | ✅ | ✅ |
+| v2 resources | ✅ | ❌ |
+
+See `docs/` for detailed documentation on each resource and data source.
 
 ## Related Projects
 
