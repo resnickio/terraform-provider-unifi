@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi NAT rule.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi NAT rule.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_nat_rule/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+NAT rules can be imported using their ID:
+
+```shell
+terraform import unifi_nat_rule.example 60a1b2c3d4e5f67890123456
+```

@@ -1,0 +1,36 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi NAT rule. Lookup by either id or description.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi NAT rule. Lookup by either id or description.
+
+~> **Note:** This data source uses the v2 API and requires a UDM device.
+
+## Example Usage
+
+### Lookup by Description
+
+```hcl
+data "unifi_nat_rule" "outbound" {
+  description = "Outbound NAT"
+}
+
+output "nat_type" {
+  value = data.unifi_nat_rule.outbound.type
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_nat_rule" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
