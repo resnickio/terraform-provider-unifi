@@ -1,0 +1,36 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi zone-based firewall policy (v2 API). Lookup by either id or name.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi zone-based firewall policy (v2 API). Lookup by either id or name.
+
+~> **Note:** This data source requires a UDM device running Network Application 10.x or later with zone-based firewall support.
+
+## Example Usage
+
+### Lookup by Name
+
+```hcl
+data "unifi_firewall_policy" "lan_to_wan" {
+  name = "Allow LAN to WAN"
+}
+
+output "policy_action" {
+  value = data.unifi_firewall_policy.lan_to_wan.action
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_firewall_policy" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
