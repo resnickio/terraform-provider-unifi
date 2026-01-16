@@ -1,0 +1,36 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi static DNS record. Lookup by either id or key (hostname).
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi static DNS record. Lookup by either id or key (hostname).
+
+~> **Note:** This data source uses the v2 API and requires a UDM device.
+
+## Example Usage
+
+### Lookup by Key (Hostname)
+
+```hcl
+data "unifi_static_dns" "server" {
+  key = "server.local"
+}
+
+output "server_ip" {
+  value = data.unifi_static_dns.server.value
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_static_dns" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}
