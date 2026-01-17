@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -112,11 +113,11 @@ func (r *PortProfileResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 			},
 			"tagged_vlan_mgmt": schema.StringAttribute{
-				Description: "Tagged VLAN management mode. Valid values: 'all' (allow all VLANs), 'block' (block all VLANs), 'custom' (allow all except excluded).",
+				Description: "Tagged VLAN management mode. Valid values: 'auto' (allow all VLANs), 'block_all' (block all tagged VLANs), 'custom' (allow all except excluded).",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("all", "block", "custom"),
+					stringvalidator.OneOf("auto", "block_all", "custom"),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -127,6 +128,9 @@ func (r *PortProfileResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"autoneg": schema.BoolAttribute{
@@ -310,6 +314,9 @@ func (r *PortProfileResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			"port_keepalive_enabled": schema.BoolAttribute{
@@ -611,15 +618,13 @@ func (r *PortProfileResource) sdkToState(ctx context.Context, profile *unifi.Por
 	state.NativeNetworkID = stringValueOrNull(profile.NativeNetworkconfID)
 	state.TaggedVlanMgmt = stringValueOrNull(profile.TaggedVlanMgmt)
 
-	if profile.ExcludedNetworkconfIDs == nil {
-		profile.ExcludedNetworkconfIDs = []string{}
+	if len(profile.ExcludedNetworkconfIDs) > 0 {
+		excludedIDs, d := types.SetValueFrom(ctx, types.StringType, profile.ExcludedNetworkconfIDs)
+		diags.Append(d...)
+		state.ExcludedNetworkIDs = excludedIDs
+	} else {
+		state.ExcludedNetworkIDs = types.SetNull(types.StringType)
 	}
-	excludedIDs, d := types.SetValueFrom(ctx, types.StringType, profile.ExcludedNetworkconfIDs)
-	diags.Append(d...)
-	if diags.HasError() {
-		return diags
-	}
-	state.ExcludedNetworkIDs = excludedIDs
 
 	if profile.Autoneg != nil {
 		state.Autoneg = types.BoolValue(*profile.Autoneg)
@@ -716,15 +721,13 @@ func (r *PortProfileResource) sdkToState(ctx context.Context, profile *unifi.Por
 	} else {
 		state.PortSecurityEnabled = types.BoolNull()
 	}
-	if profile.PortSecurityMacAddress == nil {
-		profile.PortSecurityMacAddress = []string{}
+	if len(profile.PortSecurityMacAddress) > 0 {
+		macs, d := types.SetValueFrom(ctx, types.StringType, profile.PortSecurityMacAddress)
+		diags.Append(d...)
+		state.PortSecurityMacAddress = macs
+	} else {
+		state.PortSecurityMacAddress = types.SetNull(types.StringType)
 	}
-	macs, d := types.SetValueFrom(ctx, types.StringType, profile.PortSecurityMacAddress)
-	diags.Append(d...)
-	if diags.HasError() {
-		return diags
-	}
-	state.PortSecurityMacAddress = macs
 
 	if profile.PortKeepaliveEnabled != nil {
 		state.PortKeepaliveEnabled = types.BoolValue(*profile.PortKeepaliveEnabled)
