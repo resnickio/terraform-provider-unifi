@@ -241,6 +241,7 @@ func (p *UnifiProvider) DataSources(ctx context.Context) []func() datasource.Dat
 		NewNetworkDataSource,
 		NewPortForwardDataSource,
 		NewPortProfileDataSource,
+		NewRADIUSProfileDataSource,
 		NewStaticDNSDataSource,
 		NewStaticRouteDataSource,
 		NewTrafficRouteDataSource,
