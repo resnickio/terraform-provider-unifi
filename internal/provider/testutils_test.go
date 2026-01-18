@@ -100,6 +100,22 @@ func testAccCheckControllerSupportsGuestNetworks(t *testing.T) {
 	}
 }
 
+// testAccCheckControllerSupportsLegacyRules checks if controller supports legacy firewall rules.
+// Controllers with zone-based firewall (UDM Network 10.x) don't support legacy rules.
+func testAccCheckControllerSupportsLegacyRules(t *testing.T) {
+	testAccPreCheck(t)
+
+	client := testAccGetClient(t)
+	if client == nil {
+		return
+	}
+
+	zones, err := client.ListFirewallZones(context.Background())
+	if err == nil && len(zones) > 0 {
+		t.Skip("Controller uses zone-based firewall, legacy rules not supported")
+	}
+}
+
 // testAccFirewallZonePairConfig returns configuration for a pair of firewall zones.
 func testAccFirewallZonePairConfig(baseName string) string {
 	return fmt.Sprintf(`

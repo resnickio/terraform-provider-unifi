@@ -9,7 +9,7 @@ import (
 
 func TestAccFirewallRuleResource_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read
@@ -39,7 +39,7 @@ func TestAccFirewallRuleResource_basic(t *testing.T) {
 
 func TestAccFirewallRuleResource_withGroups(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create rule with firewall groups
@@ -64,7 +64,7 @@ func TestAccFirewallRuleResource_withGroups(t *testing.T) {
 
 func TestAccFirewallRuleResource_withSrcGroups(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create rule with source firewall groups
@@ -89,7 +89,7 @@ func TestAccFirewallRuleResource_withSrcGroups(t *testing.T) {
 
 func TestAccFirewallRuleResource_update(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create
@@ -117,7 +117,7 @@ func TestAccFirewallRuleResource_update(t *testing.T) {
 
 func TestAccFirewallRuleResource_allProtocol(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create rule with protocol "all" (no dst_port)
@@ -142,7 +142,7 @@ func TestAccFirewallRuleResource_allProtocol(t *testing.T) {
 
 func TestAccFirewallRuleResource_defaults(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with minimal config to verify defaults
@@ -166,7 +166,7 @@ func TestAccFirewallRuleResource_defaults(t *testing.T) {
 
 func TestAccFirewallRuleResource_withSrcAddress(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create rule with source address
@@ -198,7 +198,7 @@ func TestAccFirewallRuleResource_withSrcAddress(t *testing.T) {
 
 func TestAccFirewallRuleResource_withDstAddress(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create rule with destination address
@@ -230,7 +230,7 @@ func TestAccFirewallRuleResource_withDstAddress(t *testing.T) {
 
 func TestAccFirewallRuleResource_stateTracking(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with custom state tracking
@@ -256,7 +256,7 @@ func TestAccFirewallRuleResource_stateTracking(t *testing.T) {
 
 func TestAccFirewallRuleResource_withLogging(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with logging enabled
@@ -286,7 +286,7 @@ func TestAccFirewallRuleResource_withLogging(t *testing.T) {
 
 func TestAccFirewallRuleResource_udpProtocol(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create UDP rule
@@ -310,7 +310,7 @@ func TestAccFirewallRuleResource_udpProtocol(t *testing.T) {
 
 func TestAccFirewallRuleResource_tcpUdpProtocol(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create TCP+UDP rule
@@ -334,7 +334,7 @@ func TestAccFirewallRuleResource_tcpUdpProtocol(t *testing.T) {
 
 func TestAccFirewallRuleResource_icmpProtocol(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create ICMP rule (no port)
@@ -358,7 +358,7 @@ func TestAccFirewallRuleResource_icmpProtocol(t *testing.T) {
 
 func TestAccFirewallRuleResource_wanRuleset(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create WAN_IN rule
@@ -382,7 +382,7 @@ func TestAccFirewallRuleResource_wanRuleset(t *testing.T) {
 
 func TestAccFirewallRuleResource_wanLocalRuleset(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create WAN_LOCAL rule
@@ -406,7 +406,7 @@ func TestAccFirewallRuleResource_wanLocalRuleset(t *testing.T) {
 
 func TestAccFirewallRuleResource_acceptAction(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create accept rule
@@ -429,7 +429,7 @@ func TestAccFirewallRuleResource_acceptAction(t *testing.T) {
 
 func TestAccFirewallRuleResource_rejectAction(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create reject rule
@@ -452,7 +452,7 @@ func TestAccFirewallRuleResource_rejectAction(t *testing.T) {
 
 func TestAccFirewallRuleResource_portRange(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create rule with port range
@@ -475,7 +475,7 @@ func TestAccFirewallRuleResource_portRange(t *testing.T) {
 
 func TestAccFirewallRuleResource_full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create with all options

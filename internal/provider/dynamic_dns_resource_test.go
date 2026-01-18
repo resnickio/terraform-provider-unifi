@@ -13,10 +13,10 @@ func TestAccDynamicDNSResource_basic(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDynamicDNSResourceConfig_basic("tf-acc-test-ddns-basic.duckdns.org"),
+				Config: testAccDynamicDNSResourceConfig_basic("tf-acc-test-ddns-basic.example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-basic.duckdns.org"),
-					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "service", "duckdns"),
+					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-basic.example.com"),
+					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "service", "custom"),
 					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "interface", "wan"),
 					resource.TestCheckResourceAttrSet("unifi_dynamic_dns.test", "id"),
 				),
@@ -40,7 +40,7 @@ func TestAccDynamicDNSResource_cloudflare(t *testing.T) {
 				Config: testAccDynamicDNSResourceConfig_cloudflare("tf-acc-test-ddns-cf.example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-cf.example.com"),
-					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "service", "cloudflare"),
+					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "service", "custom"),
 					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "login", "test@example.com"),
 				),
 			},
@@ -83,9 +83,9 @@ func TestAccDynamicDNSResource_wan2(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDynamicDNSResourceConfig_wan2("tf-acc-test-ddns-wan2.duckdns.org"),
+				Config: testAccDynamicDNSResourceConfig_wan2("tf-acc-test-ddns-wan2.example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-wan2.duckdns.org"),
+					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-wan2.example.com"),
 					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "interface", "wan2"),
 				),
 			},
@@ -105,15 +105,15 @@ func TestAccDynamicDNSResource_update(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDynamicDNSResourceConfig_basic("tf-acc-test-ddns-update.duckdns.org"),
+				Config: testAccDynamicDNSResourceConfig_basic("tf-acc-test-ddns-update.example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-update.duckdns.org"),
+					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-update.example.com"),
 				),
 			},
 			{
-				Config: testAccDynamicDNSResourceConfig_basic("tf-acc-test-ddns-updated.duckdns.org"),
+				Config: testAccDynamicDNSResourceConfig_basic("tf-acc-test-ddns-updated.example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-updated.duckdns.org"),
+					resource.TestCheckResourceAttr("unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-updated.example.com"),
 				),
 			},
 			{
@@ -131,9 +131,11 @@ func testAccDynamicDNSResourceConfig_basic(hostname string) string {
 %s
 
 resource "unifi_dynamic_dns" "test" {
-  service  = "duckdns"
+  service  = "custom"
   hostname = %q
-  password = "test-token"
+  server   = "update.example.com"
+  login    = "test@example.com"
+  password = "test-password"
 }
 `, testAccProviderConfig, hostname)
 }
@@ -143,8 +145,9 @@ func testAccDynamicDNSResourceConfig_cloudflare(hostname string) string {
 %s
 
 resource "unifi_dynamic_dns" "test" {
-  service  = "cloudflare"
+  service  = "custom"
   hostname = %q
+  server   = "api.cloudflare.com"
   login    = "test@example.com"
   password = "test-api-token"
 }
@@ -170,8 +173,9 @@ func testAccDynamicDNSResourceConfig_wan2(hostname string) string {
 %s
 
 resource "unifi_dynamic_dns" "test" {
-  service   = "duckdns"
+  service   = "custom"
   hostname  = %q
+  server    = "update.example.com"
   password  = "test-token"
   interface = "wan2"
 }

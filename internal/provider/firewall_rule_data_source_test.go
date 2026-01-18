@@ -9,7 +9,7 @@ import (
 
 func TestAccFirewallRuleDataSource_byName(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -28,7 +28,7 @@ func TestAccFirewallRuleDataSource_byName(t *testing.T) {
 
 func TestAccFirewallRuleDataSource_byID(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckControllerSupportsLegacyRules(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{

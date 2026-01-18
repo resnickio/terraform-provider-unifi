@@ -16,7 +16,7 @@ func TestAccDynamicDNSDataSource_byHostname(t *testing.T) {
 				Config: testAccDynamicDNSDataSourceConfig_byHostname("tf-acc-test-ddns-ds.example.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.unifi_dynamic_dns.test", "hostname", "tf-acc-test-ddns-ds.example.com"),
-					resource.TestCheckResourceAttr("data.unifi_dynamic_dns.test", "service", "cloudflare"),
+					resource.TestCheckResourceAttr("data.unifi_dynamic_dns.test", "service", "custom"),
 					resource.TestCheckResourceAttrSet("data.unifi_dynamic_dns.test", "id"),
 				),
 			},
@@ -45,8 +45,9 @@ func testAccDynamicDNSDataSourceConfig_byHostname(hostname string) string {
 %s
 
 resource "unifi_dynamic_dns" "test" {
-  service  = "cloudflare"
+  service  = "custom"
   hostname = %q
+  server   = "update.example.com"
   login    = "test@example.com"
   password = "test-api-token"
 }
@@ -62,8 +63,9 @@ func testAccDynamicDNSDataSourceConfig_byID(hostname string) string {
 %s
 
 resource "unifi_dynamic_dns" "test" {
-  service  = "cloudflare"
+  service  = "custom"
   hostname = %q
+  server   = "update.example.com"
   login    = "test@example.com"
   password = "test-api-token"
 }
