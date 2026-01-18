@@ -187,9 +187,14 @@ func testAccTrafficRuleResourceConfig_block(name string) string {
 %s
 
 resource "unifi_traffic_rule" "test" {
-  name        = %q
-  action      = "BLOCK"
-  description = "Test block rule"
+  name            = %q
+  action          = "BLOCK"
+  description     = "Test block rule"
+  matching_target = "INTERNET"
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 `, testAccProviderConfig, name)
 }
@@ -199,9 +204,14 @@ func testAccTrafficRuleResourceConfig_allow(name string) string {
 %s
 
 resource "unifi_traffic_rule" "test" {
-  name        = %q
-  action      = "ALLOW"
-  description = "Test allow rule"
+  name            = %q
+  action          = "ALLOW"
+  description     = "Test allow rule"
+  matching_target = "INTERNET"
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 `, testAccProviderConfig, name)
 }
@@ -211,10 +221,15 @@ func testAccTrafficRuleResourceConfig_withSchedule(name string) string {
 %s
 
 resource "unifi_traffic_rule" "test" {
-  name   = %q
-  action = "BLOCK"
+  name            = %q
+  action          = "BLOCK"
+  matching_target = "INTERNET"
 
-  schedule {
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
+
+  schedule = {
     mode             = "CUSTOM"
     time_range_start = "09:00"
     time_range_end   = "17:00"
@@ -233,14 +248,19 @@ resource "unifi_traffic_rule" "test" {
   action          = "BLOCK"
   matching_target = "DOMAIN"
 
-  domains {
-    domain      = "*.blocked.com"
-    description = "Blocked domain"
-  }
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 
-  domains {
-    domain = "example.blocked.com"
-  }
+  domains = [
+    {
+      domain      = "*.blocked.com"
+      description = "Blocked domain"
+    },
+    {
+      domain = "example.blocked.com"
+    }
+  ]
 }
 `, testAccProviderConfig, name)
 }
@@ -250,10 +270,15 @@ func testAccTrafficRuleResourceConfig_withBandwidthLimit(name string) string {
 %s
 
 resource "unifi_traffic_rule" "test" {
-  name   = %q
-  action = "ALLOW"
+  name            = %q
+  action          = "ALLOW"
+  matching_target = "INTERNET"
 
-  bandwidth_limit {
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
+
+  bandwidth_limit = {
     download_limit_kbps = 10000
     upload_limit_kbps   = 5000
     enabled             = true
@@ -271,6 +296,10 @@ resource "unifi_traffic_rule" "test" {
   action          = "BLOCK"
   matching_target = "IP"
   ip_addresses    = ["192.168.100.0/24", "10.10.10.0/24"]
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 `, testAccProviderConfig, name)
 }
@@ -280,9 +309,14 @@ func testAccTrafficRuleResourceConfig_disabled(name string) string {
 %s
 
 resource "unifi_traffic_rule" "test" {
-  name    = %q
-  action  = "BLOCK"
-  enabled = false
+  name            = %q
+  action          = "BLOCK"
+  enabled         = false
+  matching_target = "INTERNET"
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 `, testAccProviderConfig, name)
 }

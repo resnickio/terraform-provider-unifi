@@ -160,14 +160,15 @@ resource "unifi_traffic_route" "test" {
   name            = %q
   matching_target = "DOMAIN"
 
-  domains {
-    domain      = "*.example.com"
-    description = "Example domain"
-  }
-
-  domains {
-    domain = "test.local"
-  }
+  domains = [
+    {
+      domain      = "*.example.com"
+      description = "Example domain"
+    },
+    {
+      domain = "test.local"
+    }
+  ]
 }
 `, testAccProviderConfig, name)
 }

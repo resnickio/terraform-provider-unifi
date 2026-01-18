@@ -293,3 +293,21 @@ func trafficBandwidthToObject(ctx context.Context, bw *unifi.TrafficBandwidth) (
 	diags.Append(d...)
 	return obj, diags
 }
+
+func isEmptySchedule(schedule *unifi.PolicySchedule) bool {
+	if schedule == nil {
+		return true
+	}
+	return schedule.Mode == "" && schedule.TimeRangeStart == "" &&
+		schedule.TimeRangeEnd == "" && len(schedule.DaysOfWeek) == 0
+}
+
+func isEmptyBandwidthLimit(bw *unifi.TrafficBandwidth) bool {
+	if bw == nil {
+		return true
+	}
+	enabled := bw.Enabled == nil || !*bw.Enabled
+	download := bw.DownloadLimitKbps == nil || *bw.DownloadLimitKbps == 0
+	upload := bw.UploadLimitKbps == nil || *bw.UploadLimitKbps == 0
+	return enabled && download && upload
+}

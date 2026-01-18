@@ -159,6 +159,25 @@ func (r *TrafficRuleResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:    true,
 				ElementType: types.Int64Type,
 			},
+			"ip_addresses": schema.SetAttribute{
+				Description: "Set of IP addresses or CIDR blocks for IP-based filtering.",
+				Optional:    true,
+				ElementType: types.StringType,
+			},
+			"ip_ranges": schema.SetAttribute{
+				Description: "Set of IP ranges for IP-based filtering.",
+				Optional:    true,
+				ElementType: types.StringType,
+			},
+			"regions": schema.SetAttribute{
+				Description: "Set of geographic regions for region-based filtering.",
+				Optional:    true,
+				ElementType: types.StringType,
+			},
+			"network_id": schema.StringAttribute{
+				Description: "The network ID to apply the rule to.",
+				Optional:    true,
+			},
 			"domains": schema.ListNestedAttribute{
 				Description: "List of domains for domain-based filtering.",
 				Optional:    true,
@@ -179,25 +198,6 @@ func (r *TrafficRuleResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 					},
 				},
-			},
-			"ip_addresses": schema.SetAttribute{
-				Description: "Set of IP addresses or CIDR blocks for IP-based filtering.",
-				Optional:    true,
-				ElementType: types.StringType,
-			},
-			"ip_ranges": schema.SetAttribute{
-				Description: "Set of IP ranges for IP-based filtering.",
-				Optional:    true,
-				ElementType: types.StringType,
-			},
-			"regions": schema.SetAttribute{
-				Description: "Set of geographic regions for region-based filtering.",
-				Optional:    true,
-				ElementType: types.StringType,
-			},
-			"network_id": schema.StringAttribute{
-				Description: "The network ID to apply the rule to.",
-				Optional:    true,
 			},
 			"bandwidth_limit": schema.SingleNestedAttribute{
 				Description: "Bandwidth limit configuration.",
@@ -472,13 +472,21 @@ func (r *TrafficRuleResource) sdkToState(ctx context.Context, rule *unifi.Traffi
 	diags.Append(d...)
 	state.Domains = domains
 
-	schedule, d := trafficScheduleToObject(ctx, rule.Schedule)
-	diags.Append(d...)
-	state.Schedule = schedule
+	if isEmptySchedule(rule.Schedule) {
+		state.Schedule = types.ObjectNull(trafficScheduleAttrTypes)
+	} else {
+		schedule, d := trafficScheduleToObject(ctx, rule.Schedule)
+		diags.Append(d...)
+		state.Schedule = schedule
+	}
 
-	bandwidth, d := trafficBandwidthToObject(ctx, rule.BandwidthLimit)
-	diags.Append(d...)
-	state.BandwidthLimit = bandwidth
+	if isEmptyBandwidthLimit(rule.BandwidthLimit) {
+		state.BandwidthLimit = types.ObjectNull(trafficBandwidthAttrTypes)
+	} else {
+		bandwidth, d := trafficBandwidthToObject(ctx, rule.BandwidthLimit)
+		diags.Append(d...)
+		state.BandwidthLimit = bandwidth
+	}
 
 	if len(rule.AppCategoryIDs) > 0 {
 		categories, d := types.SetValueFrom(ctx, types.StringType, rule.AppCategoryIDs)

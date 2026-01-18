@@ -133,6 +133,25 @@ func (d *TrafficRuleDataSource) Schema(ctx context.Context, req datasource.Schem
 				Computed:    true,
 				ElementType: types.Int64Type,
 			},
+			"ip_addresses": schema.SetAttribute{
+				Description: "Set of IP addresses or CIDR blocks for IP-based filtering.",
+				Computed:    true,
+				ElementType: types.StringType,
+			},
+			"ip_ranges": schema.SetAttribute{
+				Description: "Set of IP ranges for IP-based filtering.",
+				Computed:    true,
+				ElementType: types.StringType,
+			},
+			"regions": schema.SetAttribute{
+				Description: "Set of geographic regions for region-based filtering.",
+				Computed:    true,
+				ElementType: types.StringType,
+			},
+			"network_id": schema.StringAttribute{
+				Description: "The network ID to apply the rule to.",
+				Computed:    true,
+			},
 			"domains": schema.ListNestedAttribute{
 				Description: "List of domains for domain-based filtering.",
 				Computed:    true,
@@ -153,25 +172,6 @@ func (d *TrafficRuleDataSource) Schema(ctx context.Context, req datasource.Schem
 						},
 					},
 				},
-			},
-			"ip_addresses": schema.SetAttribute{
-				Description: "Set of IP addresses or CIDR blocks for IP-based filtering.",
-				Computed:    true,
-				ElementType: types.StringType,
-			},
-			"ip_ranges": schema.SetAttribute{
-				Description: "Set of IP ranges for IP-based filtering.",
-				Computed:    true,
-				ElementType: types.StringType,
-			},
-			"regions": schema.SetAttribute{
-				Description: "Set of geographic regions for region-based filtering.",
-				Computed:    true,
-				ElementType: types.StringType,
-			},
-			"network_id": schema.StringAttribute{
-				Description: "The network ID to apply the rule to.",
-				Computed:    true,
 			},
 			"bandwidth_limit": schema.SingleNestedAttribute{
 				Description: "Bandwidth limit configuration.",

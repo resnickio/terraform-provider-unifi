@@ -47,9 +47,9 @@ func testAccTrafficRouteDataSourceConfig_byName(name string) string {
 resource "unifi_traffic_route" "test" {
   name           = %q
   matching_target = "INTERNET"
-  target_devices {
+  target_devices = [{
     type = "ALL_CLIENTS"
-  }
+  }]
 }
 
 data "unifi_traffic_route" "test" {
@@ -65,9 +65,9 @@ func testAccTrafficRouteDataSourceConfig_byID(name string) string {
 resource "unifi_traffic_route" "test" {
   name           = %q
   matching_target = "INTERNET"
-  target_devices {
+  target_devices = [{
     type = "ALL_CLIENTS"
-  }
+  }]
 }
 
 data "unifi_traffic_route" "test" {

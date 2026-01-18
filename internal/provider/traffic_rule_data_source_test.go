@@ -49,9 +49,9 @@ resource "unifi_traffic_rule" "test" {
   name            = %q
   action          = "BLOCK"
   matching_target = "INTERNET"
-  target_devices {
+  target_devices = [{
     type = "ALL_CLIENTS"
-  }
+  }]
 }
 
 data "unifi_traffic_rule" "test" {
@@ -68,9 +68,9 @@ resource "unifi_traffic_rule" "test" {
   name            = %q
   action          = "BLOCK"
   matching_target = "INTERNET"
-  target_devices {
+  target_devices = [{
     type = "ALL_CLIENTS"
-  }
+  }]
 }
 
 data "unifi_traffic_rule" "test" {
