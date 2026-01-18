@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-01-16
+
+### Fixed
+
+- `unifi_port_profile` - Corrected `tagged_vlan_mgmt` valid values to "auto", "block_all", "custom" (was incorrectly "all", "block", "custom")
+- Test fixes for dynamic DNS (use "custom" service which is universally supported)
+- Test fixes for traffic rules (added required `matching_target` and `target_devices` fields)
+- Test fixes for WLAN data source (removed reference to non-existent `unifi_ap_group` data source)
+- Test fixes for firewall rules (added precheck to skip on zone-based firewall controllers)
+
+### Known Issues
+
+- `unifi_traffic_rule` - Provider has state consistency issues with default values for `bandwidth_limit` and `schedule`
+- `unifi_traffic_route` - Similar state consistency issues
+- `unifi_static_dns`, `unifi_nat_rule`, `unifi_radius_profile` - Schema issues with nested blocks vs attributes
+
 ## [0.2.0] - 2025-01-16
 
 ### Added

@@ -101,7 +101,7 @@ resource "unifi_port_profile" "storm_protected" {
 - `stormctrl_ucast_enabled` (Boolean) Enable unicast storm control.
 - `stormctrl_ucast_rate` (Number) Unicast storm control rate limit.
 - `stp_port_mode` (Boolean) Enable STP (Spanning Tree Protocol) on this port.
-- `tagged_vlan_mgmt` (String) Tagged VLAN management mode. Valid values: 'all' (allow all VLANs), 'block' (block all VLANs), 'custom' (allow all except excluded).
+- `tagged_vlan_mgmt` (String) Tagged VLAN management mode. Valid values: 'auto' (allow all VLANs), 'block_all' (block all tagged VLANs), 'custom' (allow all except excluded).
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only

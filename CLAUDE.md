@@ -202,6 +202,47 @@ Each data source follows this pattern:
 3. **Read method** - Fetches by ID directly, or lists all and filters by lookup field
 4. **sdkToState()** - Reuses resource's conversion function where possible
 
+### Nested Attributes vs Blocks
+
+**Always use nested attributes, not blocks, for new schema implementations.**
+
+Per [HashiCorp's official guidance](https://developer.hashicorp.com/terraform/plugin/framework/handling-data/blocks/list-nested):
+> "Use nested attribute types instead of block types for new schema implementations. Block support is mainly for migrating legacy SDK-based providers."
+
+**Use in schema:**
+```go
+// Correct: ListNestedAttribute / SingleNestedAttribute
+"servers": schema.ListNestedAttribute{
+    Optional: true,
+    NestedObject: schema.NestedAttributeObject{
+        Attributes: map[string]schema.Attribute{...},
+    },
+}
+
+// Wrong: ListNestedBlock / SingleNestedBlock (legacy pattern)
+"servers": schema.ListNestedBlock{
+    NestedObject: schema.NestedBlockObject{...},
+}
+```
+
+**HCL syntax in tests:**
+```hcl
+# Correct: attribute syntax with = and brackets
+servers = [{
+  ip   = "10.0.0.1"
+  port = 1812
+}]
+
+schedule = {
+  mode = "ALWAYS"
+}
+
+# Wrong: block syntax (no =, no brackets)
+servers {
+  ip   = "10.0.0.1"
+}
+```
+
 ## Preferences
 
 - **Commits**: Do not include Claude Code citations or co-author tags
