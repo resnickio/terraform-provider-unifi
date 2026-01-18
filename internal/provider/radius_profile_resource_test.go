@@ -145,17 +145,17 @@ resource "unifi_radius_profile" "test" {
   interim_update_enabled  = true
   interim_update_interval = 600
 
-  auth_server {
+  auth_server = [{
     ip     = "10.0.0.100"
     port   = 1812
     secret = "auth-secret-123"
-  }
+  }]
 
-  acct_server {
+  acct_server = [{
     ip     = "10.0.0.100"
     port   = 1813
     secret = "acct-secret-123"
-  }
+  }]
 }
 `, testAccProviderConfig, name)
 }
@@ -167,17 +167,18 @@ func testAccRADIUSProfileResourceConfig_multipleServers(name string) string {
 resource "unifi_radius_profile" "test" {
   name = %q
 
-  auth_server {
-    ip     = "10.0.0.100"
-    port   = 1812
-    secret = "primary-secret"
-  }
-
-  auth_server {
-    ip     = "10.0.0.101"
-    port   = 1812
-    secret = "secondary-secret"
-  }
+  auth_server = [
+    {
+      ip     = "10.0.0.100"
+      port   = 1812
+      secret = "primary-secret"
+    },
+    {
+      ip     = "10.0.0.101"
+      port   = 1812
+      secret = "secondary-secret"
+    }
+  ]
 }
 `, testAccProviderConfig, name)
 }
@@ -192,11 +193,11 @@ resource "unifi_radius_profile" "test" {
   vlan_enabled   = true
   vlan_wlan_mode = "required"
 
-  auth_server {
+  auth_server = [{
     ip     = "10.0.0.200"
     port   = 1812
     secret = "new-auth-secret"
-  }
+  }]
 }
 `, testAccProviderConfig, name)
 }

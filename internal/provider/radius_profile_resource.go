@@ -148,13 +148,13 @@ func (r *RADIUSProfileResource) Schema(ctx context.Context, req resource.SchemaR
 				Optional:    true,
 			},
 			"auth_server": schema.ListNestedAttribute{
-				Description: "List of RADIUS authentication servers.",
-				Optional:    true,
+				Description:  "List of RADIUS authentication servers.",
+				Optional:     true,
 				NestedObject: serverSchema,
 			},
 			"acct_server": schema.ListNestedAttribute{
-				Description: "List of RADIUS accounting servers.",
-				Optional:    true,
+				Description:  "List of RADIUS accounting servers.",
+				Optional:     true,
 				NestedObject: serverSchema,
 			},
 		},
