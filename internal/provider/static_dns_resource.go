@@ -318,25 +318,25 @@ func (r *StaticDNSResource) sdkToState(ctx context.Context, dns *unifi.StaticDNS
 	state.RecordType = types.StringValue(dns.RecordType)
 	state.Enabled = types.BoolValue(derefBool(dns.Enabled))
 
-	if dns.TTL != nil {
+	if dns.TTL != nil && *dns.TTL != 0 {
 		state.TTL = types.Int64Value(int64(*dns.TTL))
 	} else {
 		state.TTL = types.Int64Null()
 	}
 
-	if dns.Port != nil {
+	if dns.Port != nil && *dns.Port != 0 {
 		state.Port = types.Int64Value(int64(*dns.Port))
 	} else {
 		state.Port = types.Int64Null()
 	}
 
-	if dns.Priority != nil {
+	if dns.Priority != nil && *dns.Priority != 0 {
 		state.Priority = types.Int64Value(int64(*dns.Priority))
 	} else {
 		state.Priority = types.Int64Null()
 	}
 
-	if dns.Weight != nil {
+	if dns.Weight != nil && *dns.Weight != 0 {
 		state.Weight = types.Int64Value(int64(*dns.Weight))
 	} else {
 		state.Weight = types.Int64Null()

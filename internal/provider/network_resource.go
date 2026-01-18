@@ -335,8 +335,12 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 			},
 			"firewall_zone_id": schema.StringAttribute{
-				Description: "The firewall zone ID to associate with this network.",
+				Description: "The firewall zone ID to associate with this network. If not specified, the controller assigns a default zone.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			// IPv6
