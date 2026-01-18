@@ -88,6 +88,10 @@ func (r *NatRuleResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"description": schema.StringAttribute{
 				Description: "A description for the NAT rule.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"protocol": schema.StringAttribute{
 				Description: "The protocol for the NAT rule. Valid values: all, tcp, udp, tcp_udp. Defaults to all.",
@@ -101,26 +105,50 @@ func (r *NatRuleResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"source_address": schema.StringAttribute{
 				Description: "The source IP address or CIDR block.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"source_port": schema.StringAttribute{
 				Description: "The source port or port range (e.g., '80' or '8000-9000').",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"dest_address": schema.StringAttribute{
 				Description: "The destination IP address or CIDR block.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"dest_port": schema.StringAttribute{
 				Description: "The destination port or port range.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"translated_ip": schema.StringAttribute{
 				Description: "The IP address to translate to (for DNAT/SNAT).",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"translated_port": schema.StringAttribute{
 				Description: "The port to translate to (for DNAT/SNAT).",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"logging": schema.BoolAttribute{
 				Description: "Whether to log traffic matching this rule. Defaults to false.",
