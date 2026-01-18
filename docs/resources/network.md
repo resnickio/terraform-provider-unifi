@@ -62,7 +62,7 @@ resource "unifi_network" "vlan_only" {
 - `dhcp_wpad_url` (String) Web Proxy Auto-Discovery (WPAD) URL to provide via DHCP (Option 252).
 - `domain_name` (String) The domain name for this network.
 - `enabled` (Boolean) Whether the network is enabled. Defaults to true.
-- `firewall_zone_id` (String) The firewall zone ID to associate with this network.
+- `firewall_zone_id` (String) The firewall zone ID to associate with this network. If not specified, the controller assigns a default zone.
 - `igmp_proxy_upstream` (Boolean) Whether this network acts as an IGMP proxy upstream interface.
 - `igmp_snooping` (Boolean) Whether IGMP snooping is enabled. Defaults to false.
 - `internet_access_enabled` (Boolean) Whether internet access is enabled for this network. Defaults to true.
