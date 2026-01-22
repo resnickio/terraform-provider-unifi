@@ -867,3 +867,35 @@ func (c *AutoLoginClient) DeleteRADIUSProfile(ctx context.Context, id string) er
 		return c.client.DeleteRADIUSProfile(ctx, id)
 	})
 }
+
+// Device operations
+
+func (c *AutoLoginClient) ListDevices(ctx context.Context) (*unifi.DeviceList, error) {
+	var result *unifi.DeviceList
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListDevices(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetDeviceByMAC(ctx context.Context, mac string) (*unifi.DeviceConfig, error) {
+	var result *unifi.DeviceConfig
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetDeviceByMAC(ctx, mac)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateDevice(ctx context.Context, id string, device *unifi.DeviceConfig) (*unifi.DeviceConfig, error) {
+	var result *unifi.DeviceConfig
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateDevice(ctx, id, device)
+		return err
+	})
+	return result, err
+}
