@@ -19,6 +19,7 @@ type AutoLoginClient struct {
 	mu           sync.Mutex
 	lastAuthTime time.Time
 	authSem      chan struct{}
+	deviceMu     sync.Map // map[string]*sync.Mutex for per-device locking
 }
 
 // NewAutoLoginClient creates a new auto-login wrapper around the SDK client.
@@ -869,6 +870,12 @@ func (c *AutoLoginClient) DeleteRADIUSProfile(ctx context.Context, id string) er
 }
 
 // Device operations
+
+// getDeviceLock returns a mutex for the given device ID, creating one if needed.
+func (c *AutoLoginClient) getDeviceLock(deviceID string) *sync.Mutex {
+	actual, _ := c.deviceMu.LoadOrStore(deviceID, &sync.Mutex{})
+	return actual.(*sync.Mutex)
+}
 
 func (c *AutoLoginClient) ListDevices(ctx context.Context) (*unifi.DeviceList, error) {
 	var result *unifi.DeviceList

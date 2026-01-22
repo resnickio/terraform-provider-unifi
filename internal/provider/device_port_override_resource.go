@@ -210,7 +210,14 @@ func (r *DevicePortOverrideResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-	device, err := r.getDeviceByID(ctx, plan.DeviceID.ValueString())
+	deviceID := plan.DeviceID.ValueString()
+
+	// Lock this device to prevent concurrent read-modify-write race conditions
+	deviceLock := r.client.getDeviceLock(deviceID)
+	deviceLock.Lock()
+	defer deviceLock.Unlock()
+
+	device, err := r.getDeviceByID(ctx, deviceID)
 	if err != nil {
 		handleSDKError(&resp.Diagnostics, err, "read", "device")
 		return
@@ -284,7 +291,14 @@ func (r *DevicePortOverrideResource) Update(ctx context.Context, req resource.Up
 		return
 	}
 
-	device, err := r.getDeviceByID(ctx, plan.DeviceID.ValueString())
+	deviceID := plan.DeviceID.ValueString()
+
+	// Lock this device to prevent concurrent read-modify-write race conditions
+	deviceLock := r.client.getDeviceLock(deviceID)
+	deviceLock.Lock()
+	defer deviceLock.Unlock()
+
+	device, err := r.getDeviceByID(ctx, deviceID)
 	if err != nil {
 		handleSDKError(&resp.Diagnostics, err, "read", "device")
 		return
@@ -322,7 +336,14 @@ func (r *DevicePortOverrideResource) Delete(ctx context.Context, req resource.De
 		return
 	}
 
-	device, err := r.getDeviceByID(ctx, state.DeviceID.ValueString())
+	deviceID := state.DeviceID.ValueString()
+
+	// Lock this device to prevent concurrent read-modify-write race conditions
+	deviceLock := r.client.getDeviceLock(deviceID)
+	deviceLock.Lock()
+	defer deviceLock.Unlock()
+
+	device, err := r.getDeviceByID(ctx, deviceID)
 	if err != nil {
 		if isNotFoundError(err) {
 			return
