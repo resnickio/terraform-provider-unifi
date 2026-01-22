@@ -116,6 +116,90 @@ func testAccCheckControllerSupportsLegacyRules(t *testing.T) {
 	}
 }
 
+// testAccPreCheckDevice checks if there is at least one adopted device available for testing.
+func testAccPreCheckDevice(t *testing.T) {
+	testAccPreCheck(t)
+
+	client := testAccGetClient(t)
+	if client == nil {
+		return
+	}
+
+	devices, err := client.ListDevices(context.Background())
+	if err != nil {
+		t.Skipf("Could not list devices: %v", err)
+		return
+	}
+
+	if devices == nil || len(devices.NetworkDevices) == 0 {
+		t.Skip("No adopted devices available for testing")
+		return
+	}
+}
+
+// testAccPreCheckSwitch checks if there is at least one switch device available for testing.
+func testAccPreCheckSwitch(t *testing.T) {
+	testAccPreCheck(t)
+
+	client := testAccGetClient(t)
+	if client == nil {
+		return
+	}
+
+	devices, err := client.ListDevices(context.Background())
+	if err != nil {
+		t.Skipf("Could not list devices: %v", err)
+		return
+	}
+
+	if devices == nil {
+		t.Skip("No devices available for testing")
+		return
+	}
+
+	for _, d := range devices.NetworkDevices {
+		if d.Type == "usw" {
+			return
+		}
+	}
+	t.Skip("No switch devices available for testing")
+}
+
+// testAccGetFirstDeviceMAC returns the MAC of the first adopted device.
+func testAccGetFirstDeviceMAC(t *testing.T) string {
+	client := testAccGetClient(t)
+	if client == nil {
+		return ""
+	}
+
+	devices, err := client.ListDevices(context.Background())
+	if err != nil || devices == nil || len(devices.NetworkDevices) == 0 {
+		return ""
+	}
+
+	return devices.NetworkDevices[0].MAC
+}
+
+// testAccGetFirstSwitchMAC returns the MAC of the first switch device.
+func testAccGetFirstSwitchMAC(t *testing.T) string {
+	client := testAccGetClient(t)
+	if client == nil {
+		return ""
+	}
+
+	devices, err := client.ListDevices(context.Background())
+	if err != nil || devices == nil {
+		return ""
+	}
+
+	for _, d := range devices.NetworkDevices {
+		if d.Type == "usw" {
+			return d.MAC
+		}
+	}
+	return ""
+}
+
 // testAccFirewallZonePairConfig returns configuration for a pair of firewall zones.
 func testAccFirewallZonePairConfig(baseName string) string {
 	return fmt.Sprintf(`
