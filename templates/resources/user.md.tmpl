@@ -1,0 +1,26 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi user (client device record).
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi user (client device record). Users represent network clients with DHCP reservations, fixed IPs, device names, local DNS records, blocking, and user group assignments.
+
+~> **Note:** Changing the `mac` attribute forces recreation of the resource, as MAC addresses uniquely identify physical devices.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_user/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Users can be imported using their ID:
+
+```shell
+terraform import unifi_user.example 60a1b2c3d4e5f67890123456
+```

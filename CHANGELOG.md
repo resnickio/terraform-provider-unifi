@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-14
+
+### Added
+
+#### New Resources
+- `unifi_user` - Client device records with DHCP reservations, fixed IPs, device naming, local DNS records, blocking, and user group assignments
+
+#### New Data Sources
+- `unifi_user` - Look up user by ID or MAC address
+
+### Changed
+- Updated unifi-go-sdk from v0.5.0 to v0.6.0 (adds User CRUD support)
+- Provider now registers 17 resources and 18 data sources
+
 ## [0.2.1] - 2025-01-16
 
 ### Fixed

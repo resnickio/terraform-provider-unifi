@@ -254,6 +254,7 @@ data "unifi_network" "by_id" {
 | `unifi_nat_rule` | `id`, `description` | NAT rules (v2 API) |
 | `unifi_traffic_route` | `id`, `description` | Traffic routes (v2 API) |
 | `unifi_traffic_rule` | `id`, `description` | Traffic rules (v2 API) |
+| `unifi_user` | `id`, `mac` | Client device records |
 | `unifi_user_group` | `id`, `name` | User/bandwidth groups |
 | `unifi_wlan` | `id`, `name` | Wireless networks |
 
@@ -261,7 +262,7 @@ See `docs/data-sources/` for detailed attribute documentation.
 
 ## Status
 
-### Resources (16)
+### Resources (17)
 
 | Resource | Description | API |
 |----------|-------------|-----|
@@ -279,12 +280,13 @@ See `docs/data-sources/` for detailed attribute documentation.
 | `unifi_traffic_route` | Policy-based routing | v2 |
 | `unifi_traffic_rule` | QoS and traffic blocking | v2 |
 | `unifi_radius_profile` | RADIUS authentication | v1 |
+| `unifi_user` | Client device records | v1 |
 | `unifi_user_group` | Bandwidth/QoS groups | v1 |
 | `unifi_wlan` | Wireless networks (SSIDs) | v1 |
 
-### Data Sources (15)
+### Data Sources (18)
 
-All resources above (except `unifi_radius_profile`) have corresponding data sources.
+All resources above have corresponding data sources, plus the `unifi_device` data source for device lookup.
 
 ### Controller Compatibility
 

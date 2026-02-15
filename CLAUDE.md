@@ -36,6 +36,8 @@ Terraform provider for UniFi network infrastructure management.
   - `traffic_route_data_source.go` - Traffic route data source (lookup by ID or name)
   - `traffic_rule_resource.go` - Traffic rule (QoS/blocking, v2 API)
   - `traffic_rule_data_source.go` - Traffic rule data source (lookup by ID or name)
+  - `user_resource.go` - User (client device record) resource
+  - `user_data_source.go` - User data source (lookup by ID or MAC)
   - `user_group_resource.go` - User group (bandwidth profile) resource
   - `user_group_data_source.go` - User group data source (lookup by ID or name)
   - `wlan_resource.go` - Wireless network (SSID) resource
@@ -122,6 +124,7 @@ The SDK handles path differences. Both use session-based authentication.
 | `unifi_static_route` | ✅ | ✅ |
 | `unifi_traffic_route` | ✅ | ❌ (v2 API) |
 | `unifi_traffic_rule` | ✅ | ❌ (v2 API) |
+| `unifi_user` | ✅ | ✅ |
 | `unifi_user_group` | ✅ | ✅ |
 | `unifi_wlan` | ✅ | ✅ |
 
@@ -291,6 +294,7 @@ After completing a planned task, provide a concise summary including:
 - `unifi_static_route` - Static routing
 - `unifi_traffic_route` - Traffic routes/policy-based routing (v2 API)
 - `unifi_traffic_rule` - Traffic rules for QoS/blocking (v2 API)
+- `unifi_user` - Client device records (DHCP reservations, fixed IPs, device names, blocking)
 - `unifi_user_group` - Bandwidth/QoS groups
 - `unifi_wlan` - Wireless networks (SSID configuration)
 
@@ -308,6 +312,7 @@ After completing a planned task, provide a concise summary including:
 - `unifi_static_route` - Look up static route by ID or name
 - `unifi_traffic_route` - Look up traffic route by ID or name
 - `unifi_traffic_rule` - Look up traffic rule by ID or name
+- `unifi_user` - Look up user (client device record) by ID or MAC
 - `unifi_user_group` - Look up user group by ID or name
 - `unifi_wlan` - Look up WLAN by ID or name
 

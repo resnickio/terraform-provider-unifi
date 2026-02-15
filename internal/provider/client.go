@@ -906,3 +906,49 @@ func (c *AutoLoginClient) UpdateDevice(ctx context.Context, id string, device *u
 	})
 	return result, err
 }
+
+func (c *AutoLoginClient) ListUsers(ctx context.Context) ([]unifi.User, error) {
+	var result []unifi.User
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListUsers(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetUser(ctx context.Context, id string) (*unifi.User, error) {
+	var result *unifi.User
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetUser(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreateUser(ctx context.Context, user *unifi.User) (*unifi.User, error) {
+	var result *unifi.User
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreateUser(ctx, user)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateUser(ctx context.Context, id string, user *unifi.User) (*unifi.User, error) {
+	var result *unifi.User
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateUser(ctx, id, user)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) DeleteUser(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteUser(ctx, id)
+	})
+}

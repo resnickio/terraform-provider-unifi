@@ -97,6 +97,11 @@ func init() {
 		Name: "unifi_radius_profile",
 		F:    sweepRADIUSProfiles,
 	})
+
+	resource.AddTestSweepers("unifi_user", &resource.Sweeper{
+		Name: "unifi_user",
+		F:    sweepUsers,
+	})
 }
 
 func getSweeperClient() (*unifi.NetworkClient, error) {
@@ -491,6 +496,29 @@ func sweepRADIUSProfiles(region string) error {
 	for _, profile := range profiles {
 		if strings.HasPrefix(profile.Name, testResourcePrefix) {
 			if err := client.DeleteRADIUSProfile(ctx, profile.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepUsers(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	users, err := client.ListUsers(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		if strings.HasPrefix(user.Name, testResourcePrefix) {
+			if err := client.DeleteUser(ctx, user.ID); err != nil {
 				return err
 			}
 		}

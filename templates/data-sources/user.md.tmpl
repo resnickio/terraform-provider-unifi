@@ -1,0 +1,34 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves information about an existing UniFi user (client device record). Lookup by either id or mac.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves information about an existing UniFi user (client device record). Lookup by either id or mac.
+
+## Example Usage
+
+### Lookup by MAC Address
+
+```hcl
+data "unifi_user" "server" {
+  mac = "aa:bb:cc:dd:ee:01"
+}
+
+output "server_ip" {
+  value = data.unifi_user.server.fixed_ip
+}
+```
+
+### Lookup by ID
+
+```hcl
+data "unifi_user" "by_id" {
+  id = "60a1b2c3d4e5f67890123456"
+}
+```
+
+{{ .SchemaMarkdown | trimspace }}

@@ -227,6 +227,7 @@ func (p *UnifiProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewTrafficRouteResource,
 		NewTrafficRuleResource,
 		NewUserGroupResource,
+		NewUserResource,
 		NewWLANResource,
 	}
 }
@@ -249,6 +250,7 @@ func (p *UnifiProvider) DataSources(ctx context.Context) []func() datasource.Dat
 		NewTrafficRouteDataSource,
 		NewTrafficRuleDataSource,
 		NewUserGroupDataSource,
+		NewUserDataSource,
 		NewWLANDataSource,
 	}
 }
