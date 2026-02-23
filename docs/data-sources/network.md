@@ -43,8 +43,9 @@ data "unifi_network" "by_id" {
 
 - `dhcp_boot_enabled` (Boolean) Whether DHCP network boot (PXE) is enabled.
 - `dhcp_boot_filename` (String) The boot filename provided to clients (DHCP Option 67).
-- `dhcp_boot_server` (String) The IP address of the boot server (DHCP Option 66).
+- `dhcp_boot_server` (String) The IP address of the PXE boot server (DHCP Option 66).
 - `dhcp_dns` (Set of String) Set of DNS servers provided via DHCP.
+- `dhcp_dns_enabled` (Boolean) Whether DNS servers are provided via DHCP.
 - `dhcp_enabled` (Boolean) Whether DHCP is enabled on this network.
 - `dhcp_gateway` (String) Custom gateway IP address provided via DHCP (Option 3).
 - `dhcp_gateway_enabled` (Boolean) Whether a custom gateway is provided via DHCP (Option 3).
@@ -55,6 +56,7 @@ data "unifi_network" "by_id" {
 - `dhcp_relay_enabled` (Boolean) Whether DHCP relay is enabled.
 - `dhcp_start` (String) The start of the DHCP IP range.
 - `dhcp_stop` (String) The end of the DHCP IP range.
+- `dhcp_tftp_server` (String) The TFTP server address (DHCP Option 66 tftp-server-name).
 - `dhcp_time_offset_enabled` (Boolean) Whether time offset is provided via DHCP (Option 2).
 - `dhcp_unifi_controller` (String) UniFi controller IP address provided via DHCP (Option 43).
 - `dhcp_wpad_url` (String) Web Proxy Auto-Discovery (WPAD) URL provided via DHCP (Option 252).

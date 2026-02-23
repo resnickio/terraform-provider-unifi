@@ -38,7 +38,8 @@ type NetworkDataSourceModel struct {
 	DHCPLease   types.Int64  `tfsdk:"dhcp_lease"`
 
 	// DHCP DNS
-	DHCPDNS types.Set `tfsdk:"dhcp_dns"`
+	DHCPDNSEnabled types.Bool `tfsdk:"dhcp_dns_enabled"`
+	DHCPDNS        types.Set  `tfsdk:"dhcp_dns"`
 
 	// DHCP Gateway
 	DHCPGatewayEnabled types.Bool   `tfsdk:"dhcp_gateway_enabled"`
@@ -51,6 +52,7 @@ type NetworkDataSourceModel struct {
 	// DHCP Boot/PXE
 	DHCPBootEnabled  types.Bool   `tfsdk:"dhcp_boot_enabled"`
 	DHCPBootServer   types.String `tfsdk:"dhcp_boot_server"`
+	DHCPTFTPServer   types.String `tfsdk:"dhcp_tftp_server"`
 	DHCPBootFilename types.String `tfsdk:"dhcp_boot_filename"`
 
 	// DHCP Additional Options
@@ -147,6 +149,10 @@ func (d *NetworkDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			},
 
 			// DHCP DNS
+			"dhcp_dns_enabled": schema.BoolAttribute{
+				Description: "Whether DNS servers are provided via DHCP.",
+				Computed:    true,
+			},
 			"dhcp_dns": schema.SetAttribute{
 				Description: "Set of DNS servers provided via DHCP.",
 				Computed:    true,
@@ -180,7 +186,11 @@ func (d *NetworkDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 				Computed:    true,
 			},
 			"dhcp_boot_server": schema.StringAttribute{
-				Description: "The IP address of the boot server (DHCP Option 66).",
+				Description: "The IP address of the PXE boot server (DHCP Option 66).",
+				Computed:    true,
+			},
+			"dhcp_tftp_server": schema.StringAttribute{
+				Description: "The TFTP server address (DHCP Option 66 tftp-server-name).",
 				Computed:    true,
 			},
 			"dhcp_boot_filename": schema.StringAttribute{
@@ -370,6 +380,11 @@ func (d *NetworkDataSource) sdkToState(ctx context.Context, network *unifi.Netwo
 	}
 
 	// DHCP DNS
+	if network.DHCPDDNSEnabled != nil {
+		state.DHCPDNSEnabled = types.BoolValue(*network.DHCPDDNSEnabled)
+	} else {
+		state.DHCPDNSEnabled = types.BoolNull()
+	}
 	var dnsServers []string
 	if network.DHCPDDns1 != "" {
 		dnsServers = append(dnsServers, network.DHCPDDns1)
@@ -433,6 +448,7 @@ func (d *NetworkDataSource) sdkToState(ctx context.Context, network *unifi.Netwo
 		state.DHCPBootEnabled = types.BoolNull()
 	}
 	state.DHCPBootServer = stringValueOrNull(network.DHCPDBootServer)
+	state.DHCPTFTPServer = stringValueOrNull(network.DHCPDTFTPServer)
 	state.DHCPBootFilename = stringValueOrNull(network.DHCPDBootFilename)
 
 	// DHCP Additional Options

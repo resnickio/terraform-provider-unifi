@@ -45,8 +45,9 @@ resource "unifi_network" "vlan_only" {
 
 - `dhcp_boot_enabled` (Boolean) Whether DHCP network boot (PXE) is enabled. When enabled, DHCP will provide boot options to clients.
 - `dhcp_boot_filename` (String) The boot filename to provide to clients (DHCP Option 67). This is the path to the boot file on the TFTP server.
-- `dhcp_boot_server` (String) The IP address of the boot server (DHCP Option 66). Also used as the TFTP server address.
+- `dhcp_boot_server` (String) The IP address of the PXE boot server (DHCP Option 66).
 - `dhcp_dns` (Set of String) Set of DNS servers to provide via DHCP (maximum 4). Must be valid IPv4 addresses.
+- `dhcp_dns_enabled` (Boolean) Whether to provide DNS servers via DHCP.
 - `dhcp_enabled` (Boolean) Whether DHCP is enabled on this network. Defaults to true.
 - `dhcp_gateway` (String) Custom gateway IP address to provide via DHCP (Option 3). Requires dhcp_gateway_enabled to be true.
 - `dhcp_gateway_enabled` (Boolean) Whether to override the default gateway provided via DHCP (Option 3).
@@ -57,6 +58,7 @@ resource "unifi_network" "vlan_only" {
 - `dhcp_relay_enabled` (Boolean) Whether DHCP relay is enabled. When enabled, DHCP requests are forwarded to another DHCP server instead of using the built-in server.
 - `dhcp_start` (String) The start of the DHCP IP range.
 - `dhcp_stop` (String) The end of the DHCP IP range.
+- `dhcp_tftp_server` (String) The TFTP server address (DHCP Option 66 tftp-server-name). If not set, no separate TFTP server is advertised.
 - `dhcp_time_offset_enabled` (Boolean) Whether to provide time offset via DHCP (Option 2).
 - `dhcp_unifi_controller` (String) UniFi controller IP address to provide via DHCP (Option 43). Used for UniFi device adoption.
 - `dhcp_wpad_url` (String) Web Proxy Auto-Discovery (WPAD) URL to provide via DHCP (Option 252).

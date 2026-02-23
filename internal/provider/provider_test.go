@@ -19,6 +19,9 @@ var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 // testAccPreCheck validates the necessary environment variables are set
 // for running acceptance tests.
 func testAccPreCheck(t *testing.T) {
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
+	}
 	if v := os.Getenv("UNIFI_BASE_URL"); v == "" {
 		t.Fatal("UNIFI_BASE_URL must be set for acceptance tests")
 	}

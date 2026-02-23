@@ -59,7 +59,12 @@ func TestAccNetworkDataSource_allAttributes(t *testing.T) {
 					resource.TestCheckResourceAttr("data.unifi_network.test", "dhcp_enabled", "true"),
 					resource.TestCheckResourceAttr("data.unifi_network.test", "dhcp_start", "10.39.52.10"),
 					resource.TestCheckResourceAttr("data.unifi_network.test", "dhcp_stop", "10.39.52.254"),
+					resource.TestCheckResourceAttr("data.unifi_network.test", "dhcp_dns_enabled", "true"),
 					resource.TestCheckResourceAttr("data.unifi_network.test", "dhcp_dns.#", "2"),
+					resource.TestCheckResourceAttr("data.unifi_network.test", "dhcp_boot_enabled", "true"),
+					resource.TestCheckResourceAttr("data.unifi_network.test", "dhcp_boot_server", "10.39.52.10"),
+					resource.TestCheckResourceAttr("data.unifi_network.test", "dhcp_tftp_server", "10.39.52.11"),
+					resource.TestCheckResourceAttr("data.unifi_network.test", "dhcp_boot_filename", "pxelinux.0"),
 					resource.TestCheckResourceAttr("data.unifi_network.test", "domain_name", "dstest.local"),
 				),
 			},
@@ -119,7 +124,12 @@ resource "unifi_network" "source" {
   dhcp_enabled = true
   dhcp_start   = "10.39.52.10"
   dhcp_stop    = "10.39.52.254"
-  dhcp_dns     = ["8.8.8.8", "8.8.4.4"]
+  dhcp_dns_enabled = true
+  dhcp_dns         = ["8.8.8.8", "8.8.4.4"]
+  dhcp_boot_enabled  = true
+  dhcp_boot_server   = "10.39.52.10"
+  dhcp_tftp_server   = "10.39.52.11"
+  dhcp_boot_filename = "pxelinux.0"
   domain_name  = "dstest.local"
 }
 

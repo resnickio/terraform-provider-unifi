@@ -57,7 +57,8 @@ type NetworkResourceModel struct {
 	DHCPLease   types.Int64  `tfsdk:"dhcp_lease"`
 
 	// DHCP DNS
-	DHCPDNS types.Set `tfsdk:"dhcp_dns"`
+	DHCPDNSEnabled types.Bool `tfsdk:"dhcp_dns_enabled"`
+	DHCPDNS        types.Set  `tfsdk:"dhcp_dns"`
 
 	// DHCP Gateway
 	DHCPGatewayEnabled types.Bool   `tfsdk:"dhcp_gateway_enabled"`
@@ -70,6 +71,7 @@ type NetworkResourceModel struct {
 	// DHCP Boot/PXE
 	DHCPBootEnabled  types.Bool   `tfsdk:"dhcp_boot_enabled"`
 	DHCPBootServer   types.String `tfsdk:"dhcp_boot_server"`
+	DHCPTFTPServer   types.String `tfsdk:"dhcp_tftp_server"`
 	DHCPBootFilename types.String `tfsdk:"dhcp_boot_filename"`
 
 	// DHCP Additional Options
@@ -194,6 +196,10 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 
 			// DHCP DNS
+			"dhcp_dns_enabled": schema.BoolAttribute{
+				Description: "Whether to provide DNS servers via DHCP.",
+				Optional:    true,
+			},
 			"dhcp_dns": schema.SetAttribute{
 				Description: "Set of DNS servers to provide via DHCP (maximum 4). Must be valid IPv4 addresses.",
 				Optional:    true,
@@ -242,7 +248,14 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:    true,
 			},
 			"dhcp_boot_server": schema.StringAttribute{
-				Description: "The IP address of the boot server (DHCP Option 66). Also used as the TFTP server address.",
+				Description: "The IP address of the PXE boot server (DHCP Option 66).",
+				Optional:    true,
+				Validators: []validator.String{
+					IPv4Address(),
+				},
+			},
+			"dhcp_tftp_server": schema.StringAttribute{
+				Description: "The TFTP server address (DHCP Option 66 tftp-server-name). If not set, no separate TFTP server is advertised.",
 				Optional:    true,
 				Validators: []validator.String{
 					IPv4Address(),
@@ -556,13 +569,17 @@ func (r *NetworkResource) planToSDK(ctx context.Context, plan *NetworkResourceMo
 	}
 
 	// DHCP DNS
+	if !plan.DHCPDNSEnabled.IsNull() {
+		network.DHCPDDNSEnabled = boolPtr(plan.DHCPDNSEnabled.ValueBool())
+	} else if !plan.DHCPDNS.IsNull() {
+		network.DHCPDDNSEnabled = boolPtr(true)
+	}
 	if !plan.DHCPDNS.IsNull() {
 		var dnsServers []string
 		diags.Append(plan.DHCPDNS.ElementsAs(ctx, &dnsServers, false)...)
 		if diags.HasError() {
 			return nil
 		}
-		network.DHCPDDNSEnabled = boolPtr(len(dnsServers) > 0)
 		if len(dnsServers) > 0 {
 			network.DHCPDDns1 = dnsServers[0]
 		}
@@ -609,7 +626,9 @@ func (r *NetworkResource) planToSDK(ctx context.Context, plan *NetworkResourceMo
 	}
 	if !plan.DHCPBootServer.IsNull() {
 		network.DHCPDBootServer = plan.DHCPBootServer.ValueString()
-		network.DHCPDTFTPServer = plan.DHCPBootServer.ValueString()
+	}
+	if !plan.DHCPTFTPServer.IsNull() {
+		network.DHCPDTFTPServer = plan.DHCPTFTPServer.ValueString()
 	}
 	if !plan.DHCPBootFilename.IsNull() {
 		network.DHCPDBootFilename = plan.DHCPBootFilename.ValueString()
@@ -694,6 +713,11 @@ func (r *NetworkResource) sdkToState(ctx context.Context, network *unifi.Network
 	}
 
 	// DHCP DNS
+	if network.DHCPDDNSEnabled != nil {
+		state.DHCPDNSEnabled = types.BoolValue(*network.DHCPDDNSEnabled)
+	} else {
+		state.DHCPDNSEnabled = types.BoolNull()
+	}
 	var dnsServers []string
 	if network.DHCPDDns1 != "" {
 		dnsServers = append(dnsServers, network.DHCPDDns1)
@@ -757,6 +781,7 @@ func (r *NetworkResource) sdkToState(ctx context.Context, network *unifi.Network
 		state.DHCPBootEnabled = types.BoolNull()
 	}
 	state.DHCPBootServer = stringValueOrNull(network.DHCPDBootServer)
+	state.DHCPTFTPServer = stringValueOrNull(network.DHCPDTFTPServer)
 	state.DHCPBootFilename = stringValueOrNull(network.DHCPDBootFilename)
 
 	// DHCP Additional Options

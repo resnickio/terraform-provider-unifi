@@ -380,6 +380,34 @@ resource "unifi_network" "test" {
 `, testAccProviderConfig, name, vlanID)
 }
 
+func TestAccNetworkResource_dhcpDnsEnabled(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_dhcpDnsEnabled("tf-acc-test-network-dns-en", 3916, true, []string{"8.8.8.8"}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_dns_enabled", "true"),
+					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_dns.#", "1"),
+					resource.TestCheckTypeSetElemAttr("unifi_network.test", "dhcp_dns.*", "8.8.8.8"),
+				),
+			},
+			{
+				Config: testAccNetworkResourceConfig_dhcpDnsEnabled("tf-acc-test-network-dns-en", 3916, false, []string{"8.8.8.8"}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_dns_enabled", "false"),
+				),
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func testAccNetworkResourceConfig_dhcpDns(name string, vlanID int, dnsServers []string) string {
 	return fmt.Sprintf(`
 %s
@@ -473,6 +501,30 @@ func TestAccNetworkResource_dhcpBoot(t *testing.T) {
 	})
 }
 
+func TestAccNetworkResource_dhcpTftpServer(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_dhcpTftpServer("tf-acc-test-network-tftp", 3917),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-tftp"),
+					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_boot_enabled", "true"),
+					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_boot_server", "10.77.0.10"),
+					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_tftp_server", "10.77.0.11"),
+					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_boot_filename", "pxelinux.0"),
+				),
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccNetworkResource_dhcpAdvanced(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -550,6 +602,7 @@ func TestAccNetworkResource_allDhcpOptions(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-all-dhcp"),
 					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_enabled", "true"),
+					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_dns_enabled", "true"),
 					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_dns.#", "2"),
 					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_ntp_enabled", "true"),
 					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_ntp.#", "1"),
@@ -557,6 +610,7 @@ func TestAccNetworkResource_allDhcpOptions(t *testing.T) {
 					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_gateway", "10.75.0.254"),
 					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_boot_enabled", "true"),
 					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_boot_server", "10.75.0.10"),
+					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_tftp_server", "10.75.0.11"),
 					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_boot_filename", "pxelinux.0"),
 					resource.TestCheckResourceAttr("unifi_network.test", "dhcp_unifi_controller", "10.75.0.1"),
 					resource.TestCheckResourceAttr("unifi_network.test", "domain_name", "test.local"),
@@ -569,6 +623,24 @@ func TestAccNetworkResource_allDhcpOptions(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccNetworkResourceConfig_dhcpDnsEnabled(name string, vlanID int, enabled bool, dnsServers []string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_network" "test" {
+  name             = %q
+  purpose          = "corporate"
+  vlan_id          = %d
+  subnet           = "10.%d.0.1/24"
+  dhcp_enabled     = true
+  dhcp_start       = "10.%d.0.10"
+  dhcp_stop        = "10.%d.0.254"
+  dhcp_dns_enabled = %t
+  dhcp_dns         = [%s]
+}
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256, enabled, formatStringListForHCL(dnsServers))
 }
 
 func testAccNetworkResourceConfig_dhcpNtp(name string, vlanID int, ntpServers []string) string {
@@ -624,6 +696,26 @@ resource "unifi_network" "test" {
   dhcp_boot_filename = "pxelinux.0"
 }
 `, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256, vlanID%256)
+}
+
+func testAccNetworkResourceConfig_dhcpTftpServer(name string, vlanID int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_network" "test" {
+  name               = %q
+  purpose            = "corporate"
+  vlan_id            = %d
+  subnet             = "10.%d.0.1/24"
+  dhcp_enabled       = true
+  dhcp_start         = "10.%d.0.10"
+  dhcp_stop          = "10.%d.0.254"
+  dhcp_boot_enabled  = true
+  dhcp_boot_server   = "10.%d.0.10"
+  dhcp_tftp_server   = "10.%d.0.11"
+  dhcp_boot_filename = "pxelinux.0"
+}
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256, vlanID%256, vlanID%256)
 }
 
 func testAccNetworkResourceConfig_dhcpAdvanced(name string, vlanID int) string {
@@ -693,6 +785,7 @@ resource "unifi_network" "test" {
   dhcp_start            = "10.%d.0.10"
   dhcp_stop             = "10.%d.0.254"
   dhcp_lease            = 43200
+  dhcp_dns_enabled      = true
   dhcp_dns              = ["8.8.8.8", "8.8.4.4"]
   dhcp_ntp_enabled      = true
   dhcp_ntp              = ["129.6.15.28"]
@@ -700,9 +793,10 @@ resource "unifi_network" "test" {
   dhcp_gateway          = "10.%d.0.254"
   dhcp_boot_enabled     = true
   dhcp_boot_server      = "10.%d.0.10"
+  dhcp_tftp_server      = "10.%d.0.11"
   dhcp_boot_filename    = "pxelinux.0"
   dhcp_unifi_controller = "10.%d.0.1"
   domain_name           = "test.local"
 }
-`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256, vlanID%256, vlanID%256, vlanID%256)
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256, vlanID%256, vlanID%256, vlanID%256, vlanID%256)
 }
