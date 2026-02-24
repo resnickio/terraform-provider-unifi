@@ -102,6 +102,11 @@ func init() {
 		Name: "unifi_user",
 		F:    sweepUsers,
 	})
+
+	resource.AddTestSweepers("unifi_device_port_override", &resource.Sweeper{
+		Name: "unifi_device_port_override",
+		F:    sweepDevicePortOverrides,
+	})
 }
 
 func getSweeperClient() (*unifi.NetworkClient, error) {
@@ -519,6 +524,45 @@ func sweepUsers(region string) error {
 	for _, user := range users {
 		if strings.HasPrefix(user.Name, testResourcePrefix) {
 			if err := client.DeleteUser(ctx, user.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepDevicePortOverrides(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	result, err := client.ListDevices(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, d := range result.NetworkDevices {
+		device, err := client.GetDeviceByMAC(ctx, d.MAC)
+		if err != nil {
+			continue
+		}
+
+		cleaned := make([]unifi.PortOverride, 0, len(device.PortOverrides))
+		changed := false
+		for _, override := range device.PortOverrides {
+			if strings.HasPrefix(override.Name, testResourcePrefix) {
+				changed = true
+			} else {
+				cleaned = append(cleaned, override)
+			}
+		}
+
+		if changed {
+			device.PortOverrides = cleaned
+			if _, err := client.UpdateDevice(ctx, device.ID, device); err != nil {
 				return err
 			}
 		}

@@ -9,6 +9,8 @@ Terraform provider for UniFi network infrastructure management.
   - `client.go` - Auto-relogin client wrapper with retry logic and rate limiting
   - `utils.go` - Pointer helpers, error handling utilities, `stringValueOrNull`
   - `traffic_types.go` - Shared nested types for traffic rules/routes
+  - `device_data_source.go` - Device data source (lookup by MAC)
+  - `device_port_override_resource.go` - Device port override resource (per-port switch configuration)
   - `dynamic_dns_resource.go` - Dynamic DNS configuration resource
   - `dynamic_dns_data_source.go` - Dynamic DNS data source (lookup by ID or hostname)
   - `firewall_group_resource.go` - Address/port group resource
@@ -28,6 +30,7 @@ Terraform provider for UniFi network infrastructure management.
   - `port_profile_resource.go` - Switch port profile resource
   - `port_profile_data_source.go` - Port profile data source (lookup by ID or name)
   - `radius_profile_resource.go` - RADIUS authentication profile resource
+  - `radius_profile_data_source.go` - RADIUS profile data source (lookup by ID or name)
   - `static_dns_resource.go` - Static DNS record resource (v2 API)
   - `static_dns_data_source.go` - Static DNS data source (lookup by ID or key)
   - `static_route_resource.go` - Static route resource
@@ -110,6 +113,7 @@ The SDK handles path differences. Both use session-based authentication.
 
 | Resource | UDM (Network 10.x) | Standalone Network App |
 |----------|-------------------|------------------------|
+| `unifi_device_port_override` | ✅ | ✅ |
 | `unifi_dynamic_dns` | ✅ | ✅ |
 | `unifi_firewall_group` | ✅ | ✅ |
 | `unifi_firewall_policy` | ✅ | ❌ (500 errors) |
@@ -248,14 +252,9 @@ servers {
 
 ## Preferences
 
-- **Commits**: Do not include Claude Code citations or co-author tags
-- **Code style**: Minimal comments, no inline comments unless truly necessary
-- **Over-engineering**: Avoid. Don't add abstractions, helpers, or features beyond what's requested
 - **Resource naming**: Test resources use `tf-acc-test-` prefix for easy identification
 - **VLAN IDs**: Use 3900+ range in tests to avoid production conflicts
 - **Rule indices**: Use 2000+ range in tests (must start with 2 or 4 per API validation)
-- **Context7 MCP**: When generating code that uses external libraries, or when needing up-to-date API documentation, configuration examples, or setup steps for any library/framework, automatically use Context7 MCP tools (`resolve-library-id` then `get-library-docs`) to fetch current documentation. Do not rely solely on training data for library APIs.
-- **Playwright MCP**: Use Playwright MCP tools for browser automation tasks: testing web UIs, scraping dynamic content, filling forms, taking screenshots, or interacting with web applications. Prefer `browser_snapshot` over screenshots for actionable page state. Use `browser_fill_form` for multiple fields, `browser_click`/`browser_type` for interactions, and `browser_evaluate` for custom JavaScript. Always call `browser_close` when finished.
 
 ## Testing Conventions
 
@@ -270,16 +269,10 @@ servers {
 - **Naming**: Test resources use `tf-acc-test-` prefix, test functions use `TestAcc{Resource}_{scenario}` pattern
 - **Config builders**: Use helper functions to build test configs with consistent patterns
 
-## Post-Implementation Summaries
-
-After completing a planned task, provide a concise summary including:
-- **Files Created**: New files with brief descriptions
-- **Files Modified**: Existing files and what changed
-- **Key Details**: Coverage, scope, or other relevant metrics
-
 ## Status
 
 **Implemented Resources:**
+- `unifi_device_port_override` - Per-port switch configuration overrides (name, profile, PoE, VLANs, speed)
 - `unifi_dynamic_dns` - Dynamic DNS configuration
 - `unifi_firewall_group` - Address and port groups
 - `unifi_firewall_policy` - Zone-based firewall (v2 API)
@@ -299,6 +292,7 @@ After completing a planned task, provide a concise summary including:
 - `unifi_wlan` - Wireless networks (SSID configuration)
 
 **Implemented Data Sources:**
+- `unifi_device` - Look up device by MAC address
 - `unifi_dynamic_dns` - Look up dynamic DNS configuration by ID or hostname
 - `unifi_firewall_group` - Look up firewall group (address/port) by ID or name
 - `unifi_firewall_policy` - Look up firewall policy by ID or name
@@ -308,6 +302,7 @@ After completing a planned task, provide a concise summary including:
 - `unifi_network` - Look up network by ID or name
 - `unifi_port_forward` - Look up port forward by ID or name
 - `unifi_port_profile` - Look up port profile by ID or name
+- `unifi_radius_profile` - Look up RADIUS profile by ID or name
 - `unifi_static_dns` - Look up static DNS record by ID or key (hostname)
 - `unifi_static_route` - Look up static route by ID or name
 - `unifi_traffic_route` - Look up traffic route by ID or name
