@@ -79,7 +79,7 @@ type NetworkDataSourceModel struct {
 	FirewallZoneID types.String `tfsdk:"firewall_zone_id"`
 
 	// IPv6
-	IPv6SettingPreference types.String `tfsdk:"ipv6_setting_preference"`
+	IPv6 types.Object `tfsdk:"ipv6"`
 }
 
 func NewNetworkDataSource() datasource.DataSource {
@@ -267,9 +267,96 @@ func (d *NetworkDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			},
 
 			// IPv6
-			"ipv6_setting_preference": schema.StringAttribute{
-				Description: "IPv6 configuration preference (auto, manual).",
+			"ipv6": schema.SingleNestedAttribute{
+				Description: "IPv6 configuration for this network.",
 				Computed:    true,
+				Attributes: map[string]schema.Attribute{
+					"interface_type": schema.StringAttribute{
+						Description: "IPv6 interface type (none, static, pd).",
+						Computed:    true,
+					},
+					"setting_preference": schema.StringAttribute{
+						Description: "IPv6 setting preference (auto, manual).",
+						Computed:    true,
+					},
+					"wan_delegation_type": schema.StringAttribute{
+						Description: "IPv6 WAN delegation type.",
+						Computed:    true,
+					},
+					"subnet": schema.StringAttribute{
+						Description: "IPv6 subnet in CIDR notation.",
+						Computed:    true,
+					},
+					"client_address_assignment": schema.StringAttribute{
+						Description: "IPv6 client address assignment method.",
+						Computed:    true,
+					},
+					"pd_interface": schema.StringAttribute{
+						Description: "IPv6 prefix delegation interface.",
+						Computed:    true,
+					},
+					"pd_prefixid": schema.StringAttribute{
+						Description: "IPv6 prefix delegation prefix ID.",
+						Computed:    true,
+					},
+					"pd_start": schema.StringAttribute{
+						Description: "IPv6 prefix delegation range start.",
+						Computed:    true,
+					},
+					"pd_stop": schema.StringAttribute{
+						Description: "IPv6 prefix delegation range stop.",
+						Computed:    true,
+					},
+					"pd_auto_prefixid_enabled": schema.BoolAttribute{
+						Description: "Whether automatic prefix ID assignment is enabled for prefix delegation.",
+						Computed:    true,
+					},
+					"ra_enabled": schema.BoolAttribute{
+						Description: "Whether Router Advertisement (RA) is enabled.",
+						Computed:    true,
+					},
+					"ra_preferred_lifetime": schema.Int64Attribute{
+						Description: "Router Advertisement preferred lifetime in seconds.",
+						Computed:    true,
+					},
+					"ra_priority": schema.StringAttribute{
+						Description: "Router Advertisement priority (high, medium, low).",
+						Computed:    true,
+					},
+					"ra_valid_lifetime": schema.Int64Attribute{
+						Description: "Router Advertisement valid lifetime in seconds.",
+						Computed:    true,
+					},
+					"dhcpv6_enabled": schema.BoolAttribute{
+						Description: "Whether DHCPv6 is enabled.",
+						Computed:    true,
+					},
+					"dhcpv6_start": schema.StringAttribute{
+						Description: "DHCPv6 range start address.",
+						Computed:    true,
+					},
+					"dhcpv6_stop": schema.StringAttribute{
+						Description: "DHCPv6 range stop address.",
+						Computed:    true,
+					},
+					"dhcpv6_lease_time": schema.Int64Attribute{
+						Description: "DHCPv6 lease time in seconds.",
+						Computed:    true,
+					},
+					"dhcpv6_dns_auto": schema.BoolAttribute{
+						Description: "Whether DHCPv6 DNS is set automatically.",
+						Computed:    true,
+					},
+					"dhcpv6_dns": schema.ListAttribute{
+						Description: "DHCPv6 DNS servers.",
+						Computed:    true,
+						ElementType: types.StringType,
+					},
+					"dhcpv6_allow_slaac": schema.BoolAttribute{
+						Description: "Whether SLAAC is allowed alongside DHCPv6.",
+						Computed:    true,
+					},
+				},
 			},
 		},
 	}
@@ -499,7 +586,12 @@ func (d *NetworkDataSource) sdkToState(ctx context.Context, network *unifi.Netwo
 	state.FirewallZoneID = stringValueOrNull(network.FirewallZoneID)
 
 	// IPv6
-	state.IPv6SettingPreference = stringValueOrNull(network.IPv6SettingPreference)
+	ipv6Obj, ipv6Diags := ipv6ToObject(ctx, network)
+	diags.Append(ipv6Diags...)
+	if diags.HasError() {
+		return diags
+	}
+	state.IPv6 = ipv6Obj
 
 	return diags
 }

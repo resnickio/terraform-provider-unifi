@@ -67,7 +67,7 @@ data "unifi_network" "by_id" {
 - `igmp_snooping` (Boolean) Whether IGMP snooping is enabled.
 - `internet_access_enabled` (Boolean) Whether internet access is enabled for this network.
 - `intra_network_access_enabled` (Boolean) Whether devices on this network can communicate with devices on other networks.
-- `ipv6_setting_preference` (String) IPv6 configuration preference (auto, manual).
+- `ipv6` (Attributes) IPv6 configuration for this network. (see [below for nested schema](#nestedatt--ipv6))
 - `mdns_enabled` (Boolean) Whether mDNS (Bonjour/Avahi) is enabled for this network.
 - `nat_enabled` (Boolean) Whether NAT is enabled for this network.
 - `network_group` (String) The network group (LAN, WAN, WAN2).
@@ -76,3 +76,30 @@ data "unifi_network" "by_id" {
 - `subnet` (String) The subnet in CIDR notation.
 - `upnp_lan_enabled` (Boolean) Whether UPnP is enabled on this LAN network.
 - `vlan_id` (Number) The VLAN ID for this network.
+
+<a id="nestedatt--ipv6"></a>
+### Nested Schema for `ipv6`
+
+Read-Only:
+
+- `client_address_assignment` (String) IPv6 client address assignment method.
+- `dhcpv6_allow_slaac` (Boolean) Whether SLAAC is allowed alongside DHCPv6.
+- `dhcpv6_dns` (List of String) DHCPv6 DNS servers.
+- `dhcpv6_dns_auto` (Boolean) Whether DHCPv6 DNS is set automatically.
+- `dhcpv6_enabled` (Boolean) Whether DHCPv6 is enabled.
+- `dhcpv6_lease_time` (Number) DHCPv6 lease time in seconds.
+- `dhcpv6_start` (String) DHCPv6 range start address.
+- `dhcpv6_stop` (String) DHCPv6 range stop address.
+- `interface_type` (String) IPv6 interface type (none, static, pd).
+- `pd_auto_prefixid_enabled` (Boolean) Whether automatic prefix ID assignment is enabled for prefix delegation.
+- `pd_interface` (String) IPv6 prefix delegation interface.
+- `pd_prefixid` (String) IPv6 prefix delegation prefix ID.
+- `pd_start` (String) IPv6 prefix delegation range start.
+- `pd_stop` (String) IPv6 prefix delegation range stop.
+- `ra_enabled` (Boolean) Whether Router Advertisement (RA) is enabled.
+- `ra_preferred_lifetime` (Number) Router Advertisement preferred lifetime in seconds.
+- `ra_priority` (String) Router Advertisement priority (high, medium, low).
+- `ra_valid_lifetime` (Number) Router Advertisement valid lifetime in seconds.
+- `setting_preference` (String) IPv6 setting preference (auto, manual).
+- `subnet` (String) IPv6 subnet in CIDR notation.
+- `wan_delegation_type` (String) IPv6 WAN delegation type.

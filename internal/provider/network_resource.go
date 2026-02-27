@@ -7,8 +7,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -33,6 +35,30 @@ var (
 	_ resource.Resource                = &NetworkResource{}
 	_ resource.ResourceWithImportState = &NetworkResource{}
 )
+
+var ipv6AttrTypes = map[string]attr.Type{
+	"interface_type":             types.StringType,
+	"setting_preference":         types.StringType,
+	"wan_delegation_type":        types.StringType,
+	"subnet":                     types.StringType,
+	"client_address_assignment":  types.StringType,
+	"pd_interface":               types.StringType,
+	"pd_prefixid":                types.StringType,
+	"pd_start":                   types.StringType,
+	"pd_stop":                    types.StringType,
+	"pd_auto_prefixid_enabled":   types.BoolType,
+	"ra_enabled":                 types.BoolType,
+	"ra_preferred_lifetime":      types.Int64Type,
+	"ra_priority":                types.StringType,
+	"ra_valid_lifetime":          types.Int64Type,
+	"dhcpv6_enabled":             types.BoolType,
+	"dhcpv6_start":               types.StringType,
+	"dhcpv6_stop":                types.StringType,
+	"dhcpv6_lease_time":          types.Int64Type,
+	"dhcpv6_dns_auto":            types.BoolType,
+	"dhcpv6_dns":                 types.ListType{ElemType: types.StringType},
+	"dhcpv6_allow_slaac":         types.BoolType,
+}
 
 type NetworkResource struct {
 	client *AutoLoginClient
@@ -98,7 +124,7 @@ type NetworkResourceModel struct {
 	FirewallZoneID types.String `tfsdk:"firewall_zone_id"`
 
 	// IPv6
-	IPv6SettingPreference types.String `tfsdk:"ipv6_setting_preference"`
+	IPv6 types.Object `tfsdk:"ipv6"`
 }
 
 func NewNetworkResource() resource.Resource {
@@ -199,6 +225,7 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"dhcp_dns_enabled": schema.BoolAttribute{
 				Description: "Whether to provide DNS servers via DHCP.",
 				Optional:    true,
+				Computed:    true,
 			},
 			"dhcp_dns": schema.SetAttribute{
 				Description: "Set of DNS servers to provide via DHCP (maximum 4). Must be valid IPv4 addresses.",
@@ -357,15 +384,129 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 
 			// IPv6
-			"ipv6_setting_preference": schema.StringAttribute{
-				Description: "IPv6 configuration preference. Valid values: 'auto', 'manual'.",
+			"ipv6": schema.SingleNestedAttribute{
+				Description: "IPv6 configuration for this network.",
 				Optional:    true,
 				Computed:    true,
-				Validators: []validator.String{
-					stringvalidator.OneOf("auto", "manual"),
-				},
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+				Attributes: map[string]schema.Attribute{
+					"interface_type": schema.StringAttribute{
+						Description: "IPv6 interface type. Valid values: 'none', 'static', 'pd'.",
+						Optional:    true,
+						Computed:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("none", "static", "pd"),
+						},
+					},
+					"setting_preference": schema.StringAttribute{
+						Description: "IPv6 setting preference. Valid values: 'auto', 'manual'.",
+						Optional:    true,
+						Computed:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("auto", "manual"),
+						},
+					},
+					"wan_delegation_type": schema.StringAttribute{
+						Description: "IPv6 WAN delegation type.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"subnet": schema.StringAttribute{
+						Description: "IPv6 subnet in CIDR notation.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"client_address_assignment": schema.StringAttribute{
+						Description: "IPv6 client address assignment method.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"pd_interface": schema.StringAttribute{
+						Description: "IPv6 prefix delegation interface.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"pd_prefixid": schema.StringAttribute{
+						Description: "IPv6 prefix delegation prefix ID.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"pd_start": schema.StringAttribute{
+						Description: "IPv6 prefix delegation range start.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"pd_stop": schema.StringAttribute{
+						Description: "IPv6 prefix delegation range stop.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"pd_auto_prefixid_enabled": schema.BoolAttribute{
+						Description: "Whether automatic prefix ID assignment is enabled for prefix delegation.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"ra_enabled": schema.BoolAttribute{
+						Description: "Whether Router Advertisement (RA) is enabled.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"ra_preferred_lifetime": schema.Int64Attribute{
+						Description: "Router Advertisement preferred lifetime in seconds.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"ra_priority": schema.StringAttribute{
+						Description: "Router Advertisement priority. Valid values: 'high', 'medium', 'low'.",
+						Optional:    true,
+						Computed:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("high", "medium", "low"),
+						},
+					},
+					"ra_valid_lifetime": schema.Int64Attribute{
+						Description: "Router Advertisement valid lifetime in seconds.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"dhcpv6_enabled": schema.BoolAttribute{
+						Description: "Whether DHCPv6 is enabled.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"dhcpv6_start": schema.StringAttribute{
+						Description: "DHCPv6 range start address.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"dhcpv6_stop": schema.StringAttribute{
+						Description: "DHCPv6 range stop address.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"dhcpv6_lease_time": schema.Int64Attribute{
+						Description: "DHCPv6 lease time in seconds.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"dhcpv6_dns_auto": schema.BoolAttribute{
+						Description: "Whether DHCPv6 DNS is set automatically.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"dhcpv6_dns": schema.ListAttribute{
+						Description: "DHCPv6 DNS servers (maximum 4).",
+						Optional:    true,
+						Computed:    true,
+						ElementType: types.StringType,
+						Validators: []validator.List{
+							listvalidator.SizeAtMost(4),
+						},
+					},
+					"dhcpv6_allow_slaac": schema.BoolAttribute{
+						Description: "Whether to allow SLAAC alongside DHCPv6.",
+						Optional:    true,
+						Computed:    true,
+					},
 				},
 			},
 		},
@@ -571,8 +712,6 @@ func (r *NetworkResource) planToSDK(ctx context.Context, plan *NetworkResourceMo
 	// DHCP DNS
 	if !plan.DHCPDNSEnabled.IsNull() {
 		network.DHCPDDNSEnabled = boolPtr(plan.DHCPDNSEnabled.ValueBool())
-	} else if !plan.DHCPDNS.IsNull() {
-		network.DHCPDDNSEnabled = boolPtr(true)
 	}
 	if !plan.DHCPDNS.IsNull() {
 		var dnsServers []string
@@ -678,8 +817,11 @@ func (r *NetworkResource) planToSDK(ctx context.Context, plan *NetworkResourceMo
 	}
 
 	// IPv6
-	if !plan.IPv6SettingPreference.IsNull() {
-		network.IPv6SettingPreference = plan.IPv6SettingPreference.ValueString()
+	if !plan.IPv6.IsNull() && !plan.IPv6.IsUnknown() {
+		ipv6FromObject(ctx, plan.IPv6, network, diags)
+		if diags.HasError() {
+			return nil
+		}
 	}
 
 	return network
@@ -832,7 +974,154 @@ func (r *NetworkResource) sdkToState(ctx context.Context, network *unifi.Network
 	state.FirewallZoneID = stringValueOrNull(network.FirewallZoneID)
 
 	// IPv6
-	state.IPv6SettingPreference = stringValueOrNull(network.IPv6SettingPreference)
+	ipv6Obj, d := ipv6ToObject(ctx, network)
+	diags.Append(d...)
+	if diags.HasError() {
+		return diags
+	}
+	state.IPv6 = ipv6Obj
 
 	return diags
+}
+
+func ipv6FromObject(ctx context.Context, obj types.Object, network *unifi.Network, diags *diag.Diagnostics) {
+	attrs := obj.Attributes()
+
+	if v, ok := attrs["interface_type"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6InterfaceType = v.ValueString()
+	}
+	if v, ok := attrs["setting_preference"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPv6SettingPreference = v.ValueString()
+	}
+	if v, ok := attrs["wan_delegation_type"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPv6WANDelegationType = v.ValueString()
+	}
+	if v, ok := attrs["subnet"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6Subnet = v.ValueString()
+	}
+	if v, ok := attrs["client_address_assignment"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6ClientAddressAssignment = v.ValueString()
+	}
+	if v, ok := attrs["pd_interface"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6PDInterface = v.ValueString()
+	}
+	if v, ok := attrs["pd_prefixid"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6PDPrefixid = v.ValueString()
+	}
+	if v, ok := attrs["pd_start"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6PDStart = v.ValueString()
+	}
+	if v, ok := attrs["pd_stop"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6PDStop = v.ValueString()
+	}
+	if v, ok := attrs["pd_auto_prefixid_enabled"].(types.Bool); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6PDAutoPrefixidEnabled = boolPtr(v.ValueBool())
+	}
+	if v, ok := attrs["ra_enabled"].(types.Bool); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6RaEnabled = boolPtr(v.ValueBool())
+	}
+	if v, ok := attrs["ra_preferred_lifetime"].(types.Int64); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6RaPreferredLifetime = intPtr(v.ValueInt64())
+	}
+	if v, ok := attrs["ra_priority"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6RaPriority = v.ValueString()
+	}
+	if v, ok := attrs["ra_valid_lifetime"].(types.Int64); ok && !v.IsNull() && !v.IsUnknown() {
+		network.IPV6RaValidLifetime = intPtr(v.ValueInt64())
+	}
+	if v, ok := attrs["dhcpv6_enabled"].(types.Bool); ok && !v.IsNull() && !v.IsUnknown() {
+		network.DHCPDV6Enabled = boolPtr(v.ValueBool())
+	}
+	if v, ok := attrs["dhcpv6_start"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.DHCPDV6Start = v.ValueString()
+	}
+	if v, ok := attrs["dhcpv6_stop"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
+		network.DHCPDV6Stop = v.ValueString()
+	}
+	if v, ok := attrs["dhcpv6_lease_time"].(types.Int64); ok && !v.IsNull() && !v.IsUnknown() {
+		network.DHCPDV6LeaseTime = intPtr(v.ValueInt64())
+	}
+	if v, ok := attrs["dhcpv6_dns_auto"].(types.Bool); ok && !v.IsNull() && !v.IsUnknown() {
+		network.DHCPDV6DNSAuto = boolPtr(v.ValueBool())
+	}
+	if v, ok := attrs["dhcpv6_dns"].(types.List); ok && !v.IsNull() && !v.IsUnknown() {
+		var dnsServers []string
+		diags.Append(v.ElementsAs(ctx, &dnsServers, false)...)
+		if diags.HasError() {
+			return
+		}
+		if len(dnsServers) > 0 {
+			network.DHCPDV6DNS1 = dnsServers[0]
+		}
+		if len(dnsServers) > 1 {
+			network.DHCPDV6DNS2 = dnsServers[1]
+		}
+		if len(dnsServers) > 2 {
+			network.DHCPDV6DNS3 = dnsServers[2]
+		}
+		if len(dnsServers) > 3 {
+			network.DHCPDV6DNS4 = dnsServers[3]
+		}
+	}
+	if v, ok := attrs["dhcpv6_allow_slaac"].(types.Bool); ok && !v.IsNull() && !v.IsUnknown() {
+		network.DHCPDV6AllowSlaac = boolPtr(v.ValueBool())
+	}
+}
+
+func ipv6ToObject(ctx context.Context, network *unifi.Network) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Collect DHCPv6 DNS servers into a list
+	var dnsVal types.List
+	var dnsServers []string
+	if network.DHCPDV6DNS1 != "" {
+		dnsServers = append(dnsServers, network.DHCPDV6DNS1)
+	}
+	if network.DHCPDV6DNS2 != "" {
+		dnsServers = append(dnsServers, network.DHCPDV6DNS2)
+	}
+	if network.DHCPDV6DNS3 != "" {
+		dnsServers = append(dnsServers, network.DHCPDV6DNS3)
+	}
+	if network.DHCPDV6DNS4 != "" {
+		dnsServers = append(dnsServers, network.DHCPDV6DNS4)
+	}
+	if len(dnsServers) > 0 {
+		dnsList, d := types.ListValueFrom(ctx, types.StringType, dnsServers)
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.ObjectNull(ipv6AttrTypes), diags
+		}
+		dnsVal = dnsList
+	} else {
+		dnsVal = types.ListNull(types.StringType)
+	}
+
+	attrs := map[string]attr.Value{
+		"interface_type":             stringValueOrNull(network.IPV6InterfaceType),
+		"setting_preference":         stringValueOrNull(network.IPv6SettingPreference),
+		"wan_delegation_type":        stringValueOrNull(network.IPv6WANDelegationType),
+		"subnet":                     stringValueOrNull(network.IPV6Subnet),
+		"client_address_assignment":  stringValueOrNull(network.IPV6ClientAddressAssignment),
+		"pd_interface":               stringValueOrNull(network.IPV6PDInterface),
+		"pd_prefixid":                stringValueOrNull(network.IPV6PDPrefixid),
+		"pd_start":                   stringValueOrNull(network.IPV6PDStart),
+		"pd_stop":                    stringValueOrNull(network.IPV6PDStop),
+		"pd_auto_prefixid_enabled":   types.BoolValue(derefBool(network.IPV6PDAutoPrefixidEnabled)),
+		"ra_enabled":                 types.BoolValue(derefBool(network.IPV6RaEnabled)),
+		"ra_preferred_lifetime":      types.Int64Value(derefInt(network.IPV6RaPreferredLifetime)),
+		"ra_priority":                stringValueOrNull(network.IPV6RaPriority),
+		"ra_valid_lifetime":          types.Int64Value(derefInt(network.IPV6RaValidLifetime)),
+		"dhcpv6_enabled":             types.BoolValue(derefBool(network.DHCPDV6Enabled)),
+		"dhcpv6_start":               stringValueOrNull(network.DHCPDV6Start),
+		"dhcpv6_stop":                stringValueOrNull(network.DHCPDV6Stop),
+		"dhcpv6_lease_time":          types.Int64Value(derefInt(network.DHCPDV6LeaseTime)),
+		"dhcpv6_dns_auto":            types.BoolValue(derefBool(network.DHCPDV6DNSAuto)),
+		"dhcpv6_dns":                 dnsVal,
+		"dhcpv6_allow_slaac":         types.BoolValue(derefBool(network.DHCPDV6AllowSlaac)),
+	}
+
+	obj, d := types.ObjectValue(ipv6AttrTypes, attrs)
+	diags.Append(d...)
+	return obj, diags
 }

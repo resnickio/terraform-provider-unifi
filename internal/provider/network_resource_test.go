@@ -800,3 +800,344 @@ resource "unifi_network" "test" {
 }
 `, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256, vlanID%256, vlanID%256, vlanID%256, vlanID%256)
 }
+
+// IPv6 tests
+
+func TestAccNetworkResource_ipv6Basic(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_ipv6Basic("tf-acc-test-network-ipv6", 3920),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-ipv6"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.setting_preference", "auto"),
+				),
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccNetworkResource_ipv6PrefixDelegation(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_ipv6PD("tf-acc-test-network-ipv6pd", 3921),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-ipv6pd"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.setting_preference", "manual"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.interface_type", "pd"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.ra_enabled", "true"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.ra_priority", "high"),
+				),
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccNetworkResource_ipv6DHCPv6(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_ipv6DHCPv6("tf-acc-test-network-dhcpv6", 3922),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-dhcpv6"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.setting_preference", "manual"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.interface_type", "static"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_enabled", "true"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_dns.#", "2"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_dns.0", "2001:4860:4860::8888"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_dns.1", "2001:4860:4860::8844"),
+				),
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccNetworkResource_ipv6Update(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_ipv6Basic("tf-acc-test-network-ipv6u", 3923),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.setting_preference", "auto"),
+				),
+			},
+			{
+				Config: testAccNetworkResourceConfig_ipv6PD("tf-acc-test-network-ipv6u", 3923),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.setting_preference", "manual"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.interface_type", "pd"),
+				),
+			},
+		},
+	})
+}
+
+func testAccNetworkResourceConfig_ipv6Basic(name string, vlanID int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_network" "test" {
+  name         = %q
+  purpose      = "corporate"
+  vlan_id      = %d
+  subnet       = "10.%d.0.1/24"
+  dhcp_enabled = true
+  dhcp_start   = "10.%d.0.10"
+  dhcp_stop    = "10.%d.0.254"
+
+  ipv6 = {
+    setting_preference = "auto"
+  }
+}
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256)
+}
+
+func testAccNetworkResourceConfig_ipv6PD(name string, vlanID int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_network" "test" {
+  name         = %q
+  purpose      = "corporate"
+  vlan_id      = %d
+  subnet       = "10.%d.0.1/24"
+  dhcp_enabled = true
+  dhcp_start   = "10.%d.0.10"
+  dhcp_stop    = "10.%d.0.254"
+
+  ipv6 = {
+    setting_preference = "manual"
+    interface_type     = "pd"
+    pd_interface       = "wan"
+    pd_start           = "::2"
+    pd_stop            = "::7d1"
+    ra_enabled         = true
+    ra_priority        = "high"
+  }
+}
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256)
+}
+
+func testAccNetworkResourceConfig_ipv6DHCPv6(name string, vlanID int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_network" "test" {
+  name         = %q
+  purpose      = "corporate"
+  vlan_id      = %d
+  subnet       = "10.%d.0.1/24"
+  dhcp_enabled = true
+  dhcp_start   = "10.%d.0.10"
+  dhcp_stop    = "10.%d.0.254"
+
+  ipv6 = {
+    setting_preference  = "manual"
+    interface_type      = "static"
+    subnet              = "fd00:3922::1/64"
+    wan_delegation_type = "none"
+    dhcpv6_enabled      = true
+    dhcpv6_start        = "fd00:3922::2"
+    dhcpv6_stop         = "fd00:3922::ff"
+    dhcpv6_dns          = ["2001:4860:4860::8888", "2001:4860:4860::8844"]
+  }
+}
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256)
+}
+
+func TestAccNetworkResource_ipv6PDFull(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_ipv6PDFull("tf-acc-test-network-ipv6pdfull", 3924),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-ipv6pdfull"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.setting_preference", "manual"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.interface_type", "pd"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.pd_interface", "wan"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.pd_prefixid", "0"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.pd_start", "::2"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.pd_stop", "::7d1"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.pd_auto_prefixid_enabled", "false"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.ra_enabled", "true"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.ra_priority", "medium"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.ra_preferred_lifetime", "14400"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.ra_valid_lifetime", "86400"),
+				),
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccNetworkResource_ipv6DHCPv6Full(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_ipv6DHCPv6Full("tf-acc-test-network-dhcpv6full", 3925),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-dhcpv6full"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.setting_preference", "manual"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.interface_type", "static"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_enabled", "true"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_start", "fd00:3925::2"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_stop", "fd00:3925::ff"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_lease_time", "43200"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_dns_auto", "false"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_dns.#", "4"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_dns.0", "2001:4860:4860::8888"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_dns.1", "2001:4860:4860::8844"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_dns.2", "2606:4700:4700::1111"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_dns.3", "2606:4700:4700::1001"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.dhcpv6_allow_slaac", "true"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.ra_enabled", "true"),
+				),
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccNetworkResource_ipv6StaticSubnet(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_ipv6Static("tf-acc-test-network-ipv6static", 3926),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-ipv6static"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.setting_preference", "manual"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.interface_type", "static"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.subnet", "fd00:abcd::1/64"),
+					resource.TestCheckResourceAttr("unifi_network.test", "ipv6.wan_delegation_type", "none"),
+				),
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccNetworkResourceConfig_ipv6PDFull(name string, vlanID int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_network" "test" {
+  name         = %q
+  purpose      = "corporate"
+  vlan_id      = %d
+  subnet       = "10.%d.0.1/24"
+  dhcp_enabled = true
+  dhcp_start   = "10.%d.0.10"
+  dhcp_stop    = "10.%d.0.254"
+
+  ipv6 = {
+    setting_preference       = "manual"
+    interface_type           = "pd"
+    pd_interface             = "wan"
+    pd_prefixid              = "0"
+    pd_start                 = "::2"
+    pd_stop                  = "::7d1"
+    pd_auto_prefixid_enabled = false
+    ra_enabled               = true
+    ra_priority              = "medium"
+    ra_preferred_lifetime    = 14400
+    ra_valid_lifetime        = 86400
+  }
+}
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256)
+}
+
+func testAccNetworkResourceConfig_ipv6DHCPv6Full(name string, vlanID int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_network" "test" {
+  name         = %q
+  purpose      = "corporate"
+  vlan_id      = %d
+  subnet       = "10.%d.0.1/24"
+  dhcp_enabled = true
+  dhcp_start   = "10.%d.0.10"
+  dhcp_stop    = "10.%d.0.254"
+
+  ipv6 = {
+    setting_preference  = "manual"
+    interface_type      = "static"
+    subnet              = "fd00:3925::1/64"
+    wan_delegation_type = "none"
+    dhcpv6_enabled      = true
+    dhcpv6_start        = "fd00:3925::2"
+    dhcpv6_stop         = "fd00:3925::ff"
+    dhcpv6_lease_time   = 43200
+    dhcpv6_dns_auto     = false
+    dhcpv6_dns          = ["2001:4860:4860::8888", "2001:4860:4860::8844", "2606:4700:4700::1111", "2606:4700:4700::1001"]
+    dhcpv6_allow_slaac  = true
+    ra_enabled          = true
+  }
+}
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256)
+}
+
+func testAccNetworkResourceConfig_ipv6Static(name string, vlanID int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_network" "test" {
+  name         = %q
+  purpose      = "corporate"
+  vlan_id      = %d
+  subnet       = "10.%d.0.1/24"
+  dhcp_enabled = true
+  dhcp_start   = "10.%d.0.10"
+  dhcp_stop    = "10.%d.0.254"
+
+  ipv6 = {
+    setting_preference  = "manual"
+    interface_type      = "static"
+    subnet              = "fd00:abcd::1/64"
+    wan_delegation_type = "none"
+  }
+}
+`, testAccProviderConfig, name, vlanID, vlanID%256, vlanID%256, vlanID%256)
+}
