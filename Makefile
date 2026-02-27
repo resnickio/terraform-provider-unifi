@@ -1,4 +1,4 @@
-.PHONY: build test testacc lint clean install sweep docs fmt
+.PHONY: build test testacc testacc-run lint clean install sweep docs fmt
 
 # Load .env file if it exists
 ifneq (,$(wildcard ./.env))
