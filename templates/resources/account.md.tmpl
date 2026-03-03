@@ -1,0 +1,26 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi RADIUS account.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi RADIUS account for 802.1X authentication, VPN access, or custom tunnel configurations.
+
+~> **Note:** The `x_password` attribute is write-only. After import, you must re-apply to set the password.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_account/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Accounts can be imported using their ID:
+
+```shell
+terraform import unifi_account.example 60a1b2c3d4e5f67890123456
+```

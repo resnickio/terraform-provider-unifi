@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Look up a UniFi WAN SLA monitor.
+---
+
+# {{.Name}} ({{.Type}})
+
+Look up an existing WAN SLA monitor by ID or name. Read-only.
+
+## Example Usage
+
+{{tffile "examples/data-sources/unifi_wan_sla/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}

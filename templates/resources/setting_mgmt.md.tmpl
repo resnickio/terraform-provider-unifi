@@ -1,0 +1,26 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages UniFi site management settings.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages UniFi site management settings (auto-upgrade, LED, SSH, alerts). This is a singleton resource — one per site. Destroying resets to defaults.
+
+~> **Note:** The `x_ssh_password` attribute is write-only. After import, you must re-apply to set the password.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_setting_mgmt/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Management settings can be imported using the setting ID:
+
+```shell
+terraform import unifi_setting_mgmt.example 60a1b2c3d4e5f67890123456
+```

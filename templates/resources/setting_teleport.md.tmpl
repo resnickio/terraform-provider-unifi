@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages UniFi Teleport settings.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages UniFi Teleport settings. This is a singleton resource — one per site. Destroying resets to defaults.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_setting_teleport/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Teleport settings can be imported using the setting ID:
+
+```shell
+terraform import unifi_setting_teleport.example 60a1b2c3d4e5f67890123456
+```

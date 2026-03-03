@@ -9,6 +9,16 @@ Terraform provider for UniFi network infrastructure management.
   - `client.go` - Auto-relogin client wrapper with retry logic and rate limiting
   - `utils.go` - Pointer helpers, error handling utilities, `stringValueOrNull`
   - `traffic_types.go` - Shared nested types for traffic rules/routes
+  - `account_resource.go` - RADIUS account resource (802.1X/VPN users)
+  - `account_data_source.go` - RADIUS account data source (lookup by ID or name)
+  - `acl_rule_data_source.go` - ACL rule data source (lookup by ID or name, read-only)
+  - `active_client_data_source.go` - Active client data source (lookup by MAC or display name, read-only)
+  - `ap_group_data_source.go` - AP group data source (lookup by ID or name)
+  - `admin_data_source.go` - Admin data source (lookup by ID or name, read-only)
+  - `backup_data_source.go` - Backup data source (list all backups, read-only)
+  - `content_filtering_resource.go` - Content filtering resource (v2 API singleton)
+  - `content_filtering_data_source.go` - Content filtering data source (read-only singleton)
+  - `device_resource.go` - Device resource (import-only, manages adopted device settings, radio overrides)
   - `device_data_source.go` - Device data source (lookup by MAC)
   - `device_port_override_resource.go` - Device port override resource (per-port switch configuration)
   - `dynamic_dns_resource.go` - Dynamic DNS configuration resource
@@ -31,6 +41,16 @@ Terraform provider for UniFi network infrastructure management.
   - `port_profile_data_source.go` - Port profile data source (lookup by ID or name)
   - `radius_profile_resource.go` - RADIUS authentication profile resource
   - `radius_profile_data_source.go` - RADIUS profile data source (lookup by ID or name)
+  - `setting_guest_access_resource.go` - Guest access/captive portal settings resource (singleton)
+  - `setting_ips_resource.go` - IPS/IDS and threat management settings resource (singleton)
+  - `setting_magic_site_to_site_vpn_resource.go` - Magic Site-to-Site VPN settings resource (singleton)
+  - `setting_mgmt_resource.go` - Site management settings resource (singleton)
+  - `setting_radius_resource.go` - Site RADIUS server settings resource (singleton)
+  - `setting_snmp_resource.go` - SNMP settings resource (singleton)
+  - `setting_teleport_resource.go` - Teleport settings resource (singleton)
+  - `setting_usg_resource.go` - Site USG/gateway settings resource (singleton)
+  - `site_resource.go` - Site resource (create/manage controller sites)
+  - `site_data_source.go` - Site data source (lookup by ID or name)
   - `static_dns_resource.go` - Static DNS record resource (v2 API)
   - `static_dns_data_source.go` - Static DNS data source (lookup by ID or key)
   - `static_route_resource.go` - Static route resource
@@ -43,8 +63,11 @@ Terraform provider for UniFi network infrastructure management.
   - `user_data_source.go` - User data source (lookup by ID or MAC)
   - `user_group_resource.go` - User group (bandwidth profile) resource
   - `user_group_data_source.go` - User group data source (lookup by ID or name)
+  - `vpn_connection_data_source.go` - VPN connection data source (lookup by ID or name, read-only)
+  - `wan_sla_data_source.go` - WAN SLA data source (lookup by ID or name, read-only)
   - `wlan_resource.go` - Wireless network (SSID) resource
   - `wlan_data_source.go` - WLAN data source (lookup by ID or name)
+  - `qos_rule_data_source.go` - QoS rule data source (lookup by ID or name, read-only)
   - `testutils_test.go` - Shared test utilities and helpers
   - `sweep_test.go` - Sweeper functions for test resource cleanup
   - `*_test.go` - Acceptance tests for each resource
@@ -146,6 +169,13 @@ The SDK handles path differences. Both use session-based authentication.
 | `unifi_wlan` | Import loses passphrase | API never returns passphrase (write-only) |
 | `unifi_radius_profile` | Import loses server secrets | API never returns secret field (write-only) |
 | `unifi_dynamic_dns` | Import loses password | API never returns password (write-only) |
+| `unifi_account` | Import loses password | API never returns x_password (write-only) |
+| `unifi_setting_mgmt` | Import loses SSH password | API never returns x_ssh_password (write-only) |
+| `unifi_setting_radius` | Import loses secret | API never returns x_secret (write-only) |
+| `unifi_setting_snmp` | Import loses password | API never returns x_password (write-only) |
+| `unifi_setting_magic_site_to_site_vpn` | Import loses private key | API never returns x_private_key (write-only) |
+| `unifi_content_filtering` | No import support | v2 API singleton with synthetic ID |
+| `unifi_device` | Import-only create | Devices are physically adopted, not API-created |
 
 Site limitations: Resources still work correctly - the site is determined by the provider's `site` configuration.
 
@@ -199,6 +229,8 @@ Resources using this pattern:
 - `unifi_wlan` - `passphrase` field
 - `unifi_radius_profile` - `secret` field in auth/acct server blocks
 - `unifi_dynamic_dns` - `password` field
+- `unifi_setting_snmp` - `x_password` field
+- `unifi_setting_magic_site_to_site_vpn` - `x_private_key` field
 
 ### Data Source Pattern
 
@@ -250,6 +282,23 @@ servers {
 }
 ```
 
+### Singleton Resource Pattern
+
+Settings resources (`setting_mgmt`, `setting_radius`, `setting_usg`, `setting_teleport`, `setting_snmp`, `setting_ips`, `setting_guest_access`, `setting_magic_site_to_site_vpn`, `content_filtering`) use a singleton pattern — they always exist on the controller and cannot be created/deleted:
+
+- **Create**: Apply plan values via Update API → store in state
+- **Read**: Fetch current values → store in state
+- **Update**: Apply changes via Update API → store in state
+- **Delete**: Reset to defaults via Update API → remove from state
+- **Import**: By setting `_id` from the API
+
+### Import-Only Resource Pattern
+
+The `device` resource uses an import-only pattern — devices are physically adopted, not API-created:
+
+- **Create**: Look up device by MAC → apply writable settings → store in state
+- **Delete**: No-op (removes from Terraform state, device stays adopted)
+
 ## Preferences
 
 - **Resource naming**: Test resources use `tf-acc-test-` prefix for easy identification
@@ -272,6 +321,8 @@ servers {
 ## Status
 
 **Implemented Resources:**
+- `unifi_account` - RADIUS accounts for 802.1X/VPN authentication
+- `unifi_device` - Device settings management (import-only, manages adopted devices)
 - `unifi_device_port_override` - Per-port switch configuration overrides (name, profile, PoE, VLANs, speed)
 - `unifi_dynamic_dns` - Dynamic DNS configuration
 - `unifi_firewall_group` - Address and port groups
@@ -279,10 +330,20 @@ servers {
 - `unifi_firewall_rule` - Legacy firewall rules
 - `unifi_firewall_zone` - Firewall zones (v2 API)
 - `unifi_nat_rule` - NAT rules (v2 API)
+- `unifi_content_filtering` - Content filtering configuration (singleton: blocked categories, domains)
 - `unifi_network` - VLAN networks with DHCP
 - `unifi_port_forward` - Port forwarding rules
 - `unifi_port_profile` - Switch port profiles (VLAN, PoE, 802.1X, storm control)
 - `unifi_radius_profile` - RADIUS authentication profiles for 802.1X
+- `unifi_setting_guest_access` - Guest portal settings (singleton: auth, portal customization, restrictions)
+- `unifi_setting_ips` - Intrusion Prevention System settings (singleton: IPS mode, DNS filtering, threat categories)
+- `unifi_setting_magic_site_to_site_vpn` - Magic site-to-site VPN settings (singleton)
+- `unifi_setting_mgmt` - Site management settings (singleton: auto-upgrade, LED, SSH, alerts)
+- `unifi_setting_radius` - Site RADIUS server settings (singleton)
+- `unifi_setting_snmp` - SNMP monitoring settings (singleton: community, SNMPv3)
+- `unifi_setting_teleport` - Teleport VPN settings (singleton: enabled, subnet)
+- `unifi_setting_usg` - Site USG/gateway settings (singleton: UPnP, mDNS, offloading)
+- `unifi_site` - Controller sites
 - `unifi_static_dns` - Static DNS records (v2 API)
 - `unifi_static_route` - Static routing
 - `unifi_traffic_route` - Traffic routes/policy-based routing (v2 API)
@@ -292,6 +353,13 @@ servers {
 - `unifi_wlan` - Wireless networks (SSID configuration)
 
 **Implemented Data Sources:**
+- `unifi_account` - Look up RADIUS account by ID or name
+- `unifi_acl_rule` - Look up ACL rule by ID or name (read-only)
+- `unifi_admin` - Look up controller admin by ID or name (read-only)
+- `unifi_active_client` - Look up active (connected) client by MAC or display name (read-only)
+- `unifi_ap_group` - Look up AP group by ID or name
+- `unifi_backup` - List all controller backups (read-only)
+- `unifi_content_filtering` - Read current content filtering configuration (read-only)
 - `unifi_device` - Look up device by MAC address
 - `unifi_dynamic_dns` - Look up dynamic DNS configuration by ID or hostname
 - `unifi_firewall_group` - Look up firewall group (address/port) by ID or name
@@ -304,12 +372,16 @@ servers {
 - `unifi_port_profile` - Look up port profile by ID or name
 - `unifi_radius_profile` - Look up RADIUS profile by ID or name
 - `unifi_static_dns` - Look up static DNS record by ID or key (hostname)
+- `unifi_site` - Look up site by ID or name
 - `unifi_static_route` - Look up static route by ID or name
 - `unifi_traffic_route` - Look up traffic route by ID or name
 - `unifi_traffic_rule` - Look up traffic rule by ID or name
 - `unifi_user` - Look up user (client device record) by ID or MAC
 - `unifi_user_group` - Look up user group by ID or name
+- `unifi_vpn_connection` - Look up VPN connection by ID or name (read-only)
+- `unifi_wan_sla` - Look up WAN SLA monitor by ID or name (read-only)
 - `unifi_wlan` - Look up WLAN by ID or name
+- `unifi_qos_rule` - Look up QoS rule by ID or name (read-only)
 
 ## Versioning and Releases
 

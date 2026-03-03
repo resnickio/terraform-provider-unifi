@@ -1,0 +1,24 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages UniFi IPS/IDS and threat management settings.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages UniFi IPS/IDS and threat management settings. This is a singleton resource — one per site. Destroying resets to defaults (disabled).
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_setting_ips/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+IPS settings can be imported using the setting ID:
+
+```shell
+terraform import unifi_setting_ips.example 60a1b2c3d4e5f67890123456
+```

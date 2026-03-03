@@ -1,0 +1,26 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages a UniFi device.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages a UniFi device's configurable settings. Devices are physically adopted into the UniFi controller — this resource manages their writable properties (name, LEDs, SNMP, etc.).
+
+~> **Note:** This is an import-only resource. The `mac` attribute identifies which adopted device to manage. Destroying this resource removes it from Terraform state but does not forget the device from the controller.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_device/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Devices can be imported using their ID:
+
+```shell
+terraform import unifi_device.example 60a1b2c3d4e5f67890123456
+```

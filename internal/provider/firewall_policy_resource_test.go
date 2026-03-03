@@ -12,20 +12,18 @@ func TestAccFirewallPolicyResource_basic(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create and Read
 			{
-				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy", "ALLOW", 4000),
+				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy", "ALLOW"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "action", "ALLOW"),
-					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "index", "4000"),
+					resource.TestCheckResourceAttrSet("unifi_firewall_policy.test", "index"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "protocol", "all"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "ip_version", "BOTH"),
 					resource.TestCheckResourceAttrSet("unifi_firewall_policy.test", "id"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -40,15 +38,13 @@ func TestAccFirewallPolicyResource_block(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create block policy
 			{
-				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy-block", "BLOCK", 4001),
+				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy-block", "BLOCK"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-block"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "action", "BLOCK"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -63,20 +59,18 @@ func TestAccFirewallPolicyResource_full(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create with all options
 			{
-				Config: testAccFirewallPolicyResourceConfig_full("tf-acc-test-policy-full", 4002),
+				Config: testAccFirewallPolicyResourceConfig_full("tf-acc-test-policy-full"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-full"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "action", "ALLOW"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "protocol", "tcp"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "ip_version", "IPV4"),
-					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "index", "4002"),
+					resource.TestCheckResourceAttrSet("unifi_firewall_policy.test", "index"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "logging", "true"),
 					resource.TestCheckResourceAttrSet("unifi_firewall_policy.test", "id"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -91,17 +85,15 @@ func TestAccFirewallPolicyResource_update(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create
 			{
-				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy-update", "ALLOW", 4003),
+				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy-update", "ALLOW"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-update"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "action", "ALLOW"),
 				),
 			},
-			// Update - change action and name
 			{
-				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy-updated", "BLOCK", 4003),
+				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy-updated", "BLOCK"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-updated"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "action", "BLOCK"),
@@ -116,15 +108,13 @@ func TestAccFirewallPolicyResource_disabled(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create disabled policy
 			{
-				Config: testAccFirewallPolicyResourceConfig_disabled("tf-acc-test-policy-disabled", 4004),
+				Config: testAccFirewallPolicyResourceConfig_disabled("tf-acc-test-policy-disabled"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-disabled"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "enabled", "false"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -139,15 +129,13 @@ func TestAccFirewallPolicyResource_tcp(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create TCP policy
 			{
-				Config: testAccFirewallPolicyResourceConfig_protocol("tf-acc-test-policy-tcp", "tcp", 4005),
+				Config: testAccFirewallPolicyResourceConfig_protocol("tf-acc-test-policy-tcp", "tcp"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-tcp"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "protocol", "tcp"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -162,15 +150,13 @@ func TestAccFirewallPolicyResource_udp(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create UDP policy
 			{
-				Config: testAccFirewallPolicyResourceConfig_protocol("tf-acc-test-policy-udp", "udp", 4006),
+				Config: testAccFirewallPolicyResourceConfig_protocol("tf-acc-test-policy-udp", "udp"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-udp"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "protocol", "udp"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -185,15 +171,13 @@ func TestAccFirewallPolicyResource_ipv4Only(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create IPv4-only policy
 			{
-				Config: testAccFirewallPolicyResourceConfig_ipVersion("tf-acc-test-policy-ipv4", "IPV4", 4007),
+				Config: testAccFirewallPolicyResourceConfig_ipVersion("tf-acc-test-policy-ipv4", "IPV4"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-ipv4"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "ip_version", "IPV4"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -208,15 +192,13 @@ func TestAccFirewallPolicyResource_ipv6Only(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create IPv6-only policy
 			{
-				Config: testAccFirewallPolicyResourceConfig_ipVersion("tf-acc-test-policy-ipv6", "IPV6", 4008),
+				Config: testAccFirewallPolicyResourceConfig_ipVersion("tf-acc-test-policy-ipv6", "IPV6"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-ipv6"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "ip_version", "IPV6"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -231,9 +213,8 @@ func TestAccFirewallPolicyResource_withSource(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create with source
 			{
-				Config: testAccFirewallPolicyResourceConfig_withSource("tf-acc-test-policy-src", 4009, "10.0.0.0/24"),
+				Config: testAccFirewallPolicyResourceConfig_withSource("tf-acc-test-policy-src", "10.0.0.0/24"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-src"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "source.matching_target", "IP"),
@@ -241,7 +222,6 @@ func TestAccFirewallPolicyResource_withSource(t *testing.T) {
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "source.ips.0", "10.0.0.0/24"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -256,9 +236,8 @@ func TestAccFirewallPolicyResource_withDestination(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create with destination
 			{
-				Config: testAccFirewallPolicyResourceConfig_withDestination("tf-acc-test-policy-dst", 4010, "192.168.1.0/24"),
+				Config: testAccFirewallPolicyResourceConfig_withDestination("tf-acc-test-policy-dst", "192.168.1.0/24"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-dst"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.matching_target", "IP"),
@@ -266,7 +245,6 @@ func TestAccFirewallPolicyResource_withDestination(t *testing.T) {
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.ips.0", "192.168.1.0/24"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -281,15 +259,13 @@ func TestAccFirewallPolicyResource_withPort(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create with destination port
 			{
-				Config: testAccFirewallPolicyResourceConfig_withPort("tf-acc-test-policy-port", 4011, "443"),
+				Config: testAccFirewallPolicyResourceConfig_withPort("tf-acc-test-policy-port", "443"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-port"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.port", "443"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -304,9 +280,8 @@ func TestAccFirewallPolicyResource_defaults(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create with minimal config to verify defaults
 			{
-				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy-defaults", "ALLOW", 4012),
+				Config: testAccFirewallPolicyResourceConfig_basic("tf-acc-test-policy-defaults", "ALLOW"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "protocol", "all"),
@@ -314,6 +289,10 @@ func TestAccFirewallPolicyResource_defaults(t *testing.T) {
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "logging", "false"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "connection_state_type", "ALL"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "match_ipsec", "false"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "icmp_typename", "ANY"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "icmpv6_typename", "ANY"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "source.matching_target", "ANY"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.matching_target", "ANY"),
 				),
 			},
 		},
@@ -325,16 +304,14 @@ func TestAccFirewallPolicyResource_withZones(t *testing.T) {
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create policy with zones
 			{
-				Config: testAccFirewallPolicyResourceConfig_withZones("tf-acc-test-policy-zones", 4013),
+				Config: testAccFirewallPolicyResourceConfig_withZones("tf-acc-test-policy-zones"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "name", "tf-acc-test-policy-zones"),
 					resource.TestCheckResourceAttrSet("unifi_firewall_policy.test", "source.zone_id"),
 					resource.TestCheckResourceAttrSet("unifi_firewall_policy.test", "destination.zone_id"),
 				),
 			},
-			// ImportState
 			{
 				ResourceName:      "unifi_firewall_policy.test",
 				ImportState:       true,
@@ -344,7 +321,7 @@ func TestAccFirewallPolicyResource_withZones(t *testing.T) {
 	})
 }
 
-func testAccFirewallPolicyResourceConfig_basic(name, action string, index int) string {
+func testAccFirewallPolicyResourceConfig_basic(name, action string) string {
 	return fmt.Sprintf(`
 %s
 
@@ -359,7 +336,6 @@ resource "unifi_firewall_zone" "dst" {
 resource "unifi_firewall_policy" "test" {
   name   = %q
   action = %q
-  index  = %d
 
   source = {
     zone_id = unifi_firewall_zone.src.id
@@ -369,10 +345,10 @@ resource "unifi_firewall_policy" "test" {
     zone_id = unifi_firewall_zone.dst.id
   }
 }
-`, testAccProviderConfig, name, name, name, action, index)
+`, testAccProviderConfig, name, name, name, action)
 }
 
-func testAccFirewallPolicyResourceConfig_full(name string, index int) string {
+func testAccFirewallPolicyResourceConfig_full(name string) string {
 	return fmt.Sprintf(`
 %s
 
@@ -387,7 +363,6 @@ resource "unifi_firewall_zone" "dst" {
 resource "unifi_firewall_policy" "test" {
   name       = %q
   action     = "ALLOW"
-  index      = %d
   protocol   = "tcp"
   ip_version = "IPV4"
   logging    = true
@@ -401,10 +376,10 @@ resource "unifi_firewall_policy" "test" {
     zone_id = unifi_firewall_zone.dst.id
   }
 }
-`, testAccProviderConfig, name, name, name, index)
+`, testAccProviderConfig, name, name, name)
 }
 
-func testAccFirewallPolicyResourceConfig_disabled(name string, index int) string {
+func testAccFirewallPolicyResourceConfig_disabled(name string) string {
 	return fmt.Sprintf(`
 %s
 
@@ -419,7 +394,6 @@ resource "unifi_firewall_zone" "dst" {
 resource "unifi_firewall_policy" "test" {
   name    = %q
   action  = "ALLOW"
-  index   = %d
   enabled = false
 
   source = {
@@ -430,10 +404,10 @@ resource "unifi_firewall_policy" "test" {
     zone_id = unifi_firewall_zone.dst.id
   }
 }
-`, testAccProviderConfig, name, name, name, index)
+`, testAccProviderConfig, name, name, name)
 }
 
-func testAccFirewallPolicyResourceConfig_protocol(name, protocol string, index int) string {
+func testAccFirewallPolicyResourceConfig_protocol(name, protocol string) string {
 	return fmt.Sprintf(`
 %s
 
@@ -448,7 +422,6 @@ resource "unifi_firewall_zone" "dst" {
 resource "unifi_firewall_policy" "test" {
   name     = %q
   action   = "ALLOW"
-  index    = %d
   protocol = %q
 
   source = {
@@ -459,10 +432,10 @@ resource "unifi_firewall_policy" "test" {
     zone_id = unifi_firewall_zone.dst.id
   }
 }
-`, testAccProviderConfig, name, name, name, index, protocol)
+`, testAccProviderConfig, name, name, name, protocol)
 }
 
-func testAccFirewallPolicyResourceConfig_ipVersion(name, ipVersion string, index int) string {
+func testAccFirewallPolicyResourceConfig_ipVersion(name, ipVersion string) string {
 	return fmt.Sprintf(`
 %s
 
@@ -477,7 +450,6 @@ resource "unifi_firewall_zone" "dst" {
 resource "unifi_firewall_policy" "test" {
   name       = %q
   action     = "ALLOW"
-  index      = %d
   ip_version = %q
 
   source = {
@@ -488,10 +460,10 @@ resource "unifi_firewall_policy" "test" {
     zone_id = unifi_firewall_zone.dst.id
   }
 }
-`, testAccProviderConfig, name, name, name, index, ipVersion)
+`, testAccProviderConfig, name, name, name, ipVersion)
 }
 
-func testAccFirewallPolicyResourceConfig_withSource(name string, index int, sourceIP string) string {
+func testAccFirewallPolicyResourceConfig_withSource(name string, sourceIP string) string {
 	return fmt.Sprintf(`
 %s
 
@@ -506,7 +478,6 @@ resource "unifi_firewall_zone" "dst" {
 resource "unifi_firewall_policy" "test" {
   name   = %q
   action = "ALLOW"
-  index  = %d
 
   source = {
     zone_id         = unifi_firewall_zone.src.id
@@ -518,10 +489,10 @@ resource "unifi_firewall_policy" "test" {
     zone_id = unifi_firewall_zone.dst.id
   }
 }
-`, testAccProviderConfig, name, name, name, index, sourceIP)
+`, testAccProviderConfig, name, name, name, sourceIP)
 }
 
-func testAccFirewallPolicyResourceConfig_withDestination(name string, index int, destIP string) string {
+func testAccFirewallPolicyResourceConfig_withDestination(name string, destIP string) string {
 	return fmt.Sprintf(`
 %s
 
@@ -536,7 +507,6 @@ resource "unifi_firewall_zone" "dst" {
 resource "unifi_firewall_policy" "test" {
   name   = %q
   action = "ALLOW"
-  index  = %d
 
   source = {
     zone_id = unifi_firewall_zone.src.id
@@ -548,10 +518,10 @@ resource "unifi_firewall_policy" "test" {
     ips             = [%q]
   }
 }
-`, testAccProviderConfig, name, name, name, index, destIP)
+`, testAccProviderConfig, name, name, name, destIP)
 }
 
-func testAccFirewallPolicyResourceConfig_withPort(name string, index int, port string) string {
+func testAccFirewallPolicyResourceConfig_withPort(name string, port string) string {
 	return fmt.Sprintf(`
 %s
 
@@ -566,7 +536,6 @@ resource "unifi_firewall_zone" "dst" {
 resource "unifi_firewall_policy" "test" {
   name     = %q
   action   = "ALLOW"
-  index    = %d
   protocol = "tcp"
 
   source = {
@@ -578,10 +547,10 @@ resource "unifi_firewall_policy" "test" {
     port    = %q
   }
 }
-`, testAccProviderConfig, name, name, name, index, port)
+`, testAccProviderConfig, name, name, name, port)
 }
 
-func testAccFirewallPolicyResourceConfig_withZones(name string, index int) string {
+func testAccFirewallPolicyResourceConfig_withZones(name string) string {
 	return fmt.Sprintf(`
 %s
 
@@ -596,7 +565,6 @@ resource "unifi_firewall_zone" "destination" {
 resource "unifi_firewall_policy" "test" {
   name   = %q
   action = "ALLOW"
-  index  = %d
 
   source = {
     zone_id = unifi_firewall_zone.source.id
@@ -606,5 +574,5 @@ resource "unifi_firewall_policy" "test" {
     zone_id = unifi_firewall_zone.destination.id
   }
 }
-`, testAccProviderConfig, name, name, name, index)
+`, testAccProviderConfig, name, name, name)
 }

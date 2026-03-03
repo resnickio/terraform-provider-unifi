@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages UniFi content filtering configuration.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages UniFi content filtering configuration. This is a singleton resource — one per site. Destroying resets to defaults (disabled).
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_content_filtering/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}

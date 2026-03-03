@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -122,8 +124,12 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 				},
 			},
 			"index": schema.Int64Attribute{
-				Description: "The index/priority of the policy (lower numbers are evaluated first).",
-				Required:    true,
+				Description: "The index/priority of the policy (lower numbers are evaluated first). The controller may reassign this value.",
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
 			"logging": schema.BoolAttribute{
 				Description: "Whether to log matching packets. Defaults to false.",
@@ -152,12 +158,16 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Default:     booldefault.StaticBool(false),
 			},
 			"icmp_typename": schema.StringAttribute{
-				Description: "ICMP type name (for ICMP protocol).",
+				Description: "ICMP type name (for ICMP protocol). Defaults to 'ANY'.",
 				Optional:    true,
+				Computed:    true,
+				Default:     stringdefault.StaticString("ANY"),
 			},
 			"icmpv6_typename": schema.StringAttribute{
-				Description: "ICMPv6 type name (for ICMPv6 protocol).",
+				Description: "ICMPv6 type name (for ICMPv6 protocol). Defaults to 'ANY'.",
 				Optional:    true,
+				Computed:    true,
+				Default:     stringdefault.StaticString("ANY"),
 			},
 			"source": schema.SingleNestedAttribute{
 				Description: "Source matching criteria.",
@@ -168,8 +178,10 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 					},
 					"matching_target": schema.StringAttribute{
-						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'.",
+						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Defaults to 'ANY'.",
 						Optional:    true,
+						Computed:    true,
+						Default:     stringdefault.StaticString("ANY"),
 					},
 					"ips": schema.SetAttribute{
 						Description: "Set of IP addresses or CIDR ranges to match.",
@@ -204,8 +216,10 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 					},
 					"matching_target": schema.StringAttribute{
-						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'.",
+						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Defaults to 'ANY'.",
 						Optional:    true,
+						Computed:    true,
+						Default:     stringdefault.StaticString("ANY"),
 					},
 					"ips": schema.SetAttribute{
 						Description: "Set of IP addresses or CIDR ranges to match.",
@@ -234,6 +248,10 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 			"schedule": schema.SingleNestedAttribute{
 				Description: "Schedule configuration for when the policy is active.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
 				Attributes: map[string]schema.Attribute{
 					"mode": schema.StringAttribute{
 						Description: "Schedule mode. Valid values: 'ALWAYS', 'CUSTOM'.",
@@ -586,13 +604,13 @@ func (r *FirewallPolicyResource) sdkToState(ctx context.Context, policy *unifi.F
 	if policy.ICMPTypename != "" {
 		state.ICMPTypename = types.StringValue(policy.ICMPTypename)
 	} else {
-		state.ICMPTypename = types.StringNull()
+		state.ICMPTypename = types.StringValue("ANY")
 	}
 
 	if policy.ICMPV6Typename != "" {
 		state.ICMPV6Typename = types.StringValue(policy.ICMPV6Typename)
 	} else {
-		state.ICMPV6Typename = types.StringNull()
+		state.ICMPV6Typename = types.StringValue("ANY")
 	}
 
 	if policy.Source != nil {
@@ -658,9 +676,14 @@ func (r *FirewallPolicyResource) endpointToObject(ctx context.Context, endpoint 
 		clientMacsVal = types.SetNull(types.StringType)
 	}
 
+	matchingTarget := endpoint.MatchingTarget
+	if matchingTarget == "" {
+		matchingTarget = "ANY"
+	}
+
 	attrs := map[string]attr.Value{
 		"zone_id":         stringValueOrNull(endpoint.ZoneID),
-		"matching_target": stringValueOrNull(endpoint.MatchingTarget),
+		"matching_target": types.StringValue(matchingTarget),
 		"ips":             ipsVal,
 		"mac":             stringValueOrNull(endpoint.MAC),
 		"port":            stringValueOrNull(endpoint.Port),

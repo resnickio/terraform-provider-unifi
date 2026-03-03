@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Retrieves UniFi content filtering configuration.
+---
+
+# {{.Name}} ({{.Type}})
+
+Retrieves the current content filtering configuration for the site. Read-only.
+
+## Example Usage
+
+{{tffile "examples/data-sources/unifi_content_filtering/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}

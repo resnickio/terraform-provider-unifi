@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Look up an active (connected) UniFi client.
+---
+
+# {{.Name}} ({{.Type}})
+
+Look up an active (currently connected) UniFi network client by MAC address or display name.
+
+## Example Usage
+
+{{tffile "examples/data-sources/unifi_active_client/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}

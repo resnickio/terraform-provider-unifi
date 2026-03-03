@@ -211,7 +211,10 @@ func (p *UnifiProvider) Configure(ctx context.Context, req provider.ConfigureReq
 
 func (p *UnifiProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		NewAccountResource,
+		NewContentFilteringResource,
 		NewDevicePortOverrideResource,
+		NewDeviceResource,
 		NewDynamicDNSResource,
 		NewFirewallGroupResource,
 		NewFirewallPolicyResource,
@@ -222,6 +225,15 @@ func (p *UnifiProvider) Resources(ctx context.Context) []func() resource.Resourc
 		NewPortForwardResource,
 		NewPortProfileResource,
 		NewRADIUSProfileResource,
+		NewSettingGuestAccessResource,
+		NewSettingIPSResource,
+		NewSettingMagicSiteToSiteVPNResource,
+		NewSettingMgmtResource,
+		NewSettingRadiusResource,
+		NewSettingSNMPResource,
+		NewSettingTeleportResource,
+		NewSettingUSGResource,
+		NewSiteResource,
 		NewStaticDNSResource,
 		NewStaticRouteResource,
 		NewTrafficRouteResource,
@@ -234,6 +246,13 @@ func (p *UnifiProvider) Resources(ctx context.Context) []func() resource.Resourc
 
 func (p *UnifiProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewAccountDataSource,
+		NewAclRuleDataSource,
+		NewActiveClientDataSource,
+		NewAdminDataSource,
+		NewAPGroupDataSource,
+		NewBackupDataSource,
+		NewContentFilteringDataSource,
 		NewDeviceDataSource,
 		NewDynamicDNSDataSource,
 		NewFirewallGroupDataSource,
@@ -245,12 +264,16 @@ func (p *UnifiProvider) DataSources(ctx context.Context) []func() datasource.Dat
 		NewPortForwardDataSource,
 		NewPortProfileDataSource,
 		NewRADIUSProfileDataSource,
+		NewSiteDataSource,
 		NewStaticDNSDataSource,
 		NewStaticRouteDataSource,
 		NewTrafficRouteDataSource,
 		NewTrafficRuleDataSource,
 		NewUserGroupDataSource,
 		NewUserDataSource,
+		NewVpnConnectionDataSource,
+		NewWanSlaDataSource,
 		NewWLANDataSource,
+		NewQosRuleDataSource,
 	}
 }

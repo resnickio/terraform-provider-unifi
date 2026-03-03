@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Look up a UniFi controller admin by ID or name.
+---
+
+# {{.Name}} ({{.Type}})
+
+Look up a UniFi controller admin by ID or name. Read-only.
+
+## Example Usage
+
+{{tffile "examples/data-sources/unifi_admin/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}

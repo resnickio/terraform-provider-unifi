@@ -107,6 +107,16 @@ func init() {
 		Name: "unifi_device_port_override",
 		F:    sweepDevicePortOverrides,
 	})
+
+	resource.AddTestSweepers("unifi_account", &resource.Sweeper{
+		Name: "unifi_account",
+		F:    sweepAccounts,
+	})
+
+	resource.AddTestSweepers("unifi_site", &resource.Sweeper{
+		Name: "unifi_site",
+		F:    sweepSites,
+	})
 }
 
 func getSweeperClient() (*unifi.NetworkClient, error) {
@@ -563,6 +573,52 @@ func sweepDevicePortOverrides(region string) error {
 		if changed {
 			device.PortOverrides = cleaned
 			if _, err := client.UpdateDevice(ctx, device.ID, device); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepAccounts(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	accounts, err := client.ListRADIUSAccounts(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, account := range accounts {
+		if strings.HasPrefix(account.Name, testResourcePrefix) {
+			if err := client.DeleteRADIUSAccount(ctx, account.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sweepSites(region string) error {
+	client, err := getSweeperClient()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	sites, err := client.ListSites(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, site := range sites {
+		if strings.HasPrefix(site.Desc, testResourcePrefix) {
+			if err := client.DeleteSite(ctx, site.ID); err != nil {
 				return err
 			}
 		}

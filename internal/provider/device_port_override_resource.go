@@ -30,27 +30,27 @@ type DevicePortOverrideResource struct {
 }
 
 type DevicePortOverrideResourceModel struct {
-	ID                    types.String `tfsdk:"id"`
-	DeviceID              types.String `tfsdk:"device_id"`
-	MAC                   types.String `tfsdk:"mac"`
-	PortIdx               types.Int64  `tfsdk:"port_idx"`
-	Name                  types.String `tfsdk:"name"`
-	PortProfileID         types.String `tfsdk:"port_profile_id"`
-	PoeMode               types.String `tfsdk:"poe_mode"`
-	OpMode                types.String `tfsdk:"op_mode"`
-	AggregateMembers      types.Set    `tfsdk:"aggregate_members"`
-	NativeNetworkID       types.String `tfsdk:"native_network_id"`
-	TaggedNetworkIDs      types.Set    `tfsdk:"tagged_network_ids"`
-	ExcludedNetworkIDs    types.Set    `tfsdk:"excluded_network_ids"`
-	VoiceNetworkID        types.String `tfsdk:"voice_network_id"`
-	Autoneg               types.Bool   `tfsdk:"autoneg"`
-	Speed                 types.Int64  `tfsdk:"speed"`
-	FullDuplex            types.Bool   `tfsdk:"full_duplex"`
-	Isolation             types.Bool   `tfsdk:"isolation"`
-	StpPortMode           types.Bool   `tfsdk:"stp_port_mode"`
-	EgressRateLimitKbps   types.Int64  `tfsdk:"egress_rate_limit_kbps"`
-	PortSecurityEnabled   types.Bool   `tfsdk:"port_security_enabled"`
-	PortSecurityMacAddresses types.Set `tfsdk:"port_security_mac_addresses"`
+	ID                       types.String `tfsdk:"id"`
+	DeviceID                 types.String `tfsdk:"device_id"`
+	MAC                      types.String `tfsdk:"mac"`
+	PortIdx                  types.Int64  `tfsdk:"port_idx"`
+	Name                     types.String `tfsdk:"name"`
+	PortProfileID            types.String `tfsdk:"port_profile_id"`
+	PoeMode                  types.String `tfsdk:"poe_mode"`
+	OpMode                   types.String `tfsdk:"op_mode"`
+	AggregateMembers         types.Set    `tfsdk:"aggregate_members"`
+	NativeNetworkID          types.String `tfsdk:"native_network_id"`
+	TaggedNetworkIDs         types.Set    `tfsdk:"tagged_network_ids"`
+	ExcludedNetworkIDs       types.Set    `tfsdk:"excluded_network_ids"`
+	VoiceNetworkID           types.String `tfsdk:"voice_network_id"`
+	Autoneg                  types.Bool   `tfsdk:"autoneg"`
+	Speed                    types.Int64  `tfsdk:"speed"`
+	FullDuplex               types.Bool   `tfsdk:"full_duplex"`
+	Isolation                types.Bool   `tfsdk:"isolation"`
+	StpPortMode              types.Bool   `tfsdk:"stp_port_mode"`
+	EgressRateLimitKbps      types.Int64  `tfsdk:"egress_rate_limit_kbps"`
+	PortSecurityEnabled      types.Bool   `tfsdk:"port_security_enabled"`
+	PortSecurityMacAddresses types.Set    `tfsdk:"port_security_mac_addresses"`
 }
 
 func NewDevicePortOverrideResource() resource.Resource {

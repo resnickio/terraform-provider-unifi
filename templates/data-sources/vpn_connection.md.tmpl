@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Look up a UniFi VPN connection.
+---
+
+# {{.Name}} ({{.Type}})
+
+Look up an existing VPN connection by ID or name. Read-only.
+
+## Example Usage
+
+{{tffile "examples/data-sources/unifi_vpn_connection/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}

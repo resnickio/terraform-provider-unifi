@@ -1,0 +1,26 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Manages UniFi site RADIUS server settings.
+---
+
+# {{.Name}} ({{.Type}})
+
+Manages UniFi site RADIUS server settings. This is a singleton resource — one per site. Destroying resets to defaults.
+
+~> **Note:** The `x_secret` attribute is write-only. After import, you must re-apply to set the secret.
+
+## Example Usage
+
+{{tffile "examples/resources/unifi_setting_radius/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+RADIUS settings can be imported using the setting ID:
+
+```shell
+terraform import unifi_setting_radius.example 60a1b2c3d4e5f67890123456
+```

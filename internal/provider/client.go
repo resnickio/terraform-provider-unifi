@@ -952,3 +952,423 @@ func (c *AutoLoginClient) DeleteUser(ctx context.Context, id string) error {
 		return c.client.DeleteUser(ctx, id)
 	})
 }
+
+// Device operations (extended)
+
+func (c *AutoLoginClient) GetDevice(ctx context.Context, id string) (*unifi.DeviceConfig, error) {
+	var result *unifi.DeviceConfig
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetDevice(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) ForgetDevice(ctx context.Context, mac string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.ForgetDevice(ctx, mac)
+	})
+}
+
+// Site operations
+
+func (c *AutoLoginClient) ListSites(ctx context.Context) ([]unifi.NetworkSite, error) {
+	var result []unifi.NetworkSite
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListSites(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetSite(ctx context.Context, id string) (*unifi.NetworkSite, error) {
+	var result *unifi.NetworkSite
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetSite(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreateSite(ctx context.Context, desc string) (*unifi.NetworkSite, error) {
+	var result *unifi.NetworkSite
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreateSite(ctx, desc)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateSite(ctx context.Context, siteName, desc string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.UpdateSite(ctx, siteName, desc)
+	})
+}
+
+func (c *AutoLoginClient) DeleteSite(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteSite(ctx, id)
+	})
+}
+
+// RADIUS Account operations
+
+func (c *AutoLoginClient) ListRADIUSAccounts(ctx context.Context) ([]unifi.RADIUSAccount, error) {
+	var result []unifi.RADIUSAccount
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListRADIUSAccounts(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetRADIUSAccount(ctx context.Context, id string) (*unifi.RADIUSAccount, error) {
+	var result *unifi.RADIUSAccount
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetRADIUSAccount(ctx, id)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) CreateRADIUSAccount(ctx context.Context, account *unifi.RADIUSAccount) (*unifi.RADIUSAccount, error) {
+	var result *unifi.RADIUSAccount
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.CreateRADIUSAccount(ctx, account)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateRADIUSAccount(ctx context.Context, id string, account *unifi.RADIUSAccount) (*unifi.RADIUSAccount, error) {
+	var result *unifi.RADIUSAccount
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateRADIUSAccount(ctx, id, account)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) DeleteRADIUSAccount(ctx context.Context, id string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteRADIUSAccount(ctx, id)
+	})
+}
+
+// Settings operations
+
+func (c *AutoLoginClient) GetSettingMgmt(ctx context.Context) (*unifi.SettingMgmt, error) {
+	var result *unifi.SettingMgmt
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetSettingMgmt(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateSettingMgmt(ctx context.Context, setting *unifi.SettingMgmt) (*unifi.SettingMgmt, error) {
+	var result *unifi.SettingMgmt
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateSettingMgmt(ctx, setting)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetSettingRadius(ctx context.Context) (*unifi.SettingRadius, error) {
+	var result *unifi.SettingRadius
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetSettingRadius(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateSettingRadius(ctx context.Context, setting *unifi.SettingRadius) (*unifi.SettingRadius, error) {
+	var result *unifi.SettingRadius
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateSettingRadius(ctx, setting)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetSettingUSG(ctx context.Context) (*unifi.SettingUSG, error) {
+	var result *unifi.SettingUSG
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetSettingUSG(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateSettingUSG(ctx context.Context, setting *unifi.SettingUSG) (*unifi.SettingUSG, error) {
+	var result *unifi.SettingUSG
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateSettingUSG(ctx, setting)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) ListActiveClients(ctx context.Context) ([]unifi.Client, error) {
+	var result []unifi.Client
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListActiveClients(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) ListAclRules(ctx context.Context) ([]unifi.AclRule, error) {
+	var result []unifi.AclRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListAclRules(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) ListQosRules(ctx context.Context) ([]unifi.QosRule, error) {
+	var result []unifi.QosRule
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListQosRules(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) GetContentFiltering(ctx context.Context) (*unifi.ContentFiltering, error) {
+	var result *unifi.ContentFiltering
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetContentFiltering(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) ListVpnConnections(ctx context.Context) ([]unifi.VpnConnection, error) {
+	var result []unifi.VpnConnection
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListVpnConnections(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) ListWanSlas(ctx context.Context) ([]unifi.WanSla, error) {
+	var result []unifi.WanSla
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListWanSlas(ctx)
+		return err
+	})
+	return result, err
+}
+
+// Setting SNMP operations
+
+func (c *AutoLoginClient) GetSettingSNMP(ctx context.Context) (*unifi.SettingSNMP, error) {
+	var result *unifi.SettingSNMP
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetSettingSNMP(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateSettingSNMP(ctx context.Context, setting *unifi.SettingSNMP) (*unifi.SettingSNMP, error) {
+	var result *unifi.SettingSNMP
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateSettingSNMP(ctx, setting)
+		return err
+	})
+	return result, err
+}
+
+// Setting IPS operations
+
+func (c *AutoLoginClient) GetSettingIPS(ctx context.Context) (*unifi.SettingIPS, error) {
+	var result *unifi.SettingIPS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetSettingIPS(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateSettingIPS(ctx context.Context, setting *unifi.SettingIPS) (*unifi.SettingIPS, error) {
+	var result *unifi.SettingIPS
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateSettingIPS(ctx, setting)
+		return err
+	})
+	return result, err
+}
+
+// Setting Guest Access operations
+
+func (c *AutoLoginClient) GetSettingGuestAccess(ctx context.Context) (*unifi.SettingGuestAccess, error) {
+	var result *unifi.SettingGuestAccess
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetSettingGuestAccess(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateSettingGuestAccess(ctx context.Context, setting *unifi.SettingGuestAccess) (*unifi.SettingGuestAccess, error) {
+	var result *unifi.SettingGuestAccess
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateSettingGuestAccess(ctx, setting)
+		return err
+	})
+	return result, err
+}
+
+// Setting Teleport operations
+
+func (c *AutoLoginClient) GetSettingTeleport(ctx context.Context) (*unifi.SettingTeleport, error) {
+	var result *unifi.SettingTeleport
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetSettingTeleport(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateSettingTeleport(ctx context.Context, setting *unifi.SettingTeleport) (*unifi.SettingTeleport, error) {
+	var result *unifi.SettingTeleport
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateSettingTeleport(ctx, setting)
+		return err
+	})
+	return result, err
+}
+
+// Setting Magic Site-to-Site VPN operations
+
+func (c *AutoLoginClient) GetSettingMagicSiteToSiteVPN(ctx context.Context) (*unifi.SettingMagicSiteToSiteVPN, error) {
+	var result *unifi.SettingMagicSiteToSiteVPN
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.GetSettingMagicSiteToSiteVPN(ctx)
+		return err
+	})
+	return result, err
+}
+
+func (c *AutoLoginClient) UpdateSettingMagicSiteToSiteVPN(ctx context.Context, setting *unifi.SettingMagicSiteToSiteVPN) (*unifi.SettingMagicSiteToSiteVPN, error) {
+	var result *unifi.SettingMagicSiteToSiteVPN
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateSettingMagicSiteToSiteVPN(ctx, setting)
+		return err
+	})
+	return result, err
+}
+
+// Content Filtering update operation
+
+func (c *AutoLoginClient) UpdateContentFiltering(ctx context.Context, config *unifi.ContentFiltering) (*unifi.ContentFiltering, error) {
+	var result *unifi.ContentFiltering
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.UpdateContentFiltering(ctx, config)
+		return err
+	})
+	return result, err
+}
+
+// Backup operations
+
+func (c *AutoLoginClient) ListBackups(ctx context.Context) ([]unifi.Backup, error) {
+	var result []unifi.Backup
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListBackups(ctx)
+		return err
+	})
+	return result, err
+}
+
+// Admin operations
+
+func (c *AutoLoginClient) ListAdmins(ctx context.Context) ([]unifi.Admin, error) {
+	var result []unifi.Admin
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.ListAdmins(ctx)
+		return err
+	})
+	return result, err
+}
+
+// Auth operations
+
+func (c *AutoLoginClient) Login(ctx context.Context) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.Login(ctx)
+	})
+}
+
+func (c *AutoLoginClient) Logout(ctx context.Context) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.Logout(ctx)
+	})
+}
+
+func (c *AutoLoginClient) HasLocalSession() bool {
+	return c.client.HasLocalSession()
+}
+
+// Backup mutation operations
+
+func (c *AutoLoginClient) CreateBackup(ctx context.Context) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.CreateBackup(ctx)
+	})
+}
+
+func (c *AutoLoginClient) DeleteBackup(ctx context.Context, filename string) error {
+	return c.withRetry(ctx, func() error {
+		return c.client.DeleteBackup(ctx, filename)
+	})
+}
+
+func (c *AutoLoginClient) DownloadBackup(ctx context.Context, filename string) ([]byte, error) {
+	var result []byte
+	err := c.withRetry(ctx, func() error {
+		var err error
+		result, err = c.client.DownloadBackup(ctx, filename)
+		return err
+	})
+	return result, err
+}

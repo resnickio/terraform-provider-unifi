@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Lists available backups on the UniFi controller.
+---
+
+# {{.Name}} ({{.Type}})
+
+Lists all available backups on the UniFi controller. Read-only.
+
+## Example Usage
+
+{{tffile "examples/data-sources/unifi_backup/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}

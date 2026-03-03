@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Look up a UniFi QoS rule.
+---
+
+# {{.Name}} ({{.Type}})
+
+Look up an existing QoS rule by ID or name. Read-only.
+
+## Example Usage
+
+{{tffile "examples/data-sources/unifi_qos_rule/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
