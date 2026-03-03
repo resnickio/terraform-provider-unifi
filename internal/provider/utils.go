@@ -152,6 +152,18 @@ func derefInt(i *int) int64 {
 	return int64(*i)
 }
 
+func flexIntPtr(i int64) *unifi.FlexInt {
+	v := unifi.FlexInt(i)
+	return &v
+}
+
+func derefFlexInt(i *unifi.FlexInt) int64 {
+	if i == nil {
+		return 0
+	}
+	return int64(*i)
+}
+
 func derefBool(b *bool) bool {
 	if b == nil {
 		return false

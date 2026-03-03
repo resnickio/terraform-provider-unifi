@@ -619,7 +619,15 @@ func (r *PortProfileResource) sdkToState(ctx context.Context, profile *unifi.Por
 	state.TaggedVlanMgmt = stringValueOrNull(profile.TaggedVlanMgmt)
 
 	if len(profile.ExcludedNetworkconfIDs) > 0 {
-		excludedIDs, d := types.SetValueFrom(ctx, types.StringType, profile.ExcludedNetworkconfIDs)
+		seen := make(map[string]bool)
+		var unique []string
+		for _, id := range profile.ExcludedNetworkconfIDs {
+			if !seen[id] {
+				unique = append(unique, id)
+				seen[id] = true
+			}
+		}
+		excludedIDs, d := types.SetValueFrom(ctx, types.StringType, unique)
 		diags.Append(d...)
 		state.ExcludedNetworkIDs = excludedIDs
 	} else {

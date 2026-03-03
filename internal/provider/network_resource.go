@@ -37,27 +37,27 @@ var (
 )
 
 var ipv6AttrTypes = map[string]attr.Type{
-	"interface_type":             types.StringType,
-	"setting_preference":         types.StringType,
-	"wan_delegation_type":        types.StringType,
-	"subnet":                     types.StringType,
-	"client_address_assignment":  types.StringType,
-	"pd_interface":               types.StringType,
-	"pd_prefixid":                types.StringType,
-	"pd_start":                   types.StringType,
-	"pd_stop":                    types.StringType,
-	"pd_auto_prefixid_enabled":   types.BoolType,
-	"ra_enabled":                 types.BoolType,
-	"ra_preferred_lifetime":      types.Int64Type,
-	"ra_priority":                types.StringType,
-	"ra_valid_lifetime":          types.Int64Type,
-	"dhcpv6_enabled":             types.BoolType,
-	"dhcpv6_start":               types.StringType,
-	"dhcpv6_stop":                types.StringType,
-	"dhcpv6_lease_time":          types.Int64Type,
-	"dhcpv6_dns_auto":            types.BoolType,
-	"dhcpv6_dns":                 types.ListType{ElemType: types.StringType},
-	"dhcpv6_allow_slaac":         types.BoolType,
+	"interface_type":            types.StringType,
+	"setting_preference":        types.StringType,
+	"wan_delegation_type":       types.StringType,
+	"subnet":                    types.StringType,
+	"client_address_assignment": types.StringType,
+	"pd_interface":              types.StringType,
+	"pd_prefixid":               types.StringType,
+	"pd_start":                  types.StringType,
+	"pd_stop":                   types.StringType,
+	"pd_auto_prefixid_enabled":  types.BoolType,
+	"ra_enabled":                types.BoolType,
+	"ra_preferred_lifetime":     types.Int64Type,
+	"ra_priority":               types.StringType,
+	"ra_valid_lifetime":         types.Int64Type,
+	"dhcpv6_enabled":            types.BoolType,
+	"dhcpv6_start":              types.StringType,
+	"dhcpv6_stop":               types.StringType,
+	"dhcpv6_lease_time":         types.Int64Type,
+	"dhcpv6_dns_auto":           types.BoolType,
+	"dhcpv6_dns":                types.ListType{ElemType: types.StringType},
+	"dhcpv6_allow_slaac":        types.BoolType,
 }
 
 type NetworkResource struct {
@@ -73,8 +73,8 @@ type NetworkResourceModel struct {
 	Timeouts timeouts.Value `tfsdk:"timeouts"`
 
 	// VLAN
-	VlanID  types.Int64  `tfsdk:"vlan_id"`
-	Subnet  types.String `tfsdk:"subnet"`
+	VlanID types.Int64  `tfsdk:"vlan_id"`
+	Subnet types.String `tfsdk:"subnet"`
 
 	// DHCP Core
 	DHCPEnabled types.Bool   `tfsdk:"dhcp_enabled"`
@@ -1021,13 +1021,13 @@ func ipv6FromObject(ctx context.Context, obj types.Object, network *unifi.Networ
 		network.IPV6RaEnabled = boolPtr(v.ValueBool())
 	}
 	if v, ok := attrs["ra_preferred_lifetime"].(types.Int64); ok && !v.IsNull() && !v.IsUnknown() {
-		network.IPV6RaPreferredLifetime = intPtr(v.ValueInt64())
+		network.IPV6RaPreferredLifetime = flexIntPtr(v.ValueInt64())
 	}
 	if v, ok := attrs["ra_priority"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
 		network.IPV6RaPriority = v.ValueString()
 	}
 	if v, ok := attrs["ra_valid_lifetime"].(types.Int64); ok && !v.IsNull() && !v.IsUnknown() {
-		network.IPV6RaValidLifetime = intPtr(v.ValueInt64())
+		network.IPV6RaValidLifetime = flexIntPtr(v.ValueInt64())
 	}
 	if v, ok := attrs["dhcpv6_enabled"].(types.Bool); ok && !v.IsNull() && !v.IsUnknown() {
 		network.DHCPDV6Enabled = boolPtr(v.ValueBool())
@@ -1098,27 +1098,27 @@ func ipv6ToObject(ctx context.Context, network *unifi.Network) (types.Object, di
 	}
 
 	attrs := map[string]attr.Value{
-		"interface_type":             stringValueOrNull(network.IPV6InterfaceType),
-		"setting_preference":         stringValueOrNull(network.IPv6SettingPreference),
-		"wan_delegation_type":        stringValueOrNull(network.IPv6WANDelegationType),
-		"subnet":                     stringValueOrNull(network.IPV6Subnet),
-		"client_address_assignment":  stringValueOrNull(network.IPV6ClientAddressAssignment),
-		"pd_interface":               stringValueOrNull(network.IPV6PDInterface),
-		"pd_prefixid":                stringValueOrNull(network.IPV6PDPrefixid),
-		"pd_start":                   stringValueOrNull(network.IPV6PDStart),
-		"pd_stop":                    stringValueOrNull(network.IPV6PDStop),
-		"pd_auto_prefixid_enabled":   types.BoolValue(derefBool(network.IPV6PDAutoPrefixidEnabled)),
-		"ra_enabled":                 types.BoolValue(derefBool(network.IPV6RaEnabled)),
-		"ra_preferred_lifetime":      types.Int64Value(derefInt(network.IPV6RaPreferredLifetime)),
-		"ra_priority":                stringValueOrNull(network.IPV6RaPriority),
-		"ra_valid_lifetime":          types.Int64Value(derefInt(network.IPV6RaValidLifetime)),
-		"dhcpv6_enabled":             types.BoolValue(derefBool(network.DHCPDV6Enabled)),
-		"dhcpv6_start":               stringValueOrNull(network.DHCPDV6Start),
-		"dhcpv6_stop":                stringValueOrNull(network.DHCPDV6Stop),
-		"dhcpv6_lease_time":          types.Int64Value(derefInt(network.DHCPDV6LeaseTime)),
-		"dhcpv6_dns_auto":            types.BoolValue(derefBool(network.DHCPDV6DNSAuto)),
-		"dhcpv6_dns":                 dnsVal,
-		"dhcpv6_allow_slaac":         types.BoolValue(derefBool(network.DHCPDV6AllowSlaac)),
+		"interface_type":            stringValueOrNull(network.IPV6InterfaceType),
+		"setting_preference":        stringValueOrNull(network.IPv6SettingPreference),
+		"wan_delegation_type":       stringValueOrNull(network.IPv6WANDelegationType),
+		"subnet":                    stringValueOrNull(network.IPV6Subnet),
+		"client_address_assignment": stringValueOrNull(network.IPV6ClientAddressAssignment),
+		"pd_interface":              stringValueOrNull(network.IPV6PDInterface),
+		"pd_prefixid":               stringValueOrNull(network.IPV6PDPrefixid),
+		"pd_start":                  stringValueOrNull(network.IPV6PDStart),
+		"pd_stop":                   stringValueOrNull(network.IPV6PDStop),
+		"pd_auto_prefixid_enabled":  types.BoolValue(derefBool(network.IPV6PDAutoPrefixidEnabled)),
+		"ra_enabled":                types.BoolValue(derefBool(network.IPV6RaEnabled)),
+		"ra_preferred_lifetime":     types.Int64Value(derefFlexInt(network.IPV6RaPreferredLifetime)),
+		"ra_priority":               stringValueOrNull(network.IPV6RaPriority),
+		"ra_valid_lifetime":         types.Int64Value(derefFlexInt(network.IPV6RaValidLifetime)),
+		"dhcpv6_enabled":            types.BoolValue(derefBool(network.DHCPDV6Enabled)),
+		"dhcpv6_start":              stringValueOrNull(network.DHCPDV6Start),
+		"dhcpv6_stop":               stringValueOrNull(network.DHCPDV6Stop),
+		"dhcpv6_lease_time":         types.Int64Value(derefInt(network.DHCPDV6LeaseTime)),
+		"dhcpv6_dns_auto":           types.BoolValue(derefBool(network.DHCPDV6DNSAuto)),
+		"dhcpv6_dns":                dnsVal,
+		"dhcpv6_allow_slaac":        types.BoolValue(derefBool(network.DHCPDV6AllowSlaac)),
 	}
 
 	obj, d := types.ObjectValue(ipv6AttrTypes, attrs)

@@ -202,18 +202,22 @@ func (r *TrafficRuleResource) Schema(ctx context.Context, req resource.SchemaReq
 			"bandwidth_limit": schema.SingleNestedAttribute{
 				Description: "Bandwidth limit configuration.",
 				Optional:    true,
+				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"download_limit_kbps": schema.Int64Attribute{
 						Description: "Download speed limit in Kbps.",
 						Optional:    true,
+						Computed:    true,
 					},
 					"upload_limit_kbps": schema.Int64Attribute{
 						Description: "Upload speed limit in Kbps.",
 						Optional:    true,
+						Computed:    true,
 					},
 					"enabled": schema.BoolAttribute{
 						Description: "Whether bandwidth limiting is enabled.",
 						Optional:    true,
+						Computed:    true,
 					},
 				},
 			},
