@@ -124,12 +124,10 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 				},
 			},
 			"index": schema.Int64Attribute{
-				Description: "The index/priority of the policy (lower numbers are evaluated first). The controller may reassign this value.",
-				Optional:    true,
+				Description: "The index/priority of the policy, assigned by the controller. Read-only — the controller determines ordering.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.UseStateForUnknown(),
-					useServerValueOnCreate(),
 				},
 			},
 			"logging": schema.BoolAttribute{
@@ -450,10 +448,15 @@ func (r *FirewallPolicyResource) planToSDK(ctx context.Context, plan *FirewallPo
 		Action:              plan.Action.ValueString(),
 		Protocol:            plan.Protocol.ValueString(),
 		IPVersion:           plan.IPVersion.ValueString(),
-		Index:               intPtr(plan.Index.ValueInt64()),
 		Logging:             boolPtr(plan.Logging.ValueBool()),
 		ConnectionStateType: plan.ConnectionStateType.ValueString(),
 		MatchIPSec:          boolPtr(plan.MatchIPSec.ValueBool()),
+	}
+
+	// Only send index on updates (when state has a value).
+	// On create, let the controller assign it.
+	if !plan.Index.IsNull() && !plan.Index.IsUnknown() {
+		policy.Index = intPtr(plan.Index.ValueInt64())
 	}
 
 	if !plan.ConnectionStates.IsNull() && !plan.ConnectionStates.IsUnknown() {
@@ -722,27 +725,4 @@ func (r *FirewallPolicyResource) scheduleToObject(ctx context.Context, schedule 
 	obj, d := types.ObjectValue(scheduleAttrTypes, attrs)
 	diags.Append(d...)
 	return obj, diags
-}
-
-// serverValueOnCreateModifier marks the value as unknown during create so
-// Terraform accepts whatever the server returns. On updates, the value is
-// left unchanged (UseStateForUnknown handles that case).
-type serverValueOnCreateModifier struct{}
-
-func (m serverValueOnCreateModifier) Description(_ context.Context) string {
-	return "Accept server-assigned value on create."
-}
-
-func (m serverValueOnCreateModifier) MarkdownDescription(ctx context.Context) string {
-	return m.Description(ctx)
-}
-
-func (m serverValueOnCreateModifier) PlanModifyInt64(_ context.Context, req planmodifier.Int64Request, resp *planmodifier.Int64Response) {
-	if req.State.Raw.IsNull() {
-		resp.PlanValue = types.Int64Unknown()
-	}
-}
-
-func useServerValueOnCreate() planmodifier.Int64 {
-	return serverValueOnCreateModifier{}
 }
