@@ -24,8 +24,10 @@ import (
 )
 
 var (
-	_ resource.Resource                = &FirewallPolicyResource{}
-	_ resource.ResourceWithImportState = &FirewallPolicyResource{}
+	_ resource.Resource                   = &FirewallPolicyResource{}
+	_ resource.ResourceWithImportState    = &FirewallPolicyResource{}
+	_ resource.ResourceWithModifyPlan     = &FirewallPolicyResource{}
+	_ resource.ResourceWithValidateConfig = &FirewallPolicyResource{}
 )
 
 type FirewallPolicyResource struct {
@@ -177,10 +179,15 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 					},
 					"matching_target": schema.StringAttribute{
-						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Defaults to 'ANY'.",
+						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is set, 'NETWORK' if network_id is set, otherwise 'ANY'.",
 						Optional:    true,
 						Computed:    true,
-						Default:     stringdefault.StaticString("ANY"),
+						Validators: []validator.String{
+							stringvalidator.OneOf("ANY", "IP", "NETWORK", "DOMAIN", "REGION", "PORT_GROUP", "ADDRESS_GROUP"),
+						},
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 					"ips": schema.SetAttribute{
 						Description: "Set of IP addresses or CIDR ranges to match.",
@@ -215,10 +222,15 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 					},
 					"matching_target": schema.StringAttribute{
-						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Defaults to 'ANY'.",
+						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is set, 'NETWORK' if network_id is set, otherwise 'ANY'.",
 						Optional:    true,
 						Computed:    true,
-						Default:     stringdefault.StaticString("ANY"),
+						Validators: []validator.String{
+							stringvalidator.OneOf("ANY", "IP", "NETWORK", "DOMAIN", "REGION", "PORT_GROUP", "ADDRESS_GROUP"),
+						},
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
 					},
 					"ips": schema.SetAttribute{
 						Description: "Set of IP addresses or CIDR ranges to match.",
@@ -441,6 +453,158 @@ func (r *FirewallPolicyResource) ImportState(ctx context.Context, req resource.I
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
+// ModifyPlan auto-derives source.matching_target and destination.matching_target
+// from sibling fields when the user did not explicitly set them in config.
+//
+// UniFi's API silently discards `ips` and `network_id` when matching_target=ANY,
+// so a static "ANY" default would let users lose data on a plan that looks
+// cosmetic. Resolving here (instead of via a static default) means the plan
+// diff shows the real matching_target before approval.
+func (r *FirewallPolicyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	r.deriveEndpointMatchingTarget(ctx, "source", req, resp)
+	r.deriveEndpointMatchingTarget(ctx, "destination", req, resp)
+}
+
+func (r *FirewallPolicyResource) deriveEndpointMatchingTarget(ctx context.Context, endpoint string, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	endpointPath := path.Root(endpoint)
+
+	var planned types.Object
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, endpointPath, &planned)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if planned.IsNull() || planned.IsUnknown() {
+		return
+	}
+
+	var configured types.Object
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, endpointPath, &configured)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// If the user configured matching_target at all — even to a value that's
+	// still unknown (e.g. matching_target = some_resource.attr) — preserve
+	// their intent and let Terraform resolve it later. Auto-derivation only
+	// fills in null values, never unknowns.
+	if !configured.IsNull() && !configured.IsUnknown() {
+		if mt, ok := configured.Attributes()["matching_target"].(types.String); ok && !mt.IsNull() {
+			return
+		}
+	}
+
+	plannedAttrs := planned.Attributes()
+
+	hasIPs := false
+	if v, ok := plannedAttrs["ips"].(types.Set); ok && !v.IsNull() {
+		if v.IsUnknown() {
+			hasIPs = true
+		} else {
+			hasIPs = len(v.Elements()) > 0
+		}
+	}
+
+	hasNetworkID := false
+	if v, ok := plannedAttrs["network_id"].(types.String); ok && !v.IsNull() {
+		if v.IsUnknown() {
+			hasNetworkID = true
+		} else {
+			hasNetworkID = v.ValueString() != ""
+		}
+	}
+
+	derived := deriveMatchingTarget(hasIPs, hasNetworkID)
+
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, endpointPath.AtName("matching_target"), derived)...)
+}
+
+// deriveMatchingTarget picks the matching_target value from the populated
+// sibling fields. Extracted so the precedence rules can be unit-tested
+// without a controller round-trip.
+func deriveMatchingTarget(hasIPs, hasNetworkID bool) string {
+	switch {
+	case hasIPs:
+		return "IP"
+	case hasNetworkID:
+		return "NETWORK"
+	default:
+		return "ANY"
+	}
+}
+
+// matchingTargetTypeFor maps a matching_target value to the matching_target_type
+// the UniFi controller requires alongside it. The controller rejects an "IP"
+// (or NETWORK / DOMAIN / REGION) match without an explicit "SPECIFIC" type, and
+// rejects a *_GROUP match without an explicit "OBJECT" type. The provider
+// derives this transparently — the field isn't exposed in the resource schema.
+func matchingTargetTypeFor(matchingTarget string) string {
+	switch matchingTarget {
+	case "IP", "NETWORK", "DOMAIN", "REGION":
+		return "SPECIFIC"
+	case "PORT_GROUP", "ADDRESS_GROUP":
+		return "OBJECT"
+	default:
+		return ""
+	}
+}
+
+// ValidateConfig errors at plan time when the user explicitly sets
+// matching_target="ANY" alongside ips or network_id. UniFi silently discards
+// those fields under matching_target=ANY, so this combination is always wrong.
+func (r *FirewallPolicyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var config FirewallPolicyResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	r.validateEndpointConfig("source", config.Source, &resp.Diagnostics)
+	r.validateEndpointConfig("destination", config.Destination, &resp.Diagnostics)
+}
+
+func (r *FirewallPolicyResource) validateEndpointConfig(endpoint string, obj types.Object, diags *diag.Diagnostics) {
+	if obj.IsNull() || obj.IsUnknown() {
+		return
+	}
+	attrs := obj.Attributes()
+
+	mt, ok := attrs["matching_target"].(types.String)
+	if !ok || mt.IsNull() || mt.IsUnknown() || mt.ValueString() != "ANY" {
+		return
+	}
+
+	// Unknown values (e.g. ips = var.foo where the variable hasn't resolved)
+	// still count as "present" — the foot-gun applies just as much when the
+	// values arrive at apply time as when they're known at plan time.
+	hasIPs := false
+	if v, ok := attrs["ips"].(types.Set); ok && !v.IsNull() {
+		hasIPs = v.IsUnknown() || len(v.Elements()) > 0
+	}
+	hasNetworkID := false
+	if v, ok := attrs["network_id"].(types.String); ok && !v.IsNull() {
+		hasNetworkID = v.IsUnknown() || v.ValueString() != ""
+	}
+
+	if hasIPs {
+		diags.AddAttributeError(
+			path.Root(endpoint).AtName("matching_target"),
+			"matching_target=\"ANY\" conflicts with ips",
+			"The UniFi controller silently discards the ips field when matching_target=\"ANY\", which widens the policy. Either omit matching_target (it will be auto-derived to \"IP\") or set matching_target=\"IP\" explicitly.",
+		)
+	}
+	if hasNetworkID {
+		diags.AddAttributeError(
+			path.Root(endpoint).AtName("matching_target"),
+			"matching_target=\"ANY\" conflicts with network_id",
+			"The UniFi controller silently discards the network_id field when matching_target=\"ANY\". Either omit matching_target (it will be auto-derived to \"NETWORK\") or set matching_target=\"NETWORK\" explicitly.",
+		)
+	}
+}
+
 func (r *FirewallPolicyResource) planToSDK(ctx context.Context, plan *FirewallPolicyResourceModel, diags *diag.Diagnostics) *unifi.FirewallPolicy {
 	policy := &unifi.FirewallPolicy{
 		Name:                plan.Name.ValueString(),
@@ -518,6 +682,7 @@ func (r *FirewallPolicyResource) endpointFromObject(ctx context.Context, obj typ
 	}
 	if v, ok := attrs["matching_target"].(types.String); ok && !v.IsNull() {
 		endpoint.MatchingTarget = v.ValueString()
+		endpoint.MatchingTargetType = matchingTargetTypeFor(endpoint.MatchingTarget)
 	}
 	if v, ok := attrs["mac"].(types.String); ok && !v.IsNull() {
 		endpoint.MAC = v.ValueString()

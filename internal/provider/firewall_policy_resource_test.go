@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -575,4 +576,164 @@ resource "unifi_firewall_policy" "test" {
   }
 }
 `, testAccProviderConfig, name, name, name)
+}
+
+// Regression test for the silent data-loss bug where omitting matching_target
+// caused the provider to send matching_target="ANY" alongside ips=[...], which
+// the UniFi API silently strips. With ModifyPlan, omitting matching_target
+// auto-derives it to "IP" so the policy is created and re-planned cleanly.
+func TestAccFirewallPolicyResource_ipsAutoderivesMatchingTarget(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget("tf-acc-test-policy-autoderive-ip", "192.0.2.100"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.matching_target", "IP"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.ips.#", "1"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.ips.0", "192.0.2.100"),
+				),
+			},
+			// Re-running the same config must produce no drift — the bug used
+			// to surface here as `~ destination.matching_target = "IP" -> "ANY"`.
+			{
+				Config:   testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget("tf-acc-test-policy-autoderive-ip", "192.0.2.100"),
+				PlanOnly: true,
+			},
+			{
+				ResourceName:      "unifi_firewall_policy.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+// Regression test for the source-side auto-derive path. The destination test
+// already covers the IP branch end-to-end; this ensures the same logic runs
+// when ips is on `source` instead of `destination`.
+func TestAccFirewallPolicyResource_sourceIpsAutoderivesMatchingTarget(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccFirewallPolicyResourceConfig_sourceIPsNoMatchingTarget("tf-acc-test-policy-autoderive-src", "192.0.2.50"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "source.matching_target", "IP"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "source.ips.#", "1"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "source.ips.0", "192.0.2.50"),
+				),
+			},
+			{
+				Config:   testAccFirewallPolicyResourceConfig_sourceIPsNoMatchingTarget("tf-acc-test-policy-autoderive-src", "192.0.2.50"),
+				PlanOnly: true,
+			},
+			{
+				ResourceName:      "unifi_firewall_policy.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccFirewallPolicyResource_explicitAnyWithIpsRejected(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccFirewallPolicyResourceConfig_explicitAnyWithIPs("tf-acc-test-policy-anywithips", "192.0.2.100"),
+				ExpectError: regexp.MustCompile(`(?s)matching_target="ANY" conflicts with ips`),
+			},
+		},
+	})
+}
+
+func testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget(name, destIP string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_firewall_zone" "src" {
+  name = "%s-src-zone"
+}
+
+resource "unifi_firewall_zone" "dst" {
+  name = "%s-dst-zone"
+}
+
+resource "unifi_firewall_policy" "test" {
+  name   = %q
+  action = "ALLOW"
+
+  source = {
+    zone_id = unifi_firewall_zone.src.id
+  }
+
+  destination = {
+    zone_id = unifi_firewall_zone.dst.id
+    ips     = [%q]
+    port    = "443"
+  }
+}
+`, testAccProviderConfig, name, name, name, destIP)
+}
+
+func testAccFirewallPolicyResourceConfig_sourceIPsNoMatchingTarget(name, sourceIP string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_firewall_zone" "src" {
+  name = "%s-src-zone"
+}
+
+resource "unifi_firewall_zone" "dst" {
+  name = "%s-dst-zone"
+}
+
+resource "unifi_firewall_policy" "test" {
+  name   = %q
+  action = "ALLOW"
+
+  source = {
+    zone_id = unifi_firewall_zone.src.id
+    ips     = [%q]
+  }
+
+  destination = {
+    zone_id = unifi_firewall_zone.dst.id
+  }
+}
+`, testAccProviderConfig, name, name, name, sourceIP)
+}
+
+func testAccFirewallPolicyResourceConfig_explicitAnyWithIPs(name, destIP string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_firewall_zone" "src" {
+  name = "%s-src-zone"
+}
+
+resource "unifi_firewall_zone" "dst" {
+  name = "%s-dst-zone"
+}
+
+resource "unifi_firewall_policy" "test" {
+  name   = %q
+  action = "ALLOW"
+
+  source = {
+    zone_id = unifi_firewall_zone.src.id
+  }
+
+  destination = {
+    zone_id         = unifi_firewall_zone.dst.id
+    matching_target = "ANY"
+    ips             = [%q]
+  }
+}
+`, testAccProviderConfig, name, name, name, destIP)
 }
