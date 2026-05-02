@@ -356,12 +356,20 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Default:     booldefault.StaticBool(true),
 			},
 			"mdns_enabled": schema.BoolAttribute{
-				Description: "Whether mDNS (Bonjour/Avahi) is enabled for this network.",
+				Description: "Whether mDNS (Bonjour/Avahi) is enabled for this network. Computed by the controller when not set.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"upnp_lan_enabled": schema.BoolAttribute{
-				Description: "Whether UPnP is enabled on this LAN network.",
+				Description: "Whether UPnP is enabled on this LAN network. Computed by the controller when not set.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			// Routing
@@ -803,10 +811,13 @@ func (r *NetworkResource) planToSDK(ctx context.Context, plan *NetworkResourceMo
 	network.InternetAccessEnabled = boolPtr(plan.InternetAccessEnabled.ValueBool())
 	network.IntraNetworkAccessEnabled = boolPtr(plan.IntraNetworkAccessEnabled.ValueBool())
 	network.IsNAT = boolPtr(plan.NATEnabled.ValueBool())
-	if !plan.MDNSEnabled.IsNull() {
+	// Skip when unknown so we don't force the controller default — the schema
+	// marks these Optional+Computed, so an omitted attribute resolves to
+	// Unknown (on Create) or to the prior state (on Update).
+	if !plan.MDNSEnabled.IsNull() && !plan.MDNSEnabled.IsUnknown() {
 		network.MDNSEnabled = boolPtr(plan.MDNSEnabled.ValueBool())
 	}
-	if !plan.UPnPLANEnabled.IsNull() {
+	if !plan.UPnPLANEnabled.IsNull() && !plan.UPnPLANEnabled.IsUnknown() {
 		network.UpnpLANEnabled = boolPtr(plan.UPnPLANEnabled.ValueBool())
 	}
 
@@ -958,16 +969,8 @@ func (r *NetworkResource) sdkToState(ctx context.Context, network *unifi.Network
 	state.InternetAccessEnabled = types.BoolValue(derefBool(network.InternetAccessEnabled))
 	state.IntraNetworkAccessEnabled = types.BoolValue(derefBool(network.IntraNetworkAccessEnabled))
 	state.NATEnabled = types.BoolValue(derefBool(network.IsNAT))
-	if network.MDNSEnabled != nil {
-		state.MDNSEnabled = types.BoolValue(*network.MDNSEnabled)
-	} else {
-		state.MDNSEnabled = types.BoolNull()
-	}
-	if network.UpnpLANEnabled != nil {
-		state.UPnPLANEnabled = types.BoolValue(*network.UpnpLANEnabled)
-	} else {
-		state.UPnPLANEnabled = types.BoolNull()
-	}
+	state.MDNSEnabled = types.BoolValue(derefBool(network.MDNSEnabled))
+	state.UPnPLANEnabled = types.BoolValue(derefBool(network.UpnpLANEnabled))
 
 	// Routing
 	state.NetworkGroup = types.StringValue(network.NetworkGroup)

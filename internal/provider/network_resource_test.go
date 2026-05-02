@@ -243,6 +243,36 @@ func TestAccNetworkResource_dhcpDnsServers(t *testing.T) {
 	})
 }
 
+// Regression test for the "Provider produced inconsistent result after apply"
+// error on mdns_enabled / upnp_lan_enabled when the user omits them from
+// config. The controller persists a default (false) and returns it on Read;
+// before fix the schema marked these Optional-only so plan(null) != state(false).
+// With Optional+Computed they resolve to the controller value with no drift.
+func TestAccNetworkResource_mdnsUpnpComputedFromController(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_basic("tf-acc-test-net-mdns-upnp", 3905),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("unifi_network.test", "mdns_enabled"),
+					resource.TestCheckResourceAttrSet("unifi_network.test", "upnp_lan_enabled"),
+				),
+			},
+			{
+				Config:   testAccNetworkResourceConfig_basic("tf-acc-test-net-mdns-upnp", 3905),
+				PlanOnly: true,
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func testAccNetworkResourceConfig_basic(name string, vlanID int) string {
 	return fmt.Sprintf(`
 %s
