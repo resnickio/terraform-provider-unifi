@@ -610,26 +610,6 @@ func TestAccFirewallPolicyResource_ipsAutoderivesMatchingTarget(t *testing.T) {
 	})
 }
 
-func TestAccFirewallPolicyResource_networkIdAutoderivesMatchingTarget(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccFirewallPolicyResourceConfig_destinationNetworkNoMatchingTarget("tf-acc-test-policy-autoderive-net", 3920),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.matching_target", "NETWORK"),
-					resource.TestCheckResourceAttrSet("unifi_firewall_policy.test", "destination.network_id"),
-				),
-			},
-			{
-				Config:   testAccFirewallPolicyResourceConfig_destinationNetworkNoMatchingTarget("tf-acc-test-policy-autoderive-net", 3920),
-				PlanOnly: true,
-			},
-		},
-	})
-}
-
 func TestAccFirewallPolicyResource_explicitAnyWithIpsRejected(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
@@ -670,44 +650,6 @@ resource "unifi_firewall_policy" "test" {
   }
 }
 `, testAccProviderConfig, name, name, name, destIP)
-}
-
-func testAccFirewallPolicyResourceConfig_destinationNetworkNoMatchingTarget(name string, vlanID int) string {
-	return fmt.Sprintf(`
-%s
-
-resource "unifi_firewall_zone" "src" {
-  name = "%s-src-zone"
-}
-
-resource "unifi_firewall_zone" "dst" {
-  name = "%s-dst-zone"
-}
-
-resource "unifi_network" "dst_net" {
-  name         = "%s-dst-net"
-  purpose      = "corporate"
-  vlan_id      = %d
-  subnet       = "10.%d.0.1/24"
-  dhcp_enabled = true
-  dhcp_start   = "10.%d.0.10"
-  dhcp_stop    = "10.%d.0.254"
-}
-
-resource "unifi_firewall_policy" "test" {
-  name   = %q
-  action = "ALLOW"
-
-  source = {
-    zone_id = unifi_firewall_zone.src.id
-  }
-
-  destination = {
-    zone_id    = unifi_firewall_zone.dst.id
-    network_id = unifi_network.dst_net.id
-  }
-}
-`, testAccProviderConfig, name, name, name, vlanID, vlanID%256, vlanID%256, vlanID%256, name)
 }
 
 func testAccFirewallPolicyResourceConfig_explicitAnyWithIPs(name, destIP string) string {

@@ -517,6 +517,22 @@ func (r *FirewallPolicyResource) deriveEndpointMatchingTarget(ctx context.Contex
 	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, endpointPath.AtName("matching_target"), derived)...)
 }
 
+// matchingTargetTypeFor maps a matching_target value to the matching_target_type
+// the UniFi controller requires alongside it. The controller rejects an "IP"
+// (or NETWORK / DOMAIN / REGION) match without an explicit "SPECIFIC" type, and
+// rejects a *_GROUP match without an explicit "OBJECT" type. The provider
+// derives this transparently — the field isn't exposed in the resource schema.
+func matchingTargetTypeFor(matchingTarget string) string {
+	switch matchingTarget {
+	case "IP", "NETWORK", "DOMAIN", "REGION":
+		return "SPECIFIC"
+	case "PORT_GROUP", "ADDRESS_GROUP":
+		return "OBJECT"
+	default:
+		return ""
+	}
+}
+
 // ValidateConfig errors at plan time when the user explicitly sets
 // matching_target="ANY" alongside ips or network_id. UniFi silently discards
 // those fields under matching_target=ANY, so this combination is always wrong.
@@ -644,6 +660,7 @@ func (r *FirewallPolicyResource) endpointFromObject(ctx context.Context, obj typ
 	}
 	if v, ok := attrs["matching_target"].(types.String); ok && !v.IsNull() {
 		endpoint.MatchingTarget = v.ValueString()
+		endpoint.MatchingTargetType = matchingTargetTypeFor(endpoint.MatchingTarget)
 	}
 	if v, ok := attrs["mac"].(types.String); ok && !v.IsNull() {
 		endpoint.MAC = v.ValueString()
