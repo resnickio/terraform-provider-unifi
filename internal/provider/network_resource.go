@@ -811,10 +811,13 @@ func (r *NetworkResource) planToSDK(ctx context.Context, plan *NetworkResourceMo
 	network.InternetAccessEnabled = boolPtr(plan.InternetAccessEnabled.ValueBool())
 	network.IntraNetworkAccessEnabled = boolPtr(plan.IntraNetworkAccessEnabled.ValueBool())
 	network.IsNAT = boolPtr(plan.NATEnabled.ValueBool())
-	if !plan.MDNSEnabled.IsNull() {
+	// Skip when unknown so we don't force the controller default — the schema
+	// marks these Optional+Computed, so an omitted attribute resolves to
+	// Unknown (on Create) or to the prior state (on Update).
+	if !plan.MDNSEnabled.IsNull() && !plan.MDNSEnabled.IsUnknown() {
 		network.MDNSEnabled = boolPtr(plan.MDNSEnabled.ValueBool())
 	}
-	if !plan.UPnPLANEnabled.IsNull() {
+	if !plan.UPnPLANEnabled.IsNull() && !plan.UPnPLANEnabled.IsUnknown() {
 		network.UpnpLANEnabled = boolPtr(plan.UPnPLANEnabled.ValueBool())
 	}
 
