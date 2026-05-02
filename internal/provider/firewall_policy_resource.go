@@ -182,6 +182,9 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is set, 'NETWORK' if network_id is set, otherwise 'ANY'.",
 						Optional:    true,
 						Computed:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("ANY", "IP", "NETWORK", "DOMAIN", "REGION", "PORT_GROUP", "ADDRESS_GROUP"),
+						},
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
 						},
@@ -222,6 +225,9 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is set, 'NETWORK' if network_id is set, otherwise 'ANY'.",
 						Optional:    true,
 						Computed:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("ANY", "IP", "NETWORK", "DOMAIN", "REGION", "PORT_GROUP", "ADDRESS_GROUP"),
+						},
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
 						},
@@ -481,8 +487,12 @@ func (r *FirewallPolicyResource) deriveEndpointMatchingTarget(ctx context.Contex
 		return
 	}
 
+	// If the user configured matching_target at all — even to a value that's
+	// still unknown (e.g. matching_target = some_resource.attr) — preserve
+	// their intent and let Terraform resolve it later. Auto-derivation only
+	// fills in null values, never unknowns.
 	if !configured.IsNull() && !configured.IsUnknown() {
-		if mt, ok := configured.Attributes()["matching_target"].(types.String); ok && !mt.IsNull() && !mt.IsUnknown() {
+		if mt, ok := configured.Attributes()["matching_target"].(types.String); ok && !mt.IsNull() {
 			return
 		}
 	}
@@ -507,14 +517,23 @@ func (r *FirewallPolicyResource) deriveEndpointMatchingTarget(ctx context.Contex
 		}
 	}
 
-	derived := "ANY"
-	if hasIPs {
-		derived = "IP"
-	} else if hasNetworkID {
-		derived = "NETWORK"
-	}
+	derived := deriveMatchingTarget(hasIPs, hasNetworkID)
 
 	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, endpointPath.AtName("matching_target"), derived)...)
+}
+
+// deriveMatchingTarget picks the matching_target value from the populated
+// sibling fields. Extracted so the precedence rules can be unit-tested
+// without a controller round-trip.
+func deriveMatchingTarget(hasIPs, hasNetworkID bool) string {
+	switch {
+	case hasIPs:
+		return "IP"
+	case hasNetworkID:
+		return "NETWORK"
+	default:
+		return "ANY"
+	}
 }
 
 // matchingTargetTypeFor maps a matching_target value to the matching_target_type
@@ -558,13 +577,16 @@ func (r *FirewallPolicyResource) validateEndpointConfig(endpoint string, obj typ
 		return
 	}
 
+	// Unknown values (e.g. ips = var.foo where the variable hasn't resolved)
+	// still count as "present" — the foot-gun applies just as much when the
+	// values arrive at apply time as when they're known at plan time.
 	hasIPs := false
-	if v, ok := attrs["ips"].(types.Set); ok && !v.IsNull() && !v.IsUnknown() {
-		hasIPs = len(v.Elements()) > 0
+	if v, ok := attrs["ips"].(types.Set); ok && !v.IsNull() {
+		hasIPs = v.IsUnknown() || len(v.Elements()) > 0
 	}
 	hasNetworkID := false
-	if v, ok := attrs["network_id"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
-		hasNetworkID = v.ValueString() != ""
+	if v, ok := attrs["network_id"].(types.String); ok && !v.IsNull() {
+		hasNetworkID = v.IsUnknown() || v.ValueString() != ""
 	}
 
 	if hasIPs {

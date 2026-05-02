@@ -610,6 +610,35 @@ func TestAccFirewallPolicyResource_ipsAutoderivesMatchingTarget(t *testing.T) {
 	})
 }
 
+// Regression test for the source-side auto-derive path. The destination test
+// already covers the IP branch end-to-end; this ensures the same logic runs
+// when ips is on `source` instead of `destination`.
+func TestAccFirewallPolicyResource_sourceIpsAutoderivesMatchingTarget(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccFirewallPolicyResourceConfig_sourceIPsNoMatchingTarget("tf-acc-test-policy-autoderive-src", "192.0.2.50"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "source.matching_target", "IP"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "source.ips.#", "1"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "source.ips.0", "192.0.2.50"),
+				),
+			},
+			{
+				Config:   testAccFirewallPolicyResourceConfig_sourceIPsNoMatchingTarget("tf-acc-test-policy-autoderive-src", "192.0.2.50"),
+				PlanOnly: true,
+			},
+			{
+				ResourceName:      "unifi_firewall_policy.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccFirewallPolicyResource_explicitAnyWithIpsRejected(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
@@ -650,6 +679,34 @@ resource "unifi_firewall_policy" "test" {
   }
 }
 `, testAccProviderConfig, name, name, name, destIP)
+}
+
+func testAccFirewallPolicyResourceConfig_sourceIPsNoMatchingTarget(name, sourceIP string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_firewall_zone" "src" {
+  name = "%s-src-zone"
+}
+
+resource "unifi_firewall_zone" "dst" {
+  name = "%s-dst-zone"
+}
+
+resource "unifi_firewall_policy" "test" {
+  name   = %q
+  action = "ALLOW"
+
+  source = {
+    zone_id = unifi_firewall_zone.src.id
+    ips     = [%q]
+  }
+
+  destination = {
+    zone_id = unifi_firewall_zone.dst.id
+  }
+}
+`, testAccProviderConfig, name, name, name, sourceIP)
 }
 
 func testAccFirewallPolicyResourceConfig_explicitAnyWithIPs(name, destIP string) string {
