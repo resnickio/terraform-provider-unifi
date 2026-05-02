@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -575,4 +576,165 @@ resource "unifi_firewall_policy" "test" {
   }
 }
 `, testAccProviderConfig, name, name, name)
+}
+
+// Regression test for the silent data-loss bug where omitting matching_target
+// caused the provider to send matching_target="ANY" alongside ips=[...], which
+// the UniFi API silently strips. With ModifyPlan, omitting matching_target
+// auto-derives it to "IP" so the policy is created and re-planned cleanly.
+func TestAccFirewallPolicyResource_ipsAutoderivesMatchingTarget(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget("tf-acc-test-policy-autoderive-ip", "10.10.251.100"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.matching_target", "IP"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.ips.#", "1"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.ips.0", "10.10.251.100"),
+				),
+			},
+			// Re-running the same config must produce no drift — the bug used
+			// to surface here as `~ destination.matching_target = "IP" -> "ANY"`.
+			{
+				Config:   testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget("tf-acc-test-policy-autoderive-ip", "10.10.251.100"),
+				PlanOnly: true,
+			},
+			{
+				ResourceName:      "unifi_firewall_policy.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccFirewallPolicyResource_networkIdAutoderivesMatchingTarget(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccFirewallPolicyResourceConfig_destinationNetworkNoMatchingTarget("tf-acc-test-policy-autoderive-net", 3920),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.matching_target", "NETWORK"),
+					resource.TestCheckResourceAttrSet("unifi_firewall_policy.test", "destination.network_id"),
+				),
+			},
+			{
+				Config:   testAccFirewallPolicyResourceConfig_destinationNetworkNoMatchingTarget("tf-acc-test-policy-autoderive-net", 3920),
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+func TestAccFirewallPolicyResource_explicitAnyWithIpsRejected(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccCheckControllerSupportsZones(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccFirewallPolicyResourceConfig_explicitAnyWithIPs("tf-acc-test-policy-anywithips", "10.10.251.100"),
+				ExpectError: regexp.MustCompile(`(?s)matching_target="ANY" conflicts with ips`),
+			},
+		},
+	})
+}
+
+func testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget(name, destIP string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_firewall_zone" "src" {
+  name = "%s-src-zone"
+}
+
+resource "unifi_firewall_zone" "dst" {
+  name = "%s-dst-zone"
+}
+
+resource "unifi_firewall_policy" "test" {
+  name   = %q
+  action = "ALLOW"
+
+  source = {
+    zone_id = unifi_firewall_zone.src.id
+  }
+
+  destination = {
+    zone_id = unifi_firewall_zone.dst.id
+    ips     = [%q]
+    port    = "443"
+  }
+}
+`, testAccProviderConfig, name, name, name, destIP)
+}
+
+func testAccFirewallPolicyResourceConfig_destinationNetworkNoMatchingTarget(name string, vlanID int) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_firewall_zone" "src" {
+  name = "%s-src-zone"
+}
+
+resource "unifi_firewall_zone" "dst" {
+  name = "%s-dst-zone"
+}
+
+resource "unifi_network" "dst_net" {
+  name         = "%s-dst-net"
+  purpose      = "corporate"
+  vlan_id      = %d
+  subnet       = "10.%d.0.1/24"
+  dhcp_enabled = true
+  dhcp_start   = "10.%d.0.10"
+  dhcp_stop    = "10.%d.0.254"
+}
+
+resource "unifi_firewall_policy" "test" {
+  name   = %q
+  action = "ALLOW"
+
+  source = {
+    zone_id = unifi_firewall_zone.src.id
+  }
+
+  destination = {
+    zone_id    = unifi_firewall_zone.dst.id
+    network_id = unifi_network.dst_net.id
+  }
+}
+`, testAccProviderConfig, name, name, name, vlanID, vlanID%256, vlanID%256, vlanID%256, name)
+}
+
+func testAccFirewallPolicyResourceConfig_explicitAnyWithIPs(name, destIP string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "unifi_firewall_zone" "src" {
+  name = "%s-src-zone"
+}
+
+resource "unifi_firewall_zone" "dst" {
+  name = "%s-dst-zone"
+}
+
+resource "unifi_firewall_policy" "test" {
+  name   = %q
+  action = "ALLOW"
+
+  source = {
+    zone_id = unifi_firewall_zone.src.id
+  }
+
+  destination = {
+    zone_id         = unifi_firewall_zone.dst.id
+    matching_target = "ANY"
+    ips             = [%q]
+  }
+}
+`, testAccProviderConfig, name, name, name, destIP)
 }
