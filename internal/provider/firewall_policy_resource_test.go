@@ -588,17 +588,17 @@ func TestAccFirewallPolicyResource_ipsAutoderivesMatchingTarget(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget("tf-acc-test-policy-autoderive-ip", "10.10.251.100"),
+				Config: testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget("tf-acc-test-policy-autoderive-ip", "192.0.2.100"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.matching_target", "IP"),
 					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.ips.#", "1"),
-					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.ips.0", "10.10.251.100"),
+					resource.TestCheckResourceAttr("unifi_firewall_policy.test", "destination.ips.0", "192.0.2.100"),
 				),
 			},
 			// Re-running the same config must produce no drift — the bug used
 			// to surface here as `~ destination.matching_target = "IP" -> "ANY"`.
 			{
-				Config:   testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget("tf-acc-test-policy-autoderive-ip", "10.10.251.100"),
+				Config:   testAccFirewallPolicyResourceConfig_destinationIPsNoMatchingTarget("tf-acc-test-policy-autoderive-ip", "192.0.2.100"),
 				PlanOnly: true,
 			},
 			{
@@ -636,7 +636,7 @@ func TestAccFirewallPolicyResource_explicitAnyWithIpsRejected(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccFirewallPolicyResourceConfig_explicitAnyWithIPs("tf-acc-test-policy-anywithips", "10.10.251.100"),
+				Config:      testAccFirewallPolicyResourceConfig_explicitAnyWithIPs("tf-acc-test-policy-anywithips", "192.0.2.100"),
 				ExpectError: regexp.MustCompile(`(?s)matching_target="ANY" conflicts with ips`),
 			},
 		},
