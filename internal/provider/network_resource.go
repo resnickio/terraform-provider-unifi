@@ -356,12 +356,20 @@ func (r *NetworkResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Default:     booldefault.StaticBool(true),
 			},
 			"mdns_enabled": schema.BoolAttribute{
-				Description: "Whether mDNS (Bonjour/Avahi) is enabled for this network.",
+				Description: "Whether mDNS (Bonjour/Avahi) is enabled for this network. Computed by the controller when not set.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"upnp_lan_enabled": schema.BoolAttribute{
-				Description: "Whether UPnP is enabled on this LAN network.",
+				Description: "Whether UPnP is enabled on this LAN network. Computed by the controller when not set.",
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			// Routing
@@ -958,16 +966,8 @@ func (r *NetworkResource) sdkToState(ctx context.Context, network *unifi.Network
 	state.InternetAccessEnabled = types.BoolValue(derefBool(network.InternetAccessEnabled))
 	state.IntraNetworkAccessEnabled = types.BoolValue(derefBool(network.IntraNetworkAccessEnabled))
 	state.NATEnabled = types.BoolValue(derefBool(network.IsNAT))
-	if network.MDNSEnabled != nil {
-		state.MDNSEnabled = types.BoolValue(*network.MDNSEnabled)
-	} else {
-		state.MDNSEnabled = types.BoolNull()
-	}
-	if network.UpnpLANEnabled != nil {
-		state.UPnPLANEnabled = types.BoolValue(*network.UpnpLANEnabled)
-	} else {
-		state.UPnPLANEnabled = types.BoolNull()
-	}
+	state.MDNSEnabled = types.BoolValue(derefBool(network.MDNSEnabled))
+	state.UPnPLANEnabled = types.BoolValue(derefBool(network.UpnpLANEnabled))
 
 	// Routing
 	state.NetworkGroup = types.StringValue(network.NetworkGroup)
