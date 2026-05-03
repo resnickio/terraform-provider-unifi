@@ -28,29 +28,34 @@ resource "unifi_firewall_policy" "block_iot_to_servers" {
   name    = "Block IoT to Servers"
   enabled = true
   action  = "BLOCK"
-  index   = 1000
 
-  source {
+  source = {
     zone_id = unifi_firewall_zone.iot.id
   }
 
-  destination {
+  destination = {
     zone_id = unifi_firewall_zone.servers.id
   }
 
   logging = true
 }
 
-# Allow HTTPS traffic from any zone
+# Allow HTTPS traffic to a specific server. matching_target is omitted —
+# the provider auto-derives it to "IP" because ips is non-empty.
 resource "unifi_firewall_policy" "allow_https" {
-  name      = "Allow HTTPS"
-  enabled   = true
-  action    = "ALLOW"
-  protocol  = "tcp"
-  index     = 1001
+  name     = "Allow HTTPS"
+  enabled  = true
+  action   = "ALLOW"
+  protocol = "tcp"
 
-  destination {
-    port = "443"
+  source = {
+    zone_id = unifi_firewall_zone.iot.id
+  }
+
+  destination = {
+    zone_id = unifi_firewall_zone.servers.id
+    ips     = ["10.0.10.50"]
+    port    = "443"
   }
 }
 ```
@@ -92,7 +97,7 @@ Optional:
 - `client_macs` (Set of String) Set of client MAC addresses to match.
 - `ips` (Set of String) Set of IP addresses or CIDR ranges to match.
 - `mac` (String) MAC address to match.
-- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is set, 'NETWORK' if network_id is set, otherwise 'ANY'.
+- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.)
 - `network_id` (String) Network ID to match.
 - `port` (String) Port or port range to match.
 - `zone_id` (String) The destination zone ID.
@@ -117,7 +122,7 @@ Optional:
 - `client_macs` (Set of String) Set of client MAC addresses to match.
 - `ips` (Set of String) Set of IP addresses or CIDR ranges to match.
 - `mac` (String) MAC address to match.
-- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is set, 'NETWORK' if network_id is set, otherwise 'ANY'.
+- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.)
 - `network_id` (String) Network ID to match.
 - `port` (String) Port or port range to match.
 - `zone_id` (String) The source zone ID.

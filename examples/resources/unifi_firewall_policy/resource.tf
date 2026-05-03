@@ -12,28 +12,33 @@ resource "unifi_firewall_policy" "block_iot_to_servers" {
   name    = "Block IoT to Servers"
   enabled = true
   action  = "BLOCK"
-  index   = 1000
 
-  source {
+  source = {
     zone_id = unifi_firewall_zone.iot.id
   }
 
-  destination {
+  destination = {
     zone_id = unifi_firewall_zone.servers.id
   }
 
   logging = true
 }
 
-# Allow HTTPS traffic from any zone
+# Allow HTTPS traffic to a specific server. matching_target is omitted —
+# the provider auto-derives it to "IP" because ips is non-empty.
 resource "unifi_firewall_policy" "allow_https" {
-  name      = "Allow HTTPS"
-  enabled   = true
-  action    = "ALLOW"
-  protocol  = "tcp"
-  index     = 1001
+  name     = "Allow HTTPS"
+  enabled  = true
+  action   = "ALLOW"
+  protocol = "tcp"
 
-  destination {
-    port = "443"
+  source = {
+    zone_id = unifi_firewall_zone.iot.id
+  }
+
+  destination = {
+    zone_id = unifi_firewall_zone.servers.id
+    ips     = ["10.0.10.50"]
+    port    = "443"
   }
 }

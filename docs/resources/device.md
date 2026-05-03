@@ -9,7 +9,7 @@ description: |-
 
 Manages a UniFi device's configurable settings. Devices are physically adopted into the UniFi controller — this resource manages their writable properties (name, LEDs, SNMP, etc.).
 
-~> **Note:** This is an import-only resource. The `mac` attribute identifies which adopted device to manage. Destroying this resource removes it from Terraform state but does not forget the device from the controller.
+~> **Note:** This resource manages a device that is already physically adopted on the controller — it does not adopt new hardware. On Create, the provider looks up the existing device by `mac` and applies the writable settings; on Destroy, the resource is removed from Terraform state but the device stays adopted on the controller.
 
 ## Example Usage
 
