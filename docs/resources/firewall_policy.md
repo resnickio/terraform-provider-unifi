@@ -72,6 +72,7 @@ resource "unifi_firewall_policy" "allow_https" {
 
 - `connection_state_type` (String) Connection state matching type. Valid values: 'ALL', 'RESPOND_ONLY', 'CUSTOM'. Defaults to 'ALL'.
 - `connection_states` (Set of String) Set of connection states to match (when connection_state_type is 'CUSTOM').
+- `create_allow_respond` (Boolean) Whether the controller auto-creates a paired 'respond' rule for ALLOW policies. Auto-derived from action when unset: true for ALLOW, false otherwise. Setting this explicitly overrides the derivation.
 - `destination` (Attributes) Destination matching criteria. (see [below for nested schema](#nestedatt--destination))
 - `enabled` (Boolean) Whether the policy is enabled. Defaults to true.
 - `icmp_typename` (String) ICMP type name (for ICMP protocol). Defaults to 'ANY'.

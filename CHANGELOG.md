@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-05-02
+
+### Fixed
+
+- `unifi_firewall_policy` — changing `action` from `ALLOW` to `BLOCK` (or `REJECT`) in a single apply no longer fails with `api.err.FirewallPolicyCreateRespondTrafficPolicyNotAllowed`. The provider now sends the `create_allow_respond` field and auto-derives it from `action` (`true` for ALLOW, `false` otherwise) so the wire payload stays consistent with the action change. Users who previously had to destroy + recreate to flip a policy's action can now edit in place.
+
+### Added
+
+- `unifi_firewall_policy.create_allow_respond` — `Optional + Computed` attribute exposing the controller's auto-respond toggle. Auto-derived from `action` when unset; explicit settings override.
+
+### Known Issues
+
+- `unifi_network` — site-wide `unifi_setting_usg.mdns_enabled` gates per-network `mdns_enabled = true`. A post-apply diagnostic was attempted in this release but discarded: the framework's "inconsistent result after apply" error fires before any provider-emitted warning surfaces. A future release will need a plan-time fetch of site state for a clean fix.
+
 ## [0.8.0] - 2026-05-02
 
 ### Fixed
