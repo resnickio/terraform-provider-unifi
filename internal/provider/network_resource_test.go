@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -601,22 +602,29 @@ func TestAccNetworkResource_networkAccess(t *testing.T) {
 	})
 }
 
-func TestAccNetworkResource_mdns(t *testing.T) {
+// TestAccNetworkResource_mdnsRequiresSiteLevel verifies the plan-time
+// precondition check: setting per-network mdns_enabled=true while site-wide
+// gateway mDNS is disabled fails at plan time with a clear remediation
+// message, rather than letting the controller silently strip the value at
+// apply (which would later surface as "Provider produced inconsistent result
+// after apply" with no useful explanation).
+//
+// Brittleness: this test assumes the controller currently has
+// unifi_setting_usg.mdns_enabled = false. If the controller has site-level
+// mDNS enabled, the apply will succeed and the ExpectError assertion will
+// fail. The existing v0.8.0 + v0.8.1 finding docs explain why we can't
+// reliably set up site-level state in the test fixture (it's a singleton with
+// site-wide spillover effects). For the happy path (site-level on +
+// per-network on), use a manual verification on a UDM with site-wide mDNS
+// enabled.
+func TestAccNetworkResource_mdnsRequiresSiteLevel(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkResourceConfig_mdns("tf-acc-test-network-mdns", 3914),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-mdns"),
-					resource.TestCheckResourceAttr("unifi_network.test", "mdns_enabled", "true"),
-				),
-			},
-			{
-				ResourceName:      "unifi_network.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				Config:      testAccNetworkResourceConfig_mdns("tf-acc-test-network-mdns", 3914),
+				ExpectError: regexp.MustCompile(`Site-level mDNS must be enabled first`),
 			},
 		},
 	})

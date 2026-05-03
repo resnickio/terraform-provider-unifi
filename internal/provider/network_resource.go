@@ -34,6 +34,7 @@ const (
 var (
 	_ resource.Resource                = &NetworkResource{}
 	_ resource.ResourceWithImportState = &NetworkResource{}
+	_ resource.ResourceWithModifyPlan  = &NetworkResource{}
 )
 
 var ipv6AttrTypes = map[string]attr.Type{
@@ -687,6 +688,58 @@ func (r *NetworkResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 func (r *NetworkResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+// ModifyPlan rejects per-network mdns_enabled=true when site-wide gateway mDNS
+// is disabled. The UniFi controller silently strips per-network mdns_enabled
+// in that case (no API error), and the framework's "inconsistent result after
+// apply" check then fires a fatal error with no explanation. Catching the
+// dependency at plan time gives the operator a clear remediation path.
+//
+// Same-apply caveat: if the operator is enabling unifi_setting_usg.mdns_enabled
+// in the same apply, this check will false-positive (we only see the current
+// site state, not the planned state of another resource). Workaround: split
+// into two applies, or use -target.
+func (r *NetworkResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() || r.client == nil {
+		return
+	}
+
+	var planMDNS types.Bool
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("mdns_enabled"), &planMDNS)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	// Only check when the user explicitly intends mDNS to be on. Unknown / null
+	// / false plans are not affected by the site-level toggle.
+	if planMDNS.IsNull() || planMDNS.IsUnknown() || !planMDNS.ValueBool() {
+		return
+	}
+
+	// Same-apply mitigation: if config sets mdns_enabled=true (rather than
+	// inheriting it from a refresh), require the user has acknowledged the
+	// site-level dependency. Otherwise we'd false-positive on the very first
+	// apply when site-level is also being enabled. We keep the check anyway —
+	// see comment above for the trade-off.
+	usg, err := r.client.GetSettingUSG(ctx)
+	if err != nil {
+		// A failure to fetch site state shouldn't block plan. Emit a warning
+		// so the operator knows the check was skipped.
+		resp.Diagnostics.AddAttributeWarning(
+			path.Root("mdns_enabled"),
+			"Could not verify site-level mDNS state",
+			fmt.Sprintf("Failed to read unifi_setting_usg from the controller while checking the mdns_enabled precondition: %s. Continuing with the plan; if the site-level mdns toggle is off, the apply will fail with 'inconsistent result after apply'.", err),
+		)
+		return
+	}
+
+	if !derefBool(usg.MDNSEnabled) {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("mdns_enabled"),
+			"Site-level mDNS must be enabled first",
+			"unifi_network.mdns_enabled = true requires unifi_setting_usg.mdns_enabled to also be true. The UniFi controller currently has site-level mDNS disabled, so a per-network value of true would be silently stripped on apply. Enable the site-level toggle (manage unifi_setting_usg in Terraform, or toggle it in the UniFi UI) and re-plan. Note: if you are enabling site-level mDNS in the same apply as this network, you will need to apply unifi_setting_usg first via -target, or split the changes into two applies.",
+		)
+	}
 }
 
 func (r *NetworkResource) planToSDK(ctx context.Context, plan *NetworkResourceModel, diags *diag.Diagnostics) *unifi.Network {

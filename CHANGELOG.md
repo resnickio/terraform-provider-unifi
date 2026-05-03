@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.2] - 2026-05-03
+
+### Fixed
+
+- `unifi_network` — setting `mdns_enabled = true` while site-wide gateway mDNS is disabled (`unifi_setting_usg.mdns_enabled = false`) now errors at plan time with a clear remediation message, instead of letting the controller silently strip the value at apply (which surfaced as "Provider produced inconsistent result after apply" with no useful explanation). Implementation: `ModifyPlan` fetches `SettingUSG` and validates the precondition. Same-apply caveat: if you are enabling site-level mDNS in the same apply as a network with `mdns_enabled = true`, you'll need to apply `unifi_setting_usg` first via `-target` or split into two applies.
+
 ## [0.8.1] - 2026-05-02
 
 ### Fixed
