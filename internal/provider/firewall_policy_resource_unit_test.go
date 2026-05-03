@@ -23,6 +23,25 @@ func TestDeriveMatchingTarget(t *testing.T) {
 	}
 }
 
+func TestDeriveCreateAllowRespond(t *testing.T) {
+	cases := []struct {
+		action string
+		want   bool
+	}{
+		{action: "ALLOW", want: true},
+		{action: "BLOCK", want: false},
+		{action: "REJECT", want: false},
+		{action: "", want: false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.action, func(t *testing.T) {
+			if got := deriveCreateAllowRespond(tc.action); got != tc.want {
+				t.Fatalf("deriveCreateAllowRespond(%q) = %v, want %v", tc.action, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestMatchingTargetTypeFor(t *testing.T) {
 	cases := []struct {
 		matchingTarget string

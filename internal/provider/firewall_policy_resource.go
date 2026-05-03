@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -46,6 +47,7 @@ type FirewallPolicyResourceModel struct {
 	ConnectionStateType types.String   `tfsdk:"connection_state_type"`
 	ConnectionStates    types.Set      `tfsdk:"connection_states"`
 	MatchIPSec          types.Bool     `tfsdk:"match_ipsec"`
+	CreateAllowRespond  types.Bool     `tfsdk:"create_allow_respond"`
 	ICMPTypename        types.String   `tfsdk:"icmp_typename"`
 	ICMPV6Typename      types.String   `tfsdk:"icmpv6_typename"`
 	Source              types.Object   `tfsdk:"source"`
@@ -157,6 +159,14 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Optional:    true,
 				Computed:    true,
 				Default:     booldefault.StaticBool(false),
+			},
+			"create_allow_respond": schema.BoolAttribute{
+				Description: "Whether the controller auto-creates a paired 'respond' rule for ALLOW policies. Auto-derived from action when unset: true for ALLOW, false otherwise. Setting this explicitly overrides the derivation.",
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"icmp_typename": schema.StringAttribute{
 				Description: "ICMP type name (for ICMP protocol). Defaults to 'ANY'.",
@@ -467,6 +477,40 @@ func (r *FirewallPolicyResource) ModifyPlan(ctx context.Context, req resource.Mo
 
 	r.deriveEndpointMatchingTarget(ctx, "source", req, resp)
 	r.deriveEndpointMatchingTarget(ctx, "destination", req, resp)
+	r.deriveCreateAllowRespond(ctx, req, resp)
+}
+
+// deriveCreateAllowRespond keeps the create_allow_respond field consistent with
+// the action: ALLOW policies need it true (controller auto-creates the paired
+// respond rule); BLOCK / REJECT need it false (no respond rule, and the
+// controller refuses ALLOW→BLOCK action flips that leave a stale respond pair
+// behind, surfacing as api.err.FirewallPolicyCreateRespondTrafficPolicyNotAllowed).
+//
+// User-set values win — only fills in null/unknown values from config.
+func (r *FirewallPolicyResource) deriveCreateAllowRespond(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var configCAR types.Bool
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("create_allow_respond"), &configCAR)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if !configCAR.IsNull() && !configCAR.IsUnknown() {
+		return
+	}
+
+	var planAction types.String
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("action"), &planAction)...)
+	if resp.Diagnostics.HasError() || planAction.IsNull() || planAction.IsUnknown() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("create_allow_respond"), deriveCreateAllowRespond(planAction.ValueString()))...)
+}
+
+// deriveCreateAllowRespond returns the value the controller expects on the
+// create_allow_respond field for a given action: only ALLOW policies need an
+// auto-created respond rule.
+func deriveCreateAllowRespond(action string) bool {
+	return action == "ALLOW"
 }
 
 func (r *FirewallPolicyResource) deriveEndpointMatchingTarget(ctx context.Context, endpoint string, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
@@ -615,6 +659,13 @@ func (r *FirewallPolicyResource) planToSDK(ctx context.Context, plan *FirewallPo
 		Logging:             boolPtr(plan.Logging.ValueBool()),
 		ConnectionStateType: plan.ConnectionStateType.ValueString(),
 		MatchIPSec:          boolPtr(plan.MatchIPSec.ValueBool()),
+	}
+
+	// create_allow_respond is post-derived in ModifyPlan from action (true for
+	// ALLOW, false otherwise). Skip Unknown — only happens during interpolation
+	// edge cases — to avoid forcing the wrong value.
+	if !plan.CreateAllowRespond.IsNull() && !plan.CreateAllowRespond.IsUnknown() {
+		policy.CreateAllowRespond = boolPtr(plan.CreateAllowRespond.ValueBool())
 	}
 
 	// Only send index on updates (when state has a value).
@@ -769,6 +820,7 @@ func (r *FirewallPolicyResource) sdkToState(ctx context.Context, policy *unifi.F
 	}
 
 	state.MatchIPSec = types.BoolValue(derefBool(policy.MatchIPSec))
+	state.CreateAllowRespond = types.BoolValue(derefBool(policy.CreateAllowRespond))
 
 	if policy.ICMPTypename != "" {
 		state.ICMPTypename = types.StringValue(policy.ICMPTypename)
