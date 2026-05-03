@@ -1,6 +1,6 @@
-# Look up a traffic rule by description
+# Look up a traffic rule by name
 data "unifi_traffic_rule" "example" {
-  description = "Block Social Media"
+  name = "Block Social Media"
 }
 
 # Or look up by ID

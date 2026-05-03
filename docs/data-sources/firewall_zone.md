@@ -24,8 +24,12 @@ data "unifi_firewall_zone" "by_id" {
 
 # Use the data source in a firewall policy
 resource "unifi_firewall_policy" "example" {
-  name        = "Example Policy"
-  source_zone = data.unifi_firewall_zone.example.id
+  name   = "Example Policy"
+  action = "ALLOW"
+
+  source = {
+    zone_id = data.unifi_firewall_zone.example.id
+  }
   # ...
 }
 ```
