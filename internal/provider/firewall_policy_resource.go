@@ -820,7 +820,17 @@ func (r *FirewallPolicyResource) sdkToState(ctx context.Context, policy *unifi.F
 	}
 
 	state.MatchIPSec = types.BoolValue(derefBool(policy.MatchIPSec))
-	state.CreateAllowRespond = types.BoolValue(derefBool(policy.CreateAllowRespond))
+
+	// If the controller didn't return create_allow_respond, fall back to the
+	// derivation rule (true for ALLOW, false otherwise). This keeps state
+	// consistent with the value ModifyPlan would compute, so the framework
+	// doesn't see a phantom drift on the next plan when an older controller or
+	// a stale cached response omits the field.
+	if policy.CreateAllowRespond != nil {
+		state.CreateAllowRespond = types.BoolValue(*policy.CreateAllowRespond)
+	} else {
+		state.CreateAllowRespond = types.BoolValue(deriveCreateAllowRespond(policy.Action))
+	}
 
 	if policy.ICMPTypename != "" {
 		state.ICMPTypename = types.StringValue(policy.ICMPTypename)
