@@ -13,23 +13,20 @@ Retrieves information about an existing UniFi traffic rule (QoS/blocking). Looku
 
 ## Example Usage
 
-### Lookup by Name
-
-```hcl
-data "unifi_traffic_rule" "block_social" {
-  name = "Block Social Media"
+```terraform
+# Look up a traffic rule by description
+data "unifi_traffic_rule" "example" {
+  description = "Block Social Media"
 }
 
-output "rule_action" {
-  value = data.unifi_traffic_rule.block_social.action
-}
-```
-
-### Lookup by ID
-
-```hcl
+# Or look up by ID
 data "unifi_traffic_rule" "by_id" {
   id = "60a1b2c3d4e5f67890123456"
+}
+
+# Use the data source
+output "rule_action" {
+  value = data.unifi_traffic_rule.example.action
 }
 ```
 

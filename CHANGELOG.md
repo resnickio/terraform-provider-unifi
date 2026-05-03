@@ -25,6 +25,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `unifi_firewall_policy` — changing `action` from `ALLOW` to `BLOCK` in a single apply can fail on UniFi v9 with `api.err.FirewallPolicyCreateRespondTrafficPolicyNotAllowed`. Workaround: destroy and recreate the policy. Pre-existing; not introduced by 0.8.0.
 - `unifi_network` — site-wide `unifi_setting_usg.mdns_enabled` gates whether per-network `mdns_enabled = true` takes effect. The controller silently strips per-network `true` if the site-level toggle is off, with no error.
 
+## [0.7.2] - 2026-03-25
+
+### Fixed
+
+- `unifi_firewall_policy` — `index` made `Computed`-only. The controller auto-reassigns it on every create, so any user-set value caused `inconsistent result after apply` or invalid plans. Removes the `serverValueOnCreateModifier` plan modifier added in v0.7.1 (which the framework rejected because it can't return Unknown when config has a concrete value). Fixes #1.
+
+## [0.7.1] - 2026-03-25
+
+### Fixed
+
+- `unifi_firewall_policy` — `index` field caused `Provider produced inconsistent result after apply` when the controller assigned a value different from the user's plan. Initial fix attempt; superseded by v0.7.2's clean read-only approach.
+
+## [0.7.0] - 2026-03-02
+
+### Added
+
+#### New Resources
+- `unifi_account` - RADIUS accounts for 802.1X / VPN authentication
+- `unifi_content_filtering` - Content filtering settings (singleton)
+- `unifi_device` - Manage already-adopted device settings (radio overrides, SNMP, etc.)
+- `unifi_setting_guest_access` - Guest portal / captive portal settings (singleton)
+- `unifi_setting_ips` - IPS/IDS and threat management settings (singleton)
+- `unifi_setting_magic_site_to_site_vpn` - Magic site-to-site VPN settings (singleton)
+- `unifi_setting_mgmt` - Site management settings (singleton: auto-upgrade, LED, SSH, alerts)
+- `unifi_setting_radius` - Site RADIUS server settings (singleton)
+- `unifi_setting_snmp` - SNMP monitoring settings (singleton)
+- `unifi_setting_teleport` - Teleport VPN settings (singleton)
+- `unifi_setting_usg` - Site USG/gateway settings (singleton: UPnP, mDNS, offloading)
+- `unifi_site` - Manage controller sites
+
+#### New Data Sources
+- `unifi_account` - Look up RADIUS account by ID or name
+- `unifi_acl_rule` - Look up ACL rule by ID or name (read-only)
+- `unifi_active_client` - Look up active (connected) client by MAC or display name
+- `unifi_admin` - Look up controller admin by ID or name
+- `unifi_ap_group` - Look up AP group by ID or name
+- `unifi_backup` - List all controller backups
+- `unifi_content_filtering` - Read current content filtering configuration
+- `unifi_qos_rule` - Look up QoS rule by ID or name
+- `unifi_site` - Look up site by ID or name
+- `unifi_vpn_connection` - Look up VPN connection by ID or name
+- `unifi_wan_sla` - Look up WAN SLA monitor by ID or name
+
+### Fixed
+
+- IPS settings: corrected setting key, handle honeypot / ad-blocking fields.
+- Traffic rules: added missing `schedule` nested attribute and `app_category_ids`.
+- Port profiles: added missing `dot1x_idle_timeout` and `egress_rate_limit` fields.
+- Teleport: `enabled` now correctly handled as a `*bool`.
+- IPv6: RA lifetime fields use the SDK's `FlexInt` for string-or-int unmarshalling.
+
+### Changed
+
+- Updated `unifi-go-sdk` to v0.10.0 (`FlexInt` support).
+- Added `flexIntValueOrNull` helper in `utils.go`.
+
+## [0.6.0] - 2026-02-27
+
+### Added
+
+- `unifi_network` — IPv6 support via a new nested `ipv6` attribute (21 fields covering interface type, prefix delegation, RA, DHCPv6, SLAAC) with full acceptance test coverage.
+
+### Fixed
+
+- `unifi_network` — `dhcp_dns_enabled` plan/state mismatch when DNS servers auto-enable it.
+- Build: legacy `GNUmakefile` was shadowing `Makefile`, breaking the `testacc-run` target. Removed.
+
+### Changed
+
+- **Breaking:** the previous flat `ipv6_setting_preference` attribute is replaced by the nested `ipv6` block. Operators using IPv6 must migrate their configurations.
+
+## [0.5.0] - 2026-02-23
+
+### Added
+
+- `unifi_network` — `dhcp_dns_enabled` and `dhcp_tftp_server` attributes.
+
+### Changed
+
+- Sweeper expanded; CLAUDE.md updated; pinned `terraform-plugin-docs` version.
+
 ## [0.4.0] - 2026-02-14
 
 ### Added
@@ -39,7 +120,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated unifi-go-sdk from v0.5.0 to v0.6.0 (adds User CRUD support)
 - Provider now registers 17 resources and 18 data sources
 
-## [0.2.1] - 2025-01-16
+## [0.3.1] - 2026-01-21
+
+### Fixed
+
+- `unifi_device_port_override` — race condition when multiple port overrides on the same device used `for_each`. Read-modify-write operations could overwrite each other; added per-device locking to serialize updates.
+
+## [0.3.0] - 2026-01-21
+
+### Added
+
+- `unifi_device` data source — look up devices by MAC or name.
+- `unifi_device_port_override` resource — configure per-port settings on switches: profile assignment, PoE mode, port name, VLANs per port, link aggregation, port isolation, rate limiting. Import/export uses `device_id:port_idx` format.
+
+### Changed
+
+- Updated `unifi-go-sdk` to v0.5.0 (device management support).
+
+## [0.2.3] - 2026-01-18
+
+### Fixed
+
+- `unifi_static_dns` and `unifi_network` — state inconsistency between plan and apply.
+- Network resource documentation regenerated to match the corrected schema.
+
+## [0.2.2] - 2026-01-18
+
+### Added
+
+- GoReleaser config and GitHub Actions release workflow — first release published to the Terraform Registry.
+
+## [0.2.1] - 2026-01-18
 
 ### Fixed
 
@@ -55,7 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `unifi_traffic_route` - Similar state consistency issues
 - `unifi_static_dns`, `unifi_nat_rule`, `unifi_radius_profile` - Schema issues with nested blocks vs attributes
 
-## [0.2.0] - 2025-01-16
+## [0.2.0] - 2026-01-16
 
 ### Added
 
@@ -93,7 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Provider now registers 16 resources and 15 data sources (up from 9 resources and 3 data sources)
 
-## [0.1.1] - 2025-01-14
+## [0.1.1] - 2026-01-15
 
 ### Added
 - `unifi_firewall_zone` data source
@@ -102,7 +213,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Documentation improvements
 
-## [0.1.0] - 2025-01-13
+## [0.1.0] - 2026-01-01
 
 ### Added
 

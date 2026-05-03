@@ -13,24 +13,6 @@ Retrieves information about an existing UniFi static DNS record. Lookup by eithe
 
 ## Example Usage
 
-### Lookup by Key (Hostname)
-
-```hcl
-data "unifi_static_dns" "server" {
-  key = "server.local"
-}
-
-output "server_ip" {
-  value = data.unifi_static_dns.server.value
-}
-```
-
-### Lookup by ID
-
-```hcl
-data "unifi_static_dns" "by_id" {
-  id = "60a1b2c3d4e5f67890123456"
-}
-```
+{{tffile "examples/data-sources/unifi_static_dns/data-source.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}

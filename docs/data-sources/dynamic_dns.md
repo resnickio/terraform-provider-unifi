@@ -11,23 +11,20 @@ Retrieves information about an existing UniFi dynamic DNS configuration. Lookup 
 
 ## Example Usage
 
-### Lookup by Hostname
-
-```hcl
-data "unifi_dynamic_dns" "home" {
+```terraform
+# Look up a dynamic DNS configuration by hostname
+data "unifi_dynamic_dns" "example" {
   hostname = "home.example.com"
 }
 
-output "ddns_service" {
-  value = data.unifi_dynamic_dns.home.service
-}
-```
-
-### Lookup by ID
-
-```hcl
+# Or look up by ID
 data "unifi_dynamic_dns" "by_id" {
   id = "60a1b2c3d4e5f67890123456"
+}
+
+# Use the data source
+output "ddns_service" {
+  value = data.unifi_dynamic_dns.example.service
 }
 ```
 

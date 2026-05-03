@@ -11,24 +11,6 @@ Retrieves information about an existing UniFi wireless network (SSID). Lookup by
 
 ## Example Usage
 
-### Lookup by Name
-
-```hcl
-data "unifi_wlan" "corporate" {
-  name = "Corporate WiFi"
-}
-
-output "wlan_security" {
-  value = data.unifi_wlan.corporate.security
-}
-```
-
-### Lookup by ID
-
-```hcl
-data "unifi_wlan" "by_id" {
-  id = "60a1b2c3d4e5f67890123456"
-}
-```
+{{tffile "examples/data-sources/unifi_wlan/data-source.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}
