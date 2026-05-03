@@ -11,23 +11,20 @@ Retrieves information about an existing UniFi switch port profile. Lookup by eit
 
 ## Example Usage
 
-### Lookup by Name
-
-```hcl
-data "unifi_port_profile" "trunk" {
+```terraform
+# Look up a port profile by name
+data "unifi_port_profile" "example" {
   name = "All"
 }
 
-output "profile_vlan_mode" {
-  value = data.unifi_port_profile.trunk.tagged_vlan_mgmt
-}
-```
-
-### Lookup by ID
-
-```hcl
+# Or look up by ID
 data "unifi_port_profile" "by_id" {
   id = "60a1b2c3d4e5f67890123456"
+}
+
+# Use the data source
+output "profile_native_network" {
+  value = data.unifi_port_profile.example.native_network_id
 }
 ```
 

@@ -11,24 +11,6 @@ Retrieves information about an existing UniFi network. Lookup by either id or na
 
 ## Example Usage
 
-### Lookup by Name
-
-```hcl
-data "unifi_network" "lan" {
-  name = "Default"
-}
-
-output "lan_subnet" {
-  value = data.unifi_network.lan.subnet
-}
-```
-
-### Lookup by ID
-
-```hcl
-data "unifi_network" "by_id" {
-  id = "60a1b2c3d4e5f67890123456"
-}
-```
+{{tffile "examples/data-sources/unifi_network/data-source.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}

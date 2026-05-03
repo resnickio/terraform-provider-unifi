@@ -10,5 +10,5 @@ data "unifi_port_forward" "by_id" {
 
 # Use the data source
 output "forward_destination" {
-  value = data.unifi_port_forward.example.destination_ip
+  value = data.unifi_port_forward.example.fwd_ip
 }

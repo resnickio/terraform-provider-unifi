@@ -13,23 +13,20 @@ Retrieves information about an existing UniFi static DNS record. Lookup by eithe
 
 ## Example Usage
 
-### Lookup by Key (Hostname)
-
-```hcl
-data "unifi_static_dns" "server" {
+```terraform
+# Look up a static DNS record by key (hostname)
+data "unifi_static_dns" "example" {
   key = "server.local"
 }
 
-output "server_ip" {
-  value = data.unifi_static_dns.server.value
-}
-```
-
-### Lookup by ID
-
-```hcl
+# Or look up by ID
 data "unifi_static_dns" "by_id" {
   id = "60a1b2c3d4e5f67890123456"
+}
+
+# Use the data source
+output "dns_value" {
+  value = data.unifi_static_dns.example.value
 }
 ```
 

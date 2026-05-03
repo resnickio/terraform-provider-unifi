@@ -11,42 +11,26 @@ Retrieves information about an existing UniFi firewall zone. Lookup by either id
 
 ## Example Usage
 
-### Lookup by Name
-
-```hcl
-data "unifi_firewall_zone" "internal" {
+```terraform
+# Look up a firewall zone by name
+data "unifi_firewall_zone" "example" {
   name = "Internal"
 }
 
-output "internal_zone_id" {
-  value = data.unifi_firewall_zone.internal.id
-}
-```
-
-### Lookup by ID
-
-```hcl
+# Or look up by ID
 data "unifi_firewall_zone" "by_id" {
   id = "60a1b2c3d4e5f67890123456"
 }
-```
 
-### Use with Firewall Policy
+# Use the data source in a firewall policy
+resource "unifi_firewall_policy" "example" {
+  name   = "Example Policy"
+  action = "ALLOW"
 
-```hcl
-data "unifi_firewall_zone" "internal" {
-  name = "Internal"
-}
-
-data "unifi_firewall_zone" "external" {
-  name = "External"
-}
-
-resource "unifi_firewall_policy" "block_external" {
-  name            = "Block External Access"
-  action          = "BLOCK"
-  source_zone_id  = data.unifi_firewall_zone.external.id
-  dest_zone_id    = data.unifi_firewall_zone.internal.id
+  source = {
+    zone_id = data.unifi_firewall_zone.example.id
+  }
+  # ...
 }
 ```
 

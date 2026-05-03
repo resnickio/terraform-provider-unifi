@@ -13,24 +13,6 @@ Retrieves information about an existing UniFi traffic route (policy-based routin
 
 ## Example Usage
 
-### Lookup by Name
-
-```hcl
-data "unifi_traffic_route" "vpn_route" {
-  name = "VPN Traffic Route"
-}
-
-output "route_enabled" {
-  value = data.unifi_traffic_route.vpn_route.enabled
-}
-```
-
-### Lookup by ID
-
-```hcl
-data "unifi_traffic_route" "by_id" {
-  id = "60a1b2c3d4e5f67890123456"
-}
-```
+{{tffile "examples/data-sources/unifi_traffic_route/data-source.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}

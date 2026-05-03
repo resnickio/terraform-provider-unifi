@@ -1,6 +1,6 @@
-# Look up a traffic route by description
+# Look up a traffic route by name
 data "unifi_traffic_route" "example" {
-  description = "Work VPN Route"
+  name = "Work VPN Route"
 }
 
 # Or look up by ID

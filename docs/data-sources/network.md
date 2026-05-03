@@ -11,23 +11,20 @@ Retrieves information about an existing UniFi network. Lookup by either id or na
 
 ## Example Usage
 
-### Lookup by Name
-
-```hcl
-data "unifi_network" "lan" {
+```terraform
+# Look up a network by name
+data "unifi_network" "example" {
   name = "Default"
 }
 
-output "lan_subnet" {
-  value = data.unifi_network.lan.subnet
-}
-```
-
-### Lookup by ID
-
-```hcl
+# Or look up by ID
 data "unifi_network" "by_id" {
   id = "60a1b2c3d4e5f67890123456"
+}
+
+# Use the data source
+output "network_vlan" {
+  value = data.unifi_network.example.vlan_id
 }
 ```
 

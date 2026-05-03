@@ -13,23 +13,20 @@ Retrieves information about an existing UniFi legacy firewall rule. Lookup by ei
 
 ## Example Usage
 
-### Lookup by Name
-
-```hcl
-data "unifi_firewall_rule" "block_rule" {
-  name = "Block External Access"
+```terraform
+# Look up a legacy firewall rule by name
+data "unifi_firewall_rule" "example" {
+  name = "Block Telnet"
 }
 
-output "rule_action" {
-  value = data.unifi_firewall_rule.block_rule.action
-}
-```
-
-### Lookup by ID
-
-```hcl
+# Or look up by ID
 data "unifi_firewall_rule" "by_id" {
   id = "60a1b2c3d4e5f67890123456"
+}
+
+# Use the data source
+output "rule_action" {
+  value = data.unifi_firewall_rule.example.action
 }
 ```
 

@@ -11,23 +11,20 @@ Retrieves information about an existing UniFi port forward rule. Lookup by eithe
 
 ## Example Usage
 
-### Lookup by Name
-
-```hcl
-data "unifi_port_forward" "web_server" {
-  name = "Web Server"
+```terraform
+# Look up a port forward by name
+data "unifi_port_forward" "example" {
+  name = "SSH Server"
 }
 
-output "web_server_fwd_ip" {
-  value = data.unifi_port_forward.web_server.fwd_ip
-}
-```
-
-### Lookup by ID
-
-```hcl
+# Or look up by ID
 data "unifi_port_forward" "by_id" {
   id = "60a1b2c3d4e5f67890123456"
+}
+
+# Use the data source
+output "forward_destination" {
+  value = data.unifi_port_forward.example.fwd_ip
 }
 ```
 
