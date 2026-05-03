@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-05-02
+
+### Fixed
+
+- `unifi_firewall_policy` — **silent data loss when `matching_target` defaults to `ANY`**. The schema's static `"ANY"` default let users send `matching_target=ANY` alongside `ips=[...]`; the UniFi controller silently discarded `ips` and widened the policy to allow ANY destination in the zone. The `terraform plan` diff looked cosmetic (`matching_target: "IP" -> "ANY"`) so a careful operator could not tell the policy was about to widen. **Operators with imported policies should re-plan after upgrading; an unexpected `matching_target` change in the diff means the prior controller-side state had already been mutated.** ([#2](https://github.com/resnickio/terraform-provider-unifi/pull/2))
+- `unifi_firewall_policy` — controller now requires `matching_target_type` (`SPECIFIC` for inline values, `OBJECT` for group references) on every IP/NETWORK match. The provider was not sending this field, causing `api.err.MissingFirewallDestinationMatchingTargetType` from v9 controllers. The provider now derives it transparently from `matching_target`. ([#2](https://github.com/resnickio/terraform-provider-unifi/pull/2))
+- `unifi_network` — `mdns_enabled` and `upnp_lan_enabled` were marked `Optional` only with no default, so omitting them from config caused `Provider produced inconsistent result after apply: was null, but now cty.False` whenever the controller returned the field. Both attributes are now `Optional + Computed` and resolve to whatever the controller persists. ([#3](https://github.com/resnickio/terraform-provider-unifi/pull/3))
+
+### Changed
+
+- `unifi_firewall_policy` — `source.matching_target` and `destination.matching_target` are now auto-derived from sibling fields when the user leaves them unset: `ips` non-empty → `"IP"`, `network_id` non-empty → `"NETWORK"`, otherwise `"ANY"`. Users who previously specified `matching_target` explicitly are unaffected; users who left it unset will see plans correctly resolve to `IP`/`NETWORK` instead of the broken `ANY` default.
+- `unifi_firewall_policy` — `matching_target` now validates against the enum at plan time via `stringvalidator.OneOf(...)`. Typos that previously reached the controller now fail in `terraform plan` with a clear error.
+- `unifi_firewall_policy` — explicit `matching_target = "ANY"` alongside `ips` or `network_id` is now rejected at plan time as a config error, since UniFi silently strips those fields under `matching_target=ANY`.
+
+### Known Issues
+
+- `unifi_firewall_policy` — matching targets `DOMAIN`, `REGION`, `PORT_GROUP`, `ADDRESS_GROUP` are not usable. The Go SDK's `PolicyEndpoint` type lacks fields to carry the corresponding match data (domains, regions, group IDs); the provider can set the marker but not the values. Manage these policies via the UniFi UI for now.
+- `unifi_firewall_policy` — changing `action` from `ALLOW` to `BLOCK` in a single apply can fail on UniFi v9 with `api.err.FirewallPolicyCreateRespondTrafficPolicyNotAllowed`. Workaround: destroy and recreate the policy. Pre-existing; not introduced by 0.8.0.
+- `unifi_network` — site-wide `unifi_setting_usg.mdns_enabled` gates whether per-network `mdns_enabled = true` takes effect. The controller silently strips per-network `true` if the site-level toggle is off, with no error.
+
 ## [0.4.0] - 2026-02-14
 
 ### Added

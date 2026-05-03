@@ -70,12 +70,12 @@ resource "unifi_network" "vlan_only" {
 - `internet_access_enabled` (Boolean) Whether internet access is enabled for this network. Defaults to true.
 - `intra_network_access_enabled` (Boolean) Whether devices on this network can communicate with devices on other networks.
 - `ipv6` (Attributes) IPv6 configuration for this network. (see [below for nested schema](#nestedatt--ipv6))
-- `mdns_enabled` (Boolean) Whether mDNS (Bonjour/Avahi) is enabled for this network.
+- `mdns_enabled` (Boolean) Whether mDNS (Bonjour/Avahi) is enabled for this network. Computed by the controller when not set.
 - `nat_enabled` (Boolean) Whether NAT is enabled for this network. Defaults to true.
 - `network_group` (String) The network group. Valid values: 'LAN', 'WAN', 'WAN2'. Defaults to 'LAN'.
 - `subnet` (String) The subnet in CIDR notation (e.g., '10.0.100.0/24').
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `upnp_lan_enabled` (Boolean) Whether UPnP is enabled on this LAN network.
+- `upnp_lan_enabled` (Boolean) Whether UPnP is enabled on this LAN network. Computed by the controller when not set.
 - `vlan_id` (Number) The VLAN ID for this network. Must be between 1 and 4095.
 
 ### Read-Only
