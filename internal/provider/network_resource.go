@@ -690,45 +690,57 @@ func (r *NetworkResource) ImportState(ctx context.Context, req resource.ImportSt
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
+// modifyPlanSettingUSGTimeout bounds the controller read in ModifyPlan so a
+// stalled controller can't hang `terraform plan` indefinitely. Plan operations
+// should be fast; 30s is generous for a single GET.
+const modifyPlanSettingUSGTimeout = 30 * time.Second
+
 // ModifyPlan rejects per-network mdns_enabled=true when site-wide gateway mDNS
 // is disabled. The UniFi controller silently strips per-network mdns_enabled
 // in that case (no API error), and the framework's "inconsistent result after
 // apply" check then fires a fatal error with no explanation. Catching the
 // dependency at plan time gives the operator a clear remediation path.
 //
+// We read from req.Config (not req.Plan) so the check fires only on explicit
+// user intent. Otherwise UseStateForUnknown would surface mdns_enabled=true
+// on every plan for any existing network with that value persisted, costing
+// one extra GetSettingUSG call per managed network per plan.
+//
 // Same-apply caveat: if the operator is enabling unifi_setting_usg.mdns_enabled
 // in the same apply, this check will false-positive (we only see the current
 // site state, not the planned state of another resource). Workaround: split
 // into two applies, or use -target.
 func (r *NetworkResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	if req.Plan.Raw.IsNull() || r.client == nil {
+	if req.Plan.Raw.IsNull() || req.Config.Raw.IsNull() || r.client == nil {
 		return
 	}
 
-	var planMDNS types.Bool
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("mdns_enabled"), &planMDNS)...)
+	var configMDNS types.Bool
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("mdns_enabled"), &configMDNS)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	// Only check when the user explicitly intends mDNS to be on. Unknown / null
-	// / false plans are not affected by the site-level toggle.
-	if planMDNS.IsNull() || planMDNS.IsUnknown() || !planMDNS.ValueBool() {
+	// Only check when the user explicitly set mdns_enabled = true in config.
+	// Null (omitted), unknown (interpolated), or false configs don't trigger
+	// the controller side effect we're guarding against.
+	if configMDNS.IsNull() || configMDNS.IsUnknown() || !configMDNS.ValueBool() {
 		return
 	}
 
-	// Same-apply mitigation: if config sets mdns_enabled=true (rather than
-	// inheriting it from a refresh), require the user has acknowledged the
-	// site-level dependency. Otherwise we'd false-positive on the very first
-	// apply when site-level is also being enabled. We keep the check anyway —
-	// see comment above for the trade-off.
-	usg, err := r.client.GetSettingUSG(ctx)
+	timedCtx, cancel := context.WithTimeout(ctx, modifyPlanSettingUSGTimeout)
+	defer cancel()
+
+	usg, err := r.client.GetSettingUSG(timedCtx)
 	if err != nil {
-		// A failure to fetch site state shouldn't block plan. Emit a warning
-		// so the operator knows the check was skipped.
-		resp.Diagnostics.AddAttributeWarning(
+		// We already established the user wants mdns_enabled=true above. If we
+		// can't verify the precondition, fail loudly rather than letting the
+		// apply hit the original opaque "inconsistent result after apply"
+		// error several minutes later — the operator should retry the plan
+		// once the controller is reachable.
+		resp.Diagnostics.AddAttributeError(
 			path.Root("mdns_enabled"),
 			"Could not verify site-level mDNS state",
-			fmt.Sprintf("Failed to read unifi_setting_usg from the controller while checking the mdns_enabled precondition: %s. Continuing with the plan; if the site-level mdns toggle is off, the apply will fail with 'inconsistent result after apply'.", err),
+			fmt.Sprintf("Failed to read unifi_setting_usg from the controller while checking the mdns_enabled precondition: %s. Re-run `terraform plan` once the controller is reachable, or remove mdns_enabled from this resource until the precondition can be verified.", err),
 		)
 		return
 	}

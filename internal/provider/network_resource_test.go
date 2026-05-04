@@ -603,28 +603,49 @@ func TestAccNetworkResource_networkAccess(t *testing.T) {
 }
 
 // TestAccNetworkResource_mdnsRequiresSiteLevel verifies the plan-time
-// precondition check: setting per-network mdns_enabled=true while site-wide
-// gateway mDNS is disabled fails at plan time with a clear remediation
-// message, rather than letting the controller silently strip the value at
-// apply (which would later surface as "Provider produced inconsistent result
-// after apply" with no useful explanation).
+// precondition error path: setting per-network mdns_enabled=true while
+// site-wide gateway mDNS is disabled fails at plan time with a clear
+// remediation message, rather than letting the controller silently strip the
+// value at apply (which would later surface as "Provider produced inconsistent
+// result after apply" with no useful explanation).
 //
-// Brittleness: this test assumes the controller currently has
-// unifi_setting_usg.mdns_enabled = false. If the controller has site-level
-// mDNS enabled, the apply will succeed and the ExpectError assertion will
-// fail. The existing v0.8.0 + v0.8.1 finding docs explain why we can't
-// reliably set up site-level state in the test fixture (it's a singleton with
-// site-wide spillover effects). For the happy path (site-level on +
-// per-network on), use a manual verification on a UDM with site-wide mDNS
-// enabled.
+// Skipped on controllers where site-wide mDNS is already enabled — that's the
+// happy path covered by TestAccNetworkResource_mdnsHappyPathSiteLevelOn.
 func TestAccNetworkResource_mdnsRequiresSiteLevel(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckSiteMDNSDisabled(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccNetworkResourceConfig_mdns("tf-acc-test-network-mdns", 3914),
 				ExpectError: regexp.MustCompile(`Site-level mDNS must be enabled first`),
+			},
+		},
+	})
+}
+
+// TestAccNetworkResource_mdnsHappyPathSiteLevelOn covers the inverse: when the
+// site-wide gateway mDNS toggle is on, setting per-network mdns_enabled=true
+// works end-to-end. The two tests together give complementary coverage —
+// whichever site-level state a CI controller happens to be in, exactly one of
+// them runs. Skipped on controllers where site-wide mDNS is disabled (the
+// default for fresh UDMs).
+func TestAccNetworkResource_mdnsHappyPathSiteLevelOn(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccCheckSiteMDNSEnabled(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_mdns("tf-acc-test-network-mdns-on", 3915),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-mdns-on"),
+					resource.TestCheckResourceAttr("unifi_network.test", "mdns_enabled", "true"),
+				),
+			},
+			{
+				ResourceName:      "unifi_network.test",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
