@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -601,15 +602,43 @@ func TestAccNetworkResource_networkAccess(t *testing.T) {
 	})
 }
 
-func TestAccNetworkResource_mdns(t *testing.T) {
+// TestAccNetworkResource_mdnsRequiresSiteLevel verifies the plan-time
+// precondition error path: setting per-network mdns_enabled=true while
+// site-wide gateway mDNS is disabled fails at plan time with a clear
+// remediation message, rather than letting the controller silently strip the
+// value at apply (which would later surface as "Provider produced inconsistent
+// result after apply" with no useful explanation).
+//
+// Skipped on controllers where site-wide mDNS is already enabled — that's the
+// happy path covered by TestAccNetworkResource_mdnsHappyPathSiteLevelOn.
+func TestAccNetworkResource_mdnsRequiresSiteLevel(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 func() { testAccCheckSiteMDNSDisabled(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkResourceConfig_mdns("tf-acc-test-network-mdns", 3914),
+				Config:      testAccNetworkResourceConfig_mdns("tf-acc-test-network-mdns", 3914),
+				ExpectError: regexp.MustCompile(`Site-level mDNS must be enabled first`),
+			},
+		},
+	})
+}
+
+// TestAccNetworkResource_mdnsHappyPathSiteLevelOn covers the inverse: when the
+// site-wide gateway mDNS toggle is on, setting per-network mdns_enabled=true
+// works end-to-end. The two tests together give complementary coverage —
+// whichever site-level state a CI controller happens to be in, exactly one of
+// them runs. Skipped on controllers where site-wide mDNS is disabled (the
+// default for fresh UDMs).
+func TestAccNetworkResource_mdnsHappyPathSiteLevelOn(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccCheckSiteMDNSEnabled(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccNetworkResourceConfig_mdns("tf-acc-test-network-mdns-on", 3915),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-mdns"),
+					resource.TestCheckResourceAttr("unifi_network.test", "name", "tf-acc-test-network-mdns-on"),
 					resource.TestCheckResourceAttr("unifi_network.test", "mdns_enabled", "true"),
 				),
 			},
