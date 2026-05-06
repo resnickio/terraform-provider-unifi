@@ -98,7 +98,7 @@ Optional:
 - `client_macs` (Set of String) Set of client MAC addresses to match.
 - `ips` (Set of String) Set of IP addresses or CIDR ranges to match.
 - `mac` (String) MAC address to match.
-- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.)
+- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'REGION', 'WEB', 'APP', 'APP_CATEGORY', 'IID'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'WEB', 'APP', 'APP_CATEGORY', and 'IID' are not yet supported — those values currently pass validation but cannot produce a working policy.
 - `network_id` (String) Network ID to match.
 - `port` (String) Port or port range to match.
 - `zone_id` (String) The destination zone ID.
@@ -123,7 +123,7 @@ Optional:
 - `client_macs` (Set of String) Set of client MAC addresses to match.
 - `ips` (Set of String) Set of IP addresses or CIDR ranges to match.
 - `mac` (String) MAC address to match.
-- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.)
+- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'REGION', 'WEB', 'APP', 'APP_CATEGORY', 'IID'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'WEB', 'APP', 'APP_CATEGORY', and 'IID' are not yet supported — those values currently pass validation but cannot produce a working policy.
 - `network_id` (String) Network ID to match.
 - `port` (String) Port or port range to match.
 - `zone_id` (String) The source zone ID.
