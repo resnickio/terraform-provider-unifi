@@ -189,11 +189,11 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 					},
 					"matching_target": schema.StringAttribute{
-						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.)",
+						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'REGION', 'WEB', 'APP', 'APP_CATEGORY', 'IID'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'WEB', 'APP', 'APP_CATEGORY', and 'IID' are not yet supported — those values currently pass validation but cannot produce a working policy.",
 						Optional:    true,
 						Computed:    true,
 						Validators: []validator.String{
-							stringvalidator.OneOf("ANY", "IP", "NETWORK", "DOMAIN", "REGION", "PORT_GROUP", "ADDRESS_GROUP"),
+							stringvalidator.OneOf("ANY", "IP", "NETWORK", "REGION", "WEB", "APP", "APP_CATEGORY", "IID"),
 						},
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
@@ -232,11 +232,11 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 					},
 					"matching_target": schema.StringAttribute{
-						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'DOMAIN', 'REGION', 'PORT_GROUP', 'ADDRESS_GROUP'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.)",
+						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'REGION', 'WEB', 'APP', 'APP_CATEGORY', 'IID'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'WEB', 'APP', 'APP_CATEGORY', and 'IID' are not yet supported — those values currently pass validation but cannot produce a working policy.",
 						Optional:    true,
 						Computed:    true,
 						Validators: []validator.String{
-							stringvalidator.OneOf("ANY", "IP", "NETWORK", "DOMAIN", "REGION", "PORT_GROUP", "ADDRESS_GROUP"),
+							stringvalidator.OneOf("ANY", "IP", "NETWORK", "REGION", "WEB", "APP", "APP_CATEGORY", "IID"),
 						},
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
@@ -581,15 +581,21 @@ func deriveMatchingTarget(hasIPs, hasNetworkID bool) string {
 }
 
 // matchingTargetTypeFor maps a matching_target value to the matching_target_type
-// the UniFi controller requires alongside it. The controller rejects an "IP"
-// (or NETWORK / DOMAIN / REGION) match without an explicit "SPECIFIC" type, and
-// rejects a *_GROUP match without an explicit "OBJECT" type. The provider
-// derives this transparently — the field isn't exposed in the resource schema.
+// the UniFi controller requires alongside it. Inline literal values (IP,
+// NETWORK, REGION, WEB) need "SPECIFIC"; references to UniFi-managed objects
+// (APP, APP_CATEGORY, IID) need "OBJECT". The provider derives this
+// transparently — the field isn't exposed in the resource schema.
+//
+// The full enum, confirmed by a controller-side error message during a v0.9.0
+// probe, is [APP, WEB, IP, APP_CATEGORY, NETWORK, IID, ANY, REGION]. Carrier
+// fields for APP / APP_CATEGORY / IID / WEB are not yet supported by the SDK,
+// so those matching modes are accepted by validation but won't produce a
+// working policy until the carrier fields land.
 func matchingTargetTypeFor(matchingTarget string) string {
 	switch matchingTarget {
-	case "IP", "NETWORK", "DOMAIN", "REGION":
+	case "IP", "NETWORK", "REGION", "WEB":
 		return "SPECIFIC"
-	case "PORT_GROUP", "ADDRESS_GROUP":
+	case "APP", "APP_CATEGORY", "IID":
 		return "OBJECT"
 	default:
 		return ""

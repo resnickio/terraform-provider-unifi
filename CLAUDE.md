@@ -166,7 +166,7 @@ The SDK handles path differences. Both use session-based authentication.
 |----------|------------|--------|
 | `unifi_firewall_zone` | No `site_id` attribute | UniFi API doesn't return site_id for zones |
 | `unifi_firewall_policy` | No `site_id` attribute | UniFi API doesn't return site_id for policies |
-| `unifi_firewall_policy` | `matching_target = DOMAIN/REGION/PORT_GROUP/ADDRESS_GROUP` not usable | Go SDK's `PolicyEndpoint` lacks fields for the match data (domains, regions, group IDs). Manage via UniFi UI until SDK adds the fields. |
+| `unifi_firewall_policy` | `matching_target` carrier fields not implemented for `WEB`/`APP`/`APP_CATEGORY`/`IID` | These four matching modes were confirmed valid via a controller-side enum probe (`[APP, WEB, IP, APP_CATEGORY, NETWORK, IID, ANY, REGION]`). The Go SDK's `PolicyEndpoint` lacks fields for the match data (domain strings, app/category/group IDs), so the values pass validation but cannot produce a working policy yet. Manage via UniFi UI until SDK + provider PRs land the carrier fields. |
 | `unifi_wlan` | Import loses passphrase | API never returns passphrase (write-only) |
 | `unifi_radius_profile` | Import loses server secrets | API never returns secret field (write-only) |
 | `unifi_dynamic_dns` | Import loses password | API never returns password (write-only) |

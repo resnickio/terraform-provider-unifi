@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-05-06
+
+### Breaking
+
+- `unifi_firewall_policy` — `source.matching_target` and `destination.matching_target` no longer accept `'DOMAIN'`, `'PORT_GROUP'`, or `'ADDRESS_GROUP'`. **Those values were never accepted by the controller** — they were inherited from a Go SDK type definition that turned out to disagree with the controller's actual enum. Configs that included them have always failed at apply time with a Jackson deserialization error from the controller; this release moves the failure earlier in the pipeline (the schema validator now rejects them at plan time). No working configuration breaks. **Hard-cut, no deprecation period** — the values were dead on arrival, so a multi-release warn-only window would only delay the cleanup.
+
+### Added
+
+- `unifi_firewall_policy` — `source.matching_target` and `destination.matching_target` now accept `'APP'`, `'APP_CATEGORY'`, `'IID'`, and `'WEB'`. These are the matching modes the v9 controller actually exposes (full real enum: `[ANY, APP, APP_CATEGORY, IP, IID, NETWORK, REGION, WEB]`). **Carrier fields for these new modes are not yet implemented** in the Go SDK or provider — the values pass validation but cannot produce a working policy until follow-up SDK and provider PRs add the supporting fields (domain strings, app / category / object IDs). Tracked as a future minor release.
+- `matching_target_type` derivation rules updated to mirror the corrected enum: `IP`, `NETWORK`, `REGION`, `WEB` → `SPECIFIC`; `APP`, `APP_CATEGORY`, `IID` → `OBJECT`.
+
+### Background — how the wrong enum landed in v0.8.0
+
+The Go SDK's `PolicyEndpoint.Validate()` listed `[ANY, IP, NETWORK, DOMAIN, REGION, PORT_GROUP, ADDRESS_GROUP]` as the valid set, derived from external documentation. v0.8.0 added a `OneOf` validator on the provider side that mirrored that list — which made plan-time validation tighter, but encoded the wrong data. A direct probe against the controller's `/proxy/network/v2/api/site/<site>/firewall-policies` endpoint with `matching_target: "DOMAIN"` returned this Jackson error:
+
+> `Cannot deserialize value of type ... from String "DOMAIN": not one of the values accepted for Enum class: [APP, WEB, IP, APP_CATEGORY, NETWORK, IID, ANY, REGION]`
+
+That single error message exposed the canonical enum. v0.9.0 adopts it.
+
 ## [0.8.2] - 2026-05-03
 
 ### Fixed

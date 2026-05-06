@@ -47,14 +47,24 @@ func TestMatchingTargetTypeFor(t *testing.T) {
 		matchingTarget string
 		want           string
 	}{
+		// Inline literal values: SPECIFIC.
 		{matchingTarget: "IP", want: "SPECIFIC"},
 		{matchingTarget: "NETWORK", want: "SPECIFIC"},
-		{matchingTarget: "DOMAIN", want: "SPECIFIC"},
 		{matchingTarget: "REGION", want: "SPECIFIC"},
-		{matchingTarget: "PORT_GROUP", want: "OBJECT"},
-		{matchingTarget: "ADDRESS_GROUP", want: "OBJECT"},
+		{matchingTarget: "WEB", want: "SPECIFIC"},
+		// Object references: OBJECT.
+		{matchingTarget: "APP", want: "OBJECT"},
+		{matchingTarget: "APP_CATEGORY", want: "OBJECT"},
+		{matchingTarget: "IID", want: "OBJECT"},
+		// ANY and unset: empty (no companion type needed).
 		{matchingTarget: "ANY", want: ""},
 		{matchingTarget: "", want: ""},
+		// Pre-v0.9.0 values that used to be in this map but the controller
+		// never accepted. The helper returns "" for any non-real enum value;
+		// the schema validator now rejects these at plan time.
+		{matchingTarget: "DOMAIN", want: ""},
+		{matchingTarget: "PORT_GROUP", want: ""},
+		{matchingTarget: "ADDRESS_GROUP", want: ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.matchingTarget, func(t *testing.T) {
