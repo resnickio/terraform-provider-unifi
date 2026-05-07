@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-05-06
+
+### Changed
+
+- Bumped `unifi-go-sdk` from v0.10.0 to v0.11.0. The SDK release brings `PolicyEndpoint.Validate()` in line with the controller-confirmed `matching_target` enum that v0.9.0 corrected on the provider side: drops `DOMAIN`/`PORT_GROUP`/`ADDRESS_GROUP`, adds `APP`/`APP_CATEGORY`/`IID`/`WEB`. **No provider behavior change** — the v0.9.0 plan-time `OneOf` validator already enforced the corrected enum independent of the SDK. This bump removes the paper inconsistency between the two layers.
+
 ## [0.9.0] - 2026-05-06
 
 ### Breaking
