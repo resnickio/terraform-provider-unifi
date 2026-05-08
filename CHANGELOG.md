@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.2] - 2026-05-08
+
+### Fixed
+
+- `unifi_network` — removed the v0.8.2 plan-time mDNS validator, which was misreading the controller's settings model. The validator read `unifi_setting_usg.mdns_enabled` (a boolean field that the SDK declares but the v9 controller does not actually populate — Jackson silently dropped it). It would then conclude site-level mDNS was disabled and reject any per-network `mdns_enabled = true`, even on controllers where mDNS was actively configured and working via the actual `setting/mdns` settings key (`mode = auto`, `enabled_for_network_ids = [...]`). On v9 controllers this blocked **all** in-place changes to networks with `mdns_enabled = true`, including changes unrelated to mDNS — `lifecycle.ignore_changes` did not bypass it because `ModifyPlan` runs before `ignore_changes` is applied. The original "silent strip" footgun the validator was trying to prevent should be re-addressed once the SDK adds proper `setting/mdns` plumbing (tracked separately).
+
+### Removed
+
+- `unifi_network` — the `ResourceWithModifyPlan` interface assertion, the broken validator function, and `modifyPlanSettingUSGTimeout`. Removed the `TestAccNetworkResource_mdnsRequiresSiteLevel` test and the `testAccCheckSiteMDNSDisabled` / `testAccCheckSiteMDNSEnabled` test prechecks (they read the same wrong field). Removed the `TestAccNetworkResource_mdnsHappyPathSiteLevelOn` test as well — round-tripping `mdns_enabled = true` can't be reliably tested without first reading `setting/mdns`, which the SDK doesn't yet expose; an explanatory comment block in `network_resource_test.go` documents the gap. The Optional+Computed default-from-controller path remains covered by `TestAccNetworkResource_mdnsUpnpComputedFromController`.
+
 ## [0.10.1] - 2026-05-08
 
 ### Fixed
