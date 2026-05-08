@@ -35,3 +35,4 @@ terraform-provider-unifi
 
 # Claude Code
 .claude/
+findings/
