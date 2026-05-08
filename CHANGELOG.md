@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-05-08
+
+### Fixed
+
+- `unifi_firewall_policy.schedule` and `unifi_traffic_rule.schedule` — `scheduleFromObject` / `trafficScheduleFromObject` helpers now check `IsUnknown()` on every string and set sub-attribute, not just `IsNull()`. With the schedule sub-attributes now `Optional+Computed` (v0.10.0), an interpolation that resolved to Unknown at plan time was being coerced to `""` via `ValueString()` and silently sent to the controller — clearing the field server-side or triggering controller validation errors.
+- `unifi_traffic_rule` and `unifi_traffic_route` data sources — preserve the lookup `name` from config when the controller's GET endpoint returns an empty `name` (the controller drops `name` from every response shape; this matches the workaround the resources already had).
+
 ## [0.10.0] - 2026-05-07
 
 This release bundles two cycles of probe-driven SDK corrections (v0.12.0 enum sweep + v0.13.0 traffic round-trip probe) into a single provider release. v0.12.0 was never tagged as a separate provider release.
