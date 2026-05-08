@@ -184,32 +184,32 @@ func trafficScheduleFromObject(ctx context.Context, obj types.Object, diags *dia
 	attrs := obj.Attributes()
 	schedule := &unifi.PolicySchedule{}
 
-	if v, ok := attrs["mode"].(types.String); ok && !v.IsNull() {
+	if v, ok := attrs["mode"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
 		schedule.Mode = v.ValueString()
 	}
 	if v, ok := attrs["time_all_day"].(types.Bool); ok && !v.IsNull() && !v.IsUnknown() {
 		b := v.ValueBool()
 		schedule.TimeAllDay = &b
 	}
-	if v, ok := attrs["time_range_start"].(types.String); ok && !v.IsNull() {
+	if v, ok := attrs["time_range_start"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
 		schedule.TimeRangeStart = v.ValueString()
 	}
-	if v, ok := attrs["time_range_end"].(types.String); ok && !v.IsNull() {
+	if v, ok := attrs["time_range_end"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
 		schedule.TimeRangeEnd = v.ValueString()
 	}
-	if v, ok := attrs["repeat_on_days"].(types.Set); ok && !v.IsNull() {
+	if v, ok := attrs["repeat_on_days"].(types.Set); ok && !v.IsNull() && !v.IsUnknown() {
 		var days []string
 		d := v.ElementsAs(ctx, &days, false)
 		diags.Append(d...)
 		schedule.RepeatOnDays = days
 	}
-	if v, ok := attrs["date_start"].(types.String); ok && !v.IsNull() {
+	if v, ok := attrs["date_start"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
 		schedule.DateStart = v.ValueString()
 	}
-	if v, ok := attrs["date_end"].(types.String); ok && !v.IsNull() {
+	if v, ok := attrs["date_end"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
 		schedule.DateEnd = v.ValueString()
 	}
-	if v, ok := attrs["date"].(types.String); ok && !v.IsNull() {
+	if v, ok := attrs["date"].(types.String); ok && !v.IsNull() && !v.IsUnknown() {
 		schedule.Date = v.ValueString()
 	}
 
