@@ -50,7 +50,7 @@ output "rule_action" {
 - `ip_addresses` (Set of String) Set of IP addresses or CIDR blocks for IP-based filtering.
 - `ip_ranges` (Set of String) Set of IP ranges for IP-based filtering.
 - `matching_target` (String) The matching target type (INTERNET, IP, DOMAIN, REGION, APP).
-- `network_id` (String) The network ID to apply the rule to.
+- `network_ids` (Set of String) Set of network IDs the rule applies to.
 - `regions` (Set of String) Set of geographic regions for region-based filtering.
 - `schedule` (Attributes) Schedule for when the rule is active. (see [below for nested schema](#nestedatt--schedule))
 - `target_devices` (Attributes List) List of target devices for the rule. (see [below for nested schema](#nestedatt--target_devices))
@@ -80,10 +80,14 @@ Read-Only:
 
 Read-Only:
 
-- `days_of_week` (Set of String) Days of week when the rule is active.
-- `mode` (String) Schedule mode (ALWAYS, CUSTOM).
-- `time_range_end` (String) End time in HH:MM format.
-- `time_range_start` (String) Start time in HH:MM format.
+- `date` (String) Single date in YYYY-MM-DD (ONE_TIME_ONLY mode).
+- `date_end` (String) End date in YYYY-MM-DD (CUSTOM mode).
+- `date_start` (String) Start date in YYYY-MM-DD (CUSTOM mode).
+- `mode` (String) Schedule mode (ALWAYS, EVERY_DAY, EVERY_WEEK, ONE_TIME_ONLY, CUSTOM).
+- `repeat_on_days` (Set of String) Days of the week the schedule repeats on (lowercase 3-letter codes).
+- `time_all_day` (Boolean) Whether the schedule applies for the full day.
+- `time_range_end` (String) End time in HH:MM (24h).
+- `time_range_start` (String) Start time in HH:MM (24h).
 
 
 <a id="nestedatt--target_devices"></a>

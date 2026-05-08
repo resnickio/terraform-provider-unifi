@@ -43,7 +43,6 @@ output "route_interface" {
 - `description` (String) A description for the traffic route.
 - `domains` (Attributes List) List of domains for domain-based routing. (see [below for nested schema](#nestedatt--domains))
 - `enabled` (Boolean) Whether the traffic route is enabled.
-- `fallback` (Boolean) Whether to use fallback routing.
 - `ip_addresses` (Set of String) Set of IP addresses or CIDR blocks for IP-based routing.
 - `ip_ranges` (Set of String) Set of IP ranges for IP-based routing.
 - `kill_switch` (Boolean) Whether kill switch is enabled (block traffic if VPN fails).

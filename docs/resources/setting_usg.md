@@ -34,7 +34,7 @@ resource "unifi_setting_usg" "example" {
 - `h323_module` (Boolean)
 - `lldp_enable_all` (Boolean)
 - `mdns_enabled` (Boolean)
-- `mss_clamp` (String) MSS clamping mode: 'auto' or 'custom'.
+- `mss_clamp` (String) MSS clamping mode. Valid values: 'auto', 'custom', 'disabled'.
 - `mss_clamp_mss` (Number) MSS clamp value (when mss_clamp is 'custom').
 - `offload_accounting` (Boolean)
 - `offload_l2_blocking` (Boolean)

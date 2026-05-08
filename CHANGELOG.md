@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-05-07
+
+This release bundles two cycles of probe-driven SDK corrections (v0.12.0 enum sweep + v0.13.0 traffic round-trip probe) into a single provider release. v0.12.0 was never tagged as a separate provider release.
+
+### Breaking — schema attribute changes
+
+- `unifi_firewall_policy.schedule.days_of_week` and `unifi_traffic_rule.schedule.days_of_week` — **renamed to `repeat_on_days`**. The previous attribute name and its uppercase day enum (`MONDAY`...`SUNDAY`) were Jackson-accepted but silently dropped by the controller (verified by the v0.13.0 SDK probe). New enum is the controller-confirmed lowercase 3-letter form: `[mon, tue, wed, thu, fri, sat, sun]`. **Hard-cut, no deprecation period** — any value previously sent for `days_of_week` was never persisted, so no working configuration breaks.
+- `unifi_firewall_policy.schedule.mode` and `unifi_traffic_rule.schedule.mode` — enum widened from `[ALWAYS, CUSTOM]` to the controller-confirmed `[ALWAYS, EVERY_DAY, EVERY_WEEK, ONE_TIME_ONLY, CUSTOM]`. **Behavior change for `CUSTOM`**: the controller's `CUSTOM` mode actually requires `date_start` + `date_end` + `repeat_on_days`. The earlier provider/SDK semantics where `CUSTOM` meant "schedule on weekdays during business hours" should now use `EVERY_WEEK`. Configs using `mode = "CUSTOM"` without date fields will be rejected by the controller (`api.err.MissingDateRange`).
+- `unifi_traffic_rule.network_id` (singular) — **renamed to `network_ids`** and changed from `String` to `Set of String`. The controller never persisted the single-value form (Jackson-accepted but dropped). Existing configs setting `network_id = X` must migrate to `network_ids = [X]`. Multi-network association is now expressible. *Stateful migration note*: Terraform users with state from older provider versions will see a "Unsupported argument" error on plan; they must rewrite their config before re-applying. State refresh will populate `network_ids` from the GET response.
+- `unifi_traffic_route.fallback` — **removed**. The controller silently ignored this field (placebo); SDK v0.13.0 dropped the corresponding `Fallback` struct field. Configs setting `fallback = ...` will fail with "Unsupported argument" — but the value was never doing anything anyway.
+- `unifi_firewall_policy` — `source.matching_target` and `destination.matching_target` enum **replaced** (from v0.12.0 cycle). The previous v0.9.0 enum was based on a single-mode controller probe that only revealed IP-style branch values. SDK v0.12.0's per-value probe discovered the actual enum is identity-aware: `[ANY, CLIENT, EXTERNAL_SOURCE, IID, IP, MAC, NETWORK, REGION, USER_IDENTITY, USER_IDENTITY_ONE_CLICK_VPN, USER_IDENTITY_ONE_CLICK_WIFI, VPN_USER]`. Configs that set `matching_target = "WEB" | "APP" | "APP_CATEGORY"` now fail at plan time. No working configuration breaks — those values were never accepted by the controller (v0.9.0 added them assuming controller-side carrier-field plumbing was forthcoming; the per-value probe proved they were dead).
+- `unifi_nat_rule` — schema attributes `source_address`, `source_port`, `dest_address`, `dest_port`, `translated_ip`, `translated_port` **removed**. The UniFi v2 NAT API on current controllers responds "Unrecognized field" for each of these and returns HTTP 500 for any non-trivial create. The resource now manages only the rule shell (type, protocol, description, enabled, logging). Configure NAT translation via the UniFi UI until the upstream API stabilizes.
+- `unifi_port_profile.poe_mode` — narrowed to `[auto, off]`. `pasv24` and `passthrough` are PortOverride-only.
+- `unifi_port_profile.op_mode` — narrowed to `[switch]`. `mirror` and `aggregate` are PortOverride-only.
+- `unifi_static_route.type` — narrowed to `[static-route]`. `interface-route` was never valid for this field (the per-route flavor lives in `static_route_type`).
+- `unifi_setting_ips.advanced_filtering_preference` — `auto` removed.
+- `unifi_setting_guest_access.auth` — `password` and `radius` removed; `facebook_wifi` added. Existing configs using `password` or `radius` must migrate to `hotspot`.
+- `unifi_traffic_route.matching_target` — `APP` removed.
+
+### Added
+
+- `unifi_firewall_policy.schedule` and `unifi_traffic_rule.schedule` — new attributes `time_all_day` (Bool), `date_start` (String, YYYY-MM-DD), `date_end` (String, YYYY-MM-DD), `date` (String, YYYY-MM-DD) supporting the full `EVERY_DAY` / `EVERY_WEEK` / `ONE_TIME_ONLY` / `CUSTOM` mode set.
+- `unifi_traffic_rule.network_ids` — set-of-string replacing the singular `network_id`. Enables multi-network rules.
+- `unifi_firewall_policy` — `source.matching_target` and `destination.matching_target` accept identity-aware values: `CLIENT`, `EXTERNAL_SOURCE`, `MAC`, `USER_IDENTITY`, `USER_IDENTITY_ONE_CLICK_VPN`, `USER_IDENTITY_ONE_CLICK_WIFI`, `VPN_USER`. Carrier fields for these are not yet plumbed in the SDK; values pass validation but cannot produce a working policy until follow-up SDK PRs land.
+- `unifi_traffic_rule.matching_target` — added `APP_CATEGORY` and `LOCAL_NETWORK`.
+
+### Changed
+
+- Bumped `unifi-go-sdk` from v0.11.0 to v0.13.0 (skipping a separate v0.12.0 provider release; both SDK cycles are folded into this one).
+  - **v0.12.0**: probe sweep of every `isOneOf()` validator (17 enums corrected). Adds `TestEnumProbe` regression guard. Release notes: https://github.com/resnickio/unifi-go-sdk/releases/tag/v0.12.0
+  - **v0.13.0**: round-trip probe of v2 traffic-* endpoints and `PolicySchedule`. Found 6 fields the controller silently dropped, flipped, or fabricated. Renames + struct shape corrections; transparent `name` re-injection on Create/Update return paths. Release notes: https://github.com/resnickio/unifi-go-sdk/releases/tag/v0.13.0
+- `matchingTargetTypeFor` updated to drop dead v0.9.0 mappings (`WEB`/`APP`/`APP_CATEGORY` no longer in enum). Only `IP`/`NETWORK`/`REGION` and `IID` retain explicit mappings; identity-aware values fall through to empty-string default.
+
+### Fixed
+
+- `unifi_traffic_rule` and `unifi_traffic_route` — Create/Update no longer fail with `Provider produced inconsistent result after apply` on `.name` and `.schedule`. SDK v0.13.0 transparently re-injects `name` on Create/Update returns (the controller drops it from every response shape). The provider keeps a defensive `sdkToState` preservation of `name` from prior state — useful for the Read path, where the SDK falls back to LIST and still returns no name.
+- `unifi_traffic_rule.schedule` — schedule values now round-trip correctly. The pre-v0.13.0 SDK silently corrupted the wire payload (`days_of_week` JSON tag mismatched the controller's `repeat_on_days`, day-name enum was wrong-cased). The provider's `repeat_on_days` attribute now reaches the controller intact.
+
+### Known limitations (carried forward)
+
+- Import of `unifi_traffic_rule` / `unifi_traffic_route` loses `name`. The controller's GET endpoints don't return `name` reliably; the SDK's `name` re-injection only covers Create/Update return paths. Tests use `ImportStateVerifyIgnore: ["name"]`; users importing must re-set `name` in config before re-applying. Documented in CLAUDE.md.
+- Identity-aware `matching_target` values on `unifi_firewall_policy` pass validation but cannot produce a working policy (carrier fields not yet plumbed). Documented in CLAUDE.md.
+
+### Background — what the probes taught us
+
+v0.9.0 fixed a wrong enum based on a single Jackson deserialization error. The lesson v0.12.0 surfaced is that error messages only enumerate the values the deserializer actually evaluated against your input — so a single probe revealed only one branch of the real enum. The lesson v0.13.0 surfaced is even uglier: the controller silently *accepts* JSON tags it doesn't recognize (Jackson `@JsonIgnoreProperties(ignoreUnknown=true)`) and silently *flips* boolean fields when the JSON tag is wrong, with no error returned. Round-trip probing — write a value, read it back, check it's the same — is the only way to catch those. v0.13.0's `TestEnumProbe` and v0.12.0's per-value enum probe are now both durable regression guards.
+
 ## [0.9.1] - 2026-05-06
 
 ### Changed

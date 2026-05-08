@@ -74,10 +74,14 @@ Read-Only:
 
 Read-Only:
 
-- `days_of_week` (Set of String) Days of the week.
-- `mode` (String) Schedule mode (ALWAYS, CUSTOM).
-- `time_range_end` (String) End time in HH:MM format.
-- `time_range_start` (String) Start time in HH:MM format.
+- `date` (String) Single date in YYYY-MM-DD (ONE_TIME_ONLY mode).
+- `date_end` (String) End date in YYYY-MM-DD (CUSTOM mode).
+- `date_start` (String) Start date in YYYY-MM-DD (CUSTOM mode).
+- `mode` (String) Schedule mode (ALWAYS, EVERY_DAY, EVERY_WEEK, ONE_TIME_ONLY, CUSTOM).
+- `repeat_on_days` (Set of String) Days of the week the schedule repeats on (lowercase 3-letter codes).
+- `time_all_day` (Boolean) Whether the schedule applies for the full day.
+- `time_range_end` (String) End time in HH:MM (24h).
+- `time_range_start` (String) Start time in HH:MM (24h).
 
 
 <a id="nestedatt--source"></a>

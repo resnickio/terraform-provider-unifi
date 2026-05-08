@@ -49,7 +49,7 @@ resource "unifi_static_route" "blackhole" {
 - `static_route_nexthop` (String) The next hop IP address for the route.
 - `static_route_type` (String) The static route type. Valid values: 'nexthop-route', 'interface-route', 'blackhole'. Defaults to 'nexthop-route'.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `type` (String) The type of route. Valid values: 'static-route', 'interface-route'. Defaults to 'static-route'.
+- `type` (String) The route classification. Only 'static-route' is valid; the per-route flavor (next-hop / interface / blackhole) lives in static_route_type. Defaults to 'static-route'.
 
 ### Read-Only
 

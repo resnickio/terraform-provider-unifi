@@ -18,48 +18,60 @@ resource "unifi_traffic_rule" "block_social" {
   action          = "BLOCK"
   matching_target = "DOMAIN"
 
-  domains {
-    domain      = "*.facebook.com"
-    description = "Facebook"
-  }
+  domains = [
+    {
+      domain      = "*.facebook.com"
+      description = "Facebook"
+    },
+    {
+      domain      = "*.twitter.com"
+      description = "Twitter"
+    },
+    {
+      domain = "*.tiktok.com"
+    },
+  ]
 
-  domains {
-    domain      = "*.twitter.com"
-    description = "Twitter"
-  }
-
-  domains {
-    domain = "*.tiktok.com"
-  }
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 
 # Block during work hours with schedule
 resource "unifi_traffic_rule" "work_hours_block" {
-  name            = "Block-Gaming-Work-Hours"
-  action          = "BLOCK"
-  matching_target = "APP"
+  name             = "Block-Gaming-Work-Hours"
+  action           = "BLOCK"
+  matching_target  = "APP"
   app_category_ids = ["gaming"]
 
-  schedule {
-    mode             = "CUSTOM"
+  schedule = {
+    mode             = "EVERY_WEEK"
     time_range_start = "09:00"
     time_range_end   = "17:00"
-    days_of_week     = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]
+    repeat_on_days   = ["mon", "tue", "wed", "thu", "fri"]
   }
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 
 # Bandwidth limit for streaming
 resource "unifi_traffic_rule" "limit_streaming" {
-  name            = "Limit-Streaming"
-  action          = "ALLOW"
-  matching_target = "APP"
+  name             = "Limit-Streaming"
+  action           = "ALLOW"
+  matching_target  = "APP"
   app_category_ids = ["streaming_media"]
 
-  bandwidth_limit {
+  bandwidth_limit = {
     download_limit_kbps = 25000
     upload_limit_kbps   = 5000
     enabled             = true
   }
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 
 # Block specific IP ranges
@@ -68,6 +80,10 @@ resource "unifi_traffic_rule" "block_ips" {
   action          = "BLOCK"
   matching_target = "IP"
   ip_addresses    = ["192.168.100.0/24", "10.10.10.0/24"]
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 
 # Allow specific regions
@@ -76,6 +92,10 @@ resource "unifi_traffic_rule" "allow_regions" {
   action          = "ALLOW"
   matching_target = "REGION"
   regions         = ["US", "CA"]
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 
 # Disabled rule (for maintenance)
@@ -84,24 +104,40 @@ resource "unifi_traffic_rule" "disabled" {
   action      = "BLOCK"
   enabled     = false
   description = "Disabled for maintenance"
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 
 # Target specific devices
 resource "unifi_traffic_rule" "device_specific" {
-  name   = "Kids-Device-Block"
-  action = "BLOCK"
-
-  target_devices {
-    type       = "CLIENT"
-    client_mac = "aa:bb:cc:dd:ee:ff"
-  }
-
-  target_devices {
-    type       = "NETWORK"
-    network_id = unifi_network.kids.id
-  }
-
+  name            = "Kids-Device-Block"
+  action          = "BLOCK"
   matching_target = "INTERNET"
+
+  target_devices = [
+    {
+      type       = "CLIENT"
+      client_mac = "aa:bb:cc:dd:ee:ff"
+    },
+    {
+      type       = "NETWORK"
+      network_id = unifi_network.kids.id
+    },
+  ]
+}
+
+# Apply to multiple networks
+resource "unifi_traffic_rule" "multi_network" {
+  name            = "VLAN-Block"
+  action          = "BLOCK"
+  matching_target = "INTERNET"
+  network_ids     = [unifi_network.guest.id, unifi_network.iot.id]
+
+  target_devices = [{
+    type = "ALL_CLIENTS"
+  }]
 }
 ```
 
@@ -123,10 +159,10 @@ resource "unifi_traffic_rule" "device_specific" {
 - `enabled` (Boolean) Whether the traffic rule is enabled. Defaults to true.
 - `ip_addresses` (Set of String) Set of IP addresses or CIDR blocks for IP-based filtering.
 - `ip_ranges` (Set of String) Set of IP ranges for IP-based filtering.
-- `matching_target` (String) The matching target type. Valid values: INTERNET, IP, DOMAIN, REGION, APP.
-- `network_id` (String) The network ID to apply the rule to.
+- `matching_target` (String) The matching target type. Valid values: INTERNET, IP, DOMAIN, REGION, APP, APP_CATEGORY, LOCAL_NETWORK.
+- `network_ids` (Set of String) Set of network IDs the rule applies to. Replaces the singular `network_id` attribute (controller never persisted single-value form).
 - `regions` (Set of String) Set of geographic regions for region-based filtering.
-- `schedule` (Attributes) Schedule for when the rule is active. (see [below for nested schema](#nestedatt--schedule))
+- `schedule` (Attributes) Schedule for when the rule is active. The controller defaults to mode='ALWAYS' when omitted, so this is Computed: state may show a non-null schedule even when the config doesn't set one. (see [below for nested schema](#nestedatt--schedule))
 - `target_devices` (Attributes List) List of target devices for the rule. (see [below for nested schema](#nestedatt--target_devices))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
@@ -162,10 +198,14 @@ Optional:
 
 Optional:
 
-- `days_of_week` (Set of String) Days of week when the rule is active. Valid values: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY.
-- `mode` (String) Schedule mode. Valid values: ALWAYS, CUSTOM.
-- `time_range_end` (String) End time in HH:MM format.
-- `time_range_start` (String) Start time in HH:MM format.
+- `date` (String) Single date in YYYY-MM-DD. Required for `mode = ONE_TIME_ONLY`.
+- `date_end` (String) End date in YYYY-MM-DD. Required for `mode = CUSTOM`.
+- `date_start` (String) Start date in YYYY-MM-DD. Required for `mode = CUSTOM`.
+- `mode` (String) Schedule mode. Valid values: 'ALWAYS', 'EVERY_DAY', 'EVERY_WEEK', 'ONE_TIME_ONLY', 'CUSTOM'. Per-mode required fields: ALWAYS — none; EVERY_DAY — `time_all_day` or `time_range_start`+`time_range_end`; EVERY_WEEK — `repeat_on_days` plus a time spec; ONE_TIME_ONLY — `date` plus a time spec; CUSTOM — `repeat_on_days`, `date_start`, `date_end`, plus a time spec.
+- `repeat_on_days` (Set of String) Days of the week the schedule repeats on. Valid values: 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun' (lowercase, 3-letter codes).
+- `time_all_day` (Boolean) Whether the schedule applies for the full day. Mutually exclusive with `time_range_start`/`time_range_end`.
+- `time_range_end` (String) End time in HH:MM (24h).
+- `time_range_start` (String) Start time in HH:MM (24h).
 
 
 <a id="nestedatt--target_devices"></a>

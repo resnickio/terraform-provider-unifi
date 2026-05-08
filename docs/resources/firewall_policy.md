@@ -98,7 +98,7 @@ Optional:
 - `client_macs` (Set of String) Set of client MAC addresses to match.
 - `ips` (Set of String) Set of IP addresses or CIDR ranges to match.
 - `mac` (String) MAC address to match.
-- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'REGION', 'WEB', 'APP', 'APP_CATEGORY', 'IID'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'WEB', 'APP', 'APP_CATEGORY', and 'IID' are not yet supported — those values currently pass validation but cannot produce a working policy.
+- `matching_target` (String) Matching target type. Valid values: 'ANY', 'CLIENT', 'EXTERNAL_SOURCE', 'IID', 'IP', 'MAC', 'NETWORK', 'REGION', 'USER_IDENTITY', 'USER_IDENTITY_ONE_CLICK_VPN', 'USER_IDENTITY_ONE_CLICK_WIFI', 'VPN_USER'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'CLIENT', 'EXTERNAL_SOURCE', 'IID', 'MAC', 'USER_IDENTITY', 'USER_IDENTITY_ONE_CLICK_VPN', 'USER_IDENTITY_ONE_CLICK_WIFI', and 'VPN_USER' are not yet plumbed through the SDK — those values currently pass validation but cannot produce a working policy.
 - `network_id` (String) Network ID to match.
 - `port` (String) Port or port range to match.
 - `zone_id` (String) The destination zone ID.
@@ -109,10 +109,14 @@ Optional:
 
 Optional:
 
-- `days_of_week` (Set of String) Days of the week. Valid values: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'.
-- `mode` (String) Schedule mode. Valid values: 'ALWAYS', 'CUSTOM'.
-- `time_range_end` (String) End time in HH:MM format.
-- `time_range_start` (String) Start time in HH:MM format.
+- `date` (String) Single date in YYYY-MM-DD. Required for `mode = ONE_TIME_ONLY`.
+- `date_end` (String) End date in YYYY-MM-DD. Required for `mode = CUSTOM`.
+- `date_start` (String) Start date in YYYY-MM-DD. Required for `mode = CUSTOM`.
+- `mode` (String) Schedule mode. Valid values: 'ALWAYS', 'EVERY_DAY', 'EVERY_WEEK', 'ONE_TIME_ONLY', 'CUSTOM'. Per-mode required fields: ALWAYS — none; EVERY_DAY — `time_all_day` or `time_range_start`+`time_range_end`; EVERY_WEEK — `repeat_on_days` plus a time spec; ONE_TIME_ONLY — `date` plus a time spec; CUSTOM — `repeat_on_days`, `date_start`, `date_end`, plus a time spec.
+- `repeat_on_days` (Set of String) Days of the week the schedule repeats on. Valid values: 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun' (lowercase, 3-letter codes).
+- `time_all_day` (Boolean) Whether the schedule applies for the full day. Mutually exclusive with `time_range_start`/`time_range_end`.
+- `time_range_end` (String) End time in HH:MM (24h).
+- `time_range_start` (String) Start time in HH:MM (24h).
 
 
 <a id="nestedatt--source"></a>
@@ -123,7 +127,7 @@ Optional:
 - `client_macs` (Set of String) Set of client MAC addresses to match.
 - `ips` (Set of String) Set of IP addresses or CIDR ranges to match.
 - `mac` (String) MAC address to match.
-- `matching_target` (String) Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'REGION', 'WEB', 'APP', 'APP_CATEGORY', 'IID'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'WEB', 'APP', 'APP_CATEGORY', and 'IID' are not yet supported — those values currently pass validation but cannot produce a working policy.
+- `matching_target` (String) Matching target type. Valid values: 'ANY', 'CLIENT', 'EXTERNAL_SOURCE', 'IID', 'IP', 'MAC', 'NETWORK', 'REGION', 'USER_IDENTITY', 'USER_IDENTITY_ONE_CLICK_VPN', 'USER_IDENTITY_ONE_CLICK_WIFI', 'VPN_USER'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'CLIENT', 'EXTERNAL_SOURCE', 'IID', 'MAC', 'USER_IDENTITY', 'USER_IDENTITY_ONE_CLICK_VPN', 'USER_IDENTITY_ONE_CLICK_WIFI', and 'VPN_USER' are not yet plumbed through the SDK — those values currently pass validation but cannot produce a working policy.
 - `network_id` (String) Network ID to match.
 - `port` (String) Port or port range to match.
 - `zone_id` (String) The source zone ID.
