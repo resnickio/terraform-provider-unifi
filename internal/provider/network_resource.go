@@ -34,7 +34,6 @@ const (
 var (
 	_ resource.Resource                = &NetworkResource{}
 	_ resource.ResourceWithImportState = &NetworkResource{}
-	_ resource.ResourceWithModifyPlan  = &NetworkResource{}
 )
 
 var ipv6AttrTypes = map[string]attr.Type{
@@ -688,70 +687,6 @@ func (r *NetworkResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 func (r *NetworkResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
-}
-
-// modifyPlanSettingUSGTimeout bounds the controller read in ModifyPlan so a
-// stalled controller can't hang `terraform plan` indefinitely. Plan operations
-// should be fast; 30s is generous for a single GET.
-const modifyPlanSettingUSGTimeout = 30 * time.Second
-
-// ModifyPlan rejects per-network mdns_enabled=true when site-wide gateway mDNS
-// is disabled. The UniFi controller silently strips per-network mdns_enabled
-// in that case (no API error), and the framework's "inconsistent result after
-// apply" check then fires a fatal error with no explanation. Catching the
-// dependency at plan time gives the operator a clear remediation path.
-//
-// We read from req.Config (not req.Plan) so the check fires only on explicit
-// user intent. Otherwise UseStateForUnknown would surface mdns_enabled=true
-// on every plan for any existing network with that value persisted, costing
-// one extra GetSettingUSG call per managed network per plan.
-//
-// Same-apply caveat: if the operator is enabling unifi_setting_usg.mdns_enabled
-// in the same apply, this check will false-positive (we only see the current
-// site state, not the planned state of another resource). Workaround: split
-// into two applies, or use -target.
-func (r *NetworkResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	if req.Plan.Raw.IsNull() || req.Config.Raw.IsNull() || r.client == nil {
-		return
-	}
-
-	var configMDNS types.Bool
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("mdns_enabled"), &configMDNS)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	// Only check when the user explicitly set mdns_enabled = true in config.
-	// Null (omitted), unknown (interpolated), or false configs don't trigger
-	// the controller side effect we're guarding against.
-	if configMDNS.IsNull() || configMDNS.IsUnknown() || !configMDNS.ValueBool() {
-		return
-	}
-
-	timedCtx, cancel := context.WithTimeout(ctx, modifyPlanSettingUSGTimeout)
-	defer cancel()
-
-	usg, err := r.client.GetSettingUSG(timedCtx)
-	if err != nil {
-		// We already established the user wants mdns_enabled=true above. If we
-		// can't verify the precondition, fail loudly rather than letting the
-		// apply hit the original opaque "inconsistent result after apply"
-		// error several minutes later — the operator should retry the plan
-		// once the controller is reachable.
-		resp.Diagnostics.AddAttributeError(
-			path.Root("mdns_enabled"),
-			"Could not verify site-level mDNS state",
-			fmt.Sprintf("Failed to read unifi_setting_usg from the controller while checking the mdns_enabled precondition: %s. Re-run `terraform plan` once the controller is reachable, or remove mdns_enabled from this resource until the precondition can be verified.", err),
-		)
-		return
-	}
-
-	if !derefBool(usg.MDNSEnabled) {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("mdns_enabled"),
-			"Site-level mDNS must be enabled first",
-			"unifi_network.mdns_enabled = true requires unifi_setting_usg.mdns_enabled to also be true. The UniFi controller currently has site-level mDNS disabled, so a per-network value of true would be silently stripped on apply. Enable the site-level toggle (manage unifi_setting_usg in Terraform, or toggle it in the UniFi UI) and re-plan. Note: if you are enabling site-level mDNS in the same apply as this network, you will need to apply unifi_setting_usg first via -target, or split the changes into two applies.",
-		)
-	}
 }
 
 func (r *NetworkResource) planToSDK(ctx context.Context, plan *NetworkResourceModel, diags *diag.Diagnostics) *unifi.Network {

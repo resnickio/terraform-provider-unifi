@@ -40,44 +40,6 @@ func testAccGetClient(t *testing.T) *unifi.NetworkClient {
 }
 
 // testAccCheckControllerSupportsZones checks if the controller supports zone-based firewall.
-// testAccCheckSiteMDNSDisabled skips the test unless the site-wide gateway
-// mDNS toggle (unifi_setting_usg.mdns_enabled) is currently disabled. Used by
-// tests that exercise the per-network plan-time precondition error path.
-func testAccCheckSiteMDNSDisabled(t *testing.T) {
-	testAccPreCheck(t)
-	client := testAccGetClient(t)
-	if client == nil {
-		return
-	}
-	usg, err := client.GetSettingUSG(context.Background())
-	if err != nil {
-		t.Skipf("Could not read SettingUSG to verify site-level mDNS state: %v", err)
-		return
-	}
-	if usg.MDNSEnabled != nil && *usg.MDNSEnabled {
-		t.Skip("Skipping: site-level mdns_enabled is currently TRUE; this test requires it to be FALSE")
-	}
-}
-
-// testAccCheckSiteMDNSEnabled skips the test unless the site-wide gateway
-// mDNS toggle is currently enabled. Used by the happy-path test where setting
-// per-network mdns_enabled=true should succeed.
-func testAccCheckSiteMDNSEnabled(t *testing.T) {
-	testAccPreCheck(t)
-	client := testAccGetClient(t)
-	if client == nil {
-		return
-	}
-	usg, err := client.GetSettingUSG(context.Background())
-	if err != nil {
-		t.Skipf("Could not read SettingUSG to verify site-level mDNS state: %v", err)
-		return
-	}
-	if usg.MDNSEnabled == nil || !*usg.MDNSEnabled {
-		t.Skip("Skipping: site-level mdns_enabled is currently FALSE; this test requires it to be TRUE")
-	}
-}
-
 func testAccCheckControllerSupportsZones(t *testing.T) {
 	testAccPreCheck(t)
 
