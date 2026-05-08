@@ -32,7 +32,6 @@ type TrafficRouteDataSourceModel struct {
 	IPAddresses    types.Set    `tfsdk:"ip_addresses"`
 	IPRanges       types.Set    `tfsdk:"ip_ranges"`
 	Regions        types.Set    `tfsdk:"regions"`
-	Fallback       types.Bool   `tfsdk:"fallback"`
 	KillSwitch     types.Bool   `tfsdk:"kill_switch"`
 }
 
@@ -133,10 +132,6 @@ func (d *TrafficRouteDataSource) Schema(ctx context.Context, req datasource.Sche
 				Computed:    true,
 				ElementType: types.StringType,
 			},
-			"fallback": schema.BoolAttribute{
-				Description: "Whether to use fallback routing.",
-				Computed:    true,
-			},
 			"kill_switch": schema.BoolAttribute{
 				Description: "Whether kill switch is enabled (block traffic if VPN fails).",
 				Computed:    true,
@@ -228,8 +223,7 @@ func (d *TrafficRouteDataSource) sdkToState(ctx context.Context, route *unifi.Tr
 	state.ID = types.StringValue(route.ID)
 	state.Name = types.StringValue(route.Name)
 	state.Enabled = types.BoolValue(derefBool(route.Enabled))
-	state.Fallback = types.BoolValue(derefBool(route.Fallback))
-	state.KillSwitch = types.BoolValue(derefBool(route.KillSwitch))
+	state.KillSwitch = types.BoolValue(derefBool(route.KillSwitchEnabled))
 
 	if route.Description != "" {
 		state.Description = types.StringValue(route.Description)

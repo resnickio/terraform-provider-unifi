@@ -68,9 +68,13 @@ var endpointAttrTypes = map[string]attr.Type{
 
 var scheduleAttrTypes = map[string]attr.Type{
 	"mode":             types.StringType,
+	"time_all_day":     types.BoolType,
 	"time_range_start": types.StringType,
 	"time_range_end":   types.StringType,
-	"days_of_week":     types.SetType{ElemType: types.StringType},
+	"repeat_on_days":   types.SetType{ElemType: types.StringType},
+	"date_start":       types.StringType,
+	"date_end":         types.StringType,
+	"date":             types.StringType,
 }
 
 func NewFirewallPolicyResource() resource.Resource {
@@ -189,11 +193,11 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 					},
 					"matching_target": schema.StringAttribute{
-						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'REGION', 'WEB', 'APP', 'APP_CATEGORY', 'IID'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'WEB', 'APP', 'APP_CATEGORY', and 'IID' are not yet supported — those values currently pass validation but cannot produce a working policy.",
+						Description: "Matching target type. Valid values: 'ANY', 'CLIENT', 'EXTERNAL_SOURCE', 'IID', 'IP', 'MAC', 'NETWORK', 'REGION', 'USER_IDENTITY', 'USER_IDENTITY_ONE_CLICK_VPN', 'USER_IDENTITY_ONE_CLICK_WIFI', 'VPN_USER'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'CLIENT', 'EXTERNAL_SOURCE', 'IID', 'MAC', 'USER_IDENTITY', 'USER_IDENTITY_ONE_CLICK_VPN', 'USER_IDENTITY_ONE_CLICK_WIFI', and 'VPN_USER' are not yet plumbed through the SDK — those values currently pass validation but cannot produce a working policy.",
 						Optional:    true,
 						Computed:    true,
 						Validators: []validator.String{
-							stringvalidator.OneOf("ANY", "IP", "NETWORK", "REGION", "WEB", "APP", "APP_CATEGORY", "IID"),
+							stringvalidator.OneOf("ANY", "CLIENT", "EXTERNAL_SOURCE", "IID", "IP", "MAC", "NETWORK", "REGION", "USER_IDENTITY", "USER_IDENTITY_ONE_CLICK_VPN", "USER_IDENTITY_ONE_CLICK_WIFI", "VPN_USER"),
 						},
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
@@ -232,11 +236,11 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 					},
 					"matching_target": schema.StringAttribute{
-						Description: "Matching target type. Valid values: 'ANY', 'IP', 'NETWORK', 'REGION', 'WEB', 'APP', 'APP_CATEGORY', 'IID'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'WEB', 'APP', 'APP_CATEGORY', and 'IID' are not yet supported — those values currently pass validation but cannot produce a working policy.",
+						Description: "Matching target type. Valid values: 'ANY', 'CLIENT', 'EXTERNAL_SOURCE', 'IID', 'IP', 'MAC', 'NETWORK', 'REGION', 'USER_IDENTITY', 'USER_IDENTITY_ONE_CLICK_VPN', 'USER_IDENTITY_ONE_CLICK_WIFI', 'VPN_USER'. Auto-derived from sibling fields when unset: 'IP' if ips is non-empty, 'NETWORK' if network_id is non-empty, otherwise 'ANY'. (Unknown values from interpolation are treated as non-empty for derivation purposes.) Carrier fields for 'CLIENT', 'EXTERNAL_SOURCE', 'IID', 'MAC', 'USER_IDENTITY', 'USER_IDENTITY_ONE_CLICK_VPN', 'USER_IDENTITY_ONE_CLICK_WIFI', and 'VPN_USER' are not yet plumbed through the SDK — those values currently pass validation but cannot produce a working policy.",
 						Optional:    true,
 						Computed:    true,
 						Validators: []validator.String{
-							stringvalidator.OneOf("ANY", "IP", "NETWORK", "REGION", "WEB", "APP", "APP_CATEGORY", "IID"),
+							stringvalidator.OneOf("ANY", "CLIENT", "EXTERNAL_SOURCE", "IID", "IP", "MAC", "NETWORK", "REGION", "USER_IDENTITY", "USER_IDENTITY_ONE_CLICK_VPN", "USER_IDENTITY_ONE_CLICK_WIFI", "VPN_USER"),
 						},
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
@@ -275,21 +279,48 @@ func (r *FirewallPolicyResource) Schema(ctx context.Context, req resource.Schema
 				},
 				Attributes: map[string]schema.Attribute{
 					"mode": schema.StringAttribute{
-						Description: "Schedule mode. Valid values: 'ALWAYS', 'CUSTOM'.",
+						Description: "Schedule mode. Valid values: 'ALWAYS', 'EVERY_DAY', 'EVERY_WEEK', 'ONE_TIME_ONLY', 'CUSTOM'. Per-mode required fields: ALWAYS — none; EVERY_DAY — `time_all_day` or `time_range_start`+`time_range_end`; EVERY_WEEK — `repeat_on_days` plus a time spec; ONE_TIME_ONLY — `date` plus a time spec; CUSTOM — `repeat_on_days`, `date_start`, `date_end`, plus a time spec.",
 						Optional:    true,
+						Computed:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("ALWAYS", "EVERY_DAY", "EVERY_WEEK", "ONE_TIME_ONLY", "CUSTOM"),
+						},
+					},
+					"time_all_day": schema.BoolAttribute{
+						Description: "Whether the schedule applies for the full day. Mutually exclusive with `time_range_start`/`time_range_end`.",
+						Optional:    true,
+						Computed:    true,
 					},
 					"time_range_start": schema.StringAttribute{
-						Description: "Start time in HH:MM format.",
+						Description: "Start time in HH:MM (24h).",
 						Optional:    true,
+						Computed:    true,
 					},
 					"time_range_end": schema.StringAttribute{
-						Description: "End time in HH:MM format.",
+						Description: "End time in HH:MM (24h).",
 						Optional:    true,
+						Computed:    true,
 					},
-					"days_of_week": schema.SetAttribute{
-						Description: "Days of the week. Valid values: 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'.",
+					"repeat_on_days": schema.SetAttribute{
+						Description: "Days of the week the schedule repeats on. Valid values: 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun' (lowercase, 3-letter codes).",
 						Optional:    true,
+						Computed:    true,
 						ElementType: types.StringType,
+					},
+					"date_start": schema.StringAttribute{
+						Description: "Start date in YYYY-MM-DD. Required for `mode = CUSTOM`.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"date_end": schema.StringAttribute{
+						Description: "End date in YYYY-MM-DD. Required for `mode = CUSTOM`.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"date": schema.StringAttribute{
+						Description: "Single date in YYYY-MM-DD. Required for `mode = ONE_TIME_ONLY`.",
+						Optional:    true,
+						Computed:    true,
 					},
 				},
 			},
@@ -581,21 +612,22 @@ func deriveMatchingTarget(hasIPs, hasNetworkID bool) string {
 }
 
 // matchingTargetTypeFor maps a matching_target value to the matching_target_type
-// the UniFi controller requires alongside it. Inline literal values (IP,
-// NETWORK, REGION, WEB) need "SPECIFIC"; references to UniFi-managed objects
-// (APP, APP_CATEGORY, IID) need "OBJECT". The provider derives this
-// transparently — the field isn't exposed in the resource schema.
+// the UniFi controller requires alongside it. Only IP / NETWORK / REGION are
+// confirmed via probe to require "SPECIFIC"; the IID object reference is
+// preserved from the previous probe iteration. The new identity-aware values
+// added in SDK v0.12.0 (CLIENT, EXTERNAL_SOURCE, MAC, USER_IDENTITY*,
+// VPN_USER) have unknown matching_target_type requirements and unknown
+// carrier fields, so they fall through to the empty-string default and won't
+// produce a working policy until probed.
 //
-// The full enum, confirmed by a controller-side error message during a v0.9.0
-// probe, is [APP, WEB, IP, APP_CATEGORY, NETWORK, IID, ANY, REGION]. Carrier
-// fields for APP / APP_CATEGORY / IID / WEB are not yet supported by the SDK,
-// so those matching modes are accepted by validation but won't produce a
-// working policy until the carrier fields land.
+// The full v0.12.0 enum is [ANY, CLIENT, EXTERNAL_SOURCE, IID, IP, MAC,
+// NETWORK, REGION, USER_IDENTITY, USER_IDENTITY_ONE_CLICK_VPN,
+// USER_IDENTITY_ONE_CLICK_WIFI, VPN_USER].
 func matchingTargetTypeFor(matchingTarget string) string {
 	switch matchingTarget {
-	case "IP", "NETWORK", "REGION", "WEB":
+	case "IP", "NETWORK", "REGION":
 		return "SPECIFIC"
-	case "APP", "APP_CATEGORY", "IID":
+	case "IID":
 		return "OBJECT"
 	default:
 		return ""
@@ -777,19 +809,32 @@ func (r *FirewallPolicyResource) scheduleFromObject(ctx context.Context, obj typ
 	if v, ok := attrs["mode"].(types.String); ok && !v.IsNull() {
 		schedule.Mode = v.ValueString()
 	}
+	if v, ok := attrs["time_all_day"].(types.Bool); ok && !v.IsNull() && !v.IsUnknown() {
+		b := v.ValueBool()
+		schedule.TimeAllDay = &b
+	}
 	if v, ok := attrs["time_range_start"].(types.String); ok && !v.IsNull() {
 		schedule.TimeRangeStart = v.ValueString()
 	}
 	if v, ok := attrs["time_range_end"].(types.String); ok && !v.IsNull() {
 		schedule.TimeRangeEnd = v.ValueString()
 	}
-	if v, ok := attrs["days_of_week"].(types.Set); ok && !v.IsNull() {
+	if v, ok := attrs["repeat_on_days"].(types.Set); ok && !v.IsNull() {
 		var days []string
 		diags.Append(v.ElementsAs(ctx, &days, false)...)
 		if diags.HasError() {
 			return nil
 		}
-		schedule.DaysOfWeek = days
+		schedule.RepeatOnDays = days
+	}
+	if v, ok := attrs["date_start"].(types.String); ok && !v.IsNull() {
+		schedule.DateStart = v.ValueString()
+	}
+	if v, ok := attrs["date_end"].(types.String); ok && !v.IsNull() {
+		schedule.DateEnd = v.ValueString()
+	}
+	if v, ok := attrs["date"].(types.String); ok && !v.IsNull() {
+		schedule.Date = v.ValueString()
 	}
 
 	return schedule
@@ -937,8 +982,8 @@ func (r *FirewallPolicyResource) scheduleToObject(ctx context.Context, schedule 
 	var diags diag.Diagnostics
 
 	var daysVal types.Set
-	if len(schedule.DaysOfWeek) > 0 {
-		daysSet, d := types.SetValueFrom(ctx, types.StringType, schedule.DaysOfWeek)
+	if len(schedule.RepeatOnDays) > 0 {
+		daysSet, d := types.SetValueFrom(ctx, types.StringType, schedule.RepeatOnDays)
 		diags.Append(d...)
 		if diags.HasError() {
 			return types.ObjectNull(scheduleAttrTypes), diags
@@ -948,11 +993,22 @@ func (r *FirewallPolicyResource) scheduleToObject(ctx context.Context, schedule 
 		daysVal = types.SetNull(types.StringType)
 	}
 
+	var timeAllDay types.Bool
+	if schedule.TimeAllDay != nil {
+		timeAllDay = types.BoolValue(*schedule.TimeAllDay)
+	} else {
+		timeAllDay = types.BoolNull()
+	}
+
 	attrs := map[string]attr.Value{
 		"mode":             stringValueOrNull(schedule.Mode),
+		"time_all_day":     timeAllDay,
 		"time_range_start": stringValueOrNull(schedule.TimeRangeStart),
 		"time_range_end":   stringValueOrNull(schedule.TimeRangeEnd),
-		"days_of_week":     daysVal,
+		"repeat_on_days":   daysVal,
+		"date_start":       stringValueOrNull(schedule.DateStart),
+		"date_end":         stringValueOrNull(schedule.DateEnd),
+		"date":             stringValueOrNull(schedule.Date),
 	}
 
 	obj, d := types.ObjectValue(scheduleAttrTypes, attrs)

@@ -106,11 +106,11 @@ func (r *SettingGuestAccessResource) Schema(ctx context.Context, req resource.Sc
 				Default:     booldefault.StaticBool(false),
 			},
 			"auth": schema.StringAttribute{
-				Description: "Authentication type. Valid values: 'none', 'password', 'hotspot', 'radius', 'custom'.",
+				Description: "Authentication type. Valid values: 'none', 'hotspot', 'facebook_wifi', 'custom'.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("none", "password", "hotspot", "radius", "custom"),
+					stringvalidator.OneOf("none", "hotspot", "facebook_wifi", "custom"),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),

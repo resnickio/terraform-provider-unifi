@@ -24,7 +24,8 @@ func TestAccTrafficRuleResource_block(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_rule.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -45,7 +46,8 @@ func TestAccTrafficRuleResource_allow(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_rule.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -60,7 +62,7 @@ func TestAccTrafficRuleResource_withSchedule(t *testing.T) {
 				Config: testAccTrafficRuleResourceConfig_withSchedule("tf-acc-test-traffic-rule-schedule"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("unifi_traffic_rule.test", "name", "tf-acc-test-traffic-rule-schedule"),
-					resource.TestCheckResourceAttr("unifi_traffic_rule.test", "schedule.mode", "CUSTOM"),
+					resource.TestCheckResourceAttr("unifi_traffic_rule.test", "schedule.mode", "EVERY_WEEK"),
 					resource.TestCheckResourceAttr("unifi_traffic_rule.test", "schedule.time_range_start", "09:00"),
 					resource.TestCheckResourceAttr("unifi_traffic_rule.test", "schedule.time_range_end", "17:00"),
 				),
@@ -68,7 +70,8 @@ func TestAccTrafficRuleResource_withSchedule(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_rule.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -90,7 +93,8 @@ func TestAccTrafficRuleResource_withDomains(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_rule.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -113,7 +117,8 @@ func TestAccTrafficRuleResource_withBandwidthLimit(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_rule.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -135,7 +140,8 @@ func TestAccTrafficRuleResource_withIPAddresses(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_rule.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -155,7 +161,8 @@ func TestAccTrafficRuleResource_disabled(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_rule.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -230,10 +237,10 @@ resource "unifi_traffic_rule" "test" {
   }]
 
   schedule = {
-    mode             = "CUSTOM"
+    mode             = "EVERY_WEEK"
     time_range_start = "09:00"
     time_range_end   = "17:00"
-    days_of_week     = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"]
+    repeat_on_days   = ["mon", "tue", "wed", "thu", "fri"]
   }
 }
 `, testAccProviderConfig, name)

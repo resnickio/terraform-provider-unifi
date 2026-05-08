@@ -40,7 +40,6 @@ type TrafficRouteResourceModel struct {
 	IPAddresses    types.Set      `tfsdk:"ip_addresses"`
 	IPRanges       types.Set      `tfsdk:"ip_ranges"`
 	Regions        types.Set      `tfsdk:"regions"`
-	Fallback       types.Bool     `tfsdk:"fallback"`
 	KillSwitch     types.Bool     `tfsdk:"kill_switch"`
 	Timeouts       timeouts.Value `tfsdk:"timeouts"`
 }
@@ -87,10 +86,10 @@ func (r *TrafficRouteResource) Schema(ctx context.Context, req resource.SchemaRe
 				Optional:    true,
 			},
 			"matching_target": schema.StringAttribute{
-				Description: "The matching target type. Valid values: INTERNET, IP, DOMAIN, REGION, APP.",
+				Description: "The matching target type. Valid values: INTERNET, IP, DOMAIN, REGION.",
 				Optional:    true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("INTERNET", "IP", "DOMAIN", "REGION", "APP"),
+					stringvalidator.OneOf("INTERNET", "IP", "DOMAIN", "REGION"),
 				},
 			},
 			"target_devices": schema.ListNestedAttribute{
@@ -152,12 +151,6 @@ func (r *TrafficRouteResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description: "Set of geographic regions for region-based routing.",
 				Optional:    true,
 				ElementType: types.StringType,
-			},
-			"fallback": schema.BoolAttribute{
-				Description: "Whether to use fallback routing. Defaults to false.",
-				Optional:    true,
-				Computed:    true,
-				Default:     booldefault.StaticBool(false),
 			},
 			"kill_switch": schema.BoolAttribute{
 				Description: "Whether to enable kill switch (block traffic if VPN fails). Defaults to false.",
@@ -329,10 +322,9 @@ func (r *TrafficRouteResource) ImportState(ctx context.Context, req resource.Imp
 
 func (r *TrafficRouteResource) planToSDK(ctx context.Context, plan *TrafficRouteResourceModel, diags *diag.Diagnostics) *unifi.TrafficRoute {
 	route := &unifi.TrafficRoute{
-		Name:       plan.Name.ValueString(),
-		Enabled:    boolPtr(plan.Enabled.ValueBool()),
-		Fallback:   boolPtr(plan.Fallback.ValueBool()),
-		KillSwitch: boolPtr(plan.KillSwitch.ValueBool()),
+		Name:              plan.Name.ValueString(),
+		Enabled:           boolPtr(plan.Enabled.ValueBool()),
+		KillSwitchEnabled: boolPtr(plan.KillSwitch.ValueBool()),
 	}
 
 	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
@@ -375,10 +367,16 @@ func (r *TrafficRouteResource) sdkToState(ctx context.Context, route *unifi.Traf
 	var diags diag.Diagnostics
 
 	state.ID = types.StringValue(route.ID)
-	state.Name = types.StringValue(route.Name)
+	// The controller does not return `name` reliably on GET for traffic routes
+	// (same quirk as traffic rules). Preserve prior state when the API returns
+	// empty so the framework's apply-consistency check doesn't fail.
+	if route.Name != "" {
+		state.Name = types.StringValue(route.Name)
+	} else if state.Name.IsNull() || state.Name.IsUnknown() {
+		state.Name = types.StringValue("")
+	}
 	state.Enabled = types.BoolValue(derefBool(route.Enabled))
-	state.Fallback = types.BoolValue(derefBool(route.Fallback))
-	state.KillSwitch = types.BoolValue(derefBool(route.KillSwitch))
+	state.KillSwitch = types.BoolValue(derefBool(route.KillSwitchEnabled))
 
 	if route.Description != "" {
 		state.Description = types.StringValue(route.Description)

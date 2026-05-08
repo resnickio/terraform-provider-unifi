@@ -23,9 +23,13 @@ var trafficDomainAttrTypes = map[string]attr.Type{
 
 var trafficScheduleAttrTypes = map[string]attr.Type{
 	"mode":             types.StringType,
+	"time_all_day":     types.BoolType,
 	"time_range_start": types.StringType,
 	"time_range_end":   types.StringType,
-	"days_of_week":     types.SetType{ElemType: types.StringType},
+	"repeat_on_days":   types.SetType{ElemType: types.StringType},
+	"date_start":       types.StringType,
+	"date_end":         types.StringType,
+	"date":             types.StringType,
 }
 
 var trafficBandwidthAttrTypes = map[string]attr.Type{
@@ -183,17 +187,30 @@ func trafficScheduleFromObject(ctx context.Context, obj types.Object, diags *dia
 	if v, ok := attrs["mode"].(types.String); ok && !v.IsNull() {
 		schedule.Mode = v.ValueString()
 	}
+	if v, ok := attrs["time_all_day"].(types.Bool); ok && !v.IsNull() && !v.IsUnknown() {
+		b := v.ValueBool()
+		schedule.TimeAllDay = &b
+	}
 	if v, ok := attrs["time_range_start"].(types.String); ok && !v.IsNull() {
 		schedule.TimeRangeStart = v.ValueString()
 	}
 	if v, ok := attrs["time_range_end"].(types.String); ok && !v.IsNull() {
 		schedule.TimeRangeEnd = v.ValueString()
 	}
-	if v, ok := attrs["days_of_week"].(types.Set); ok && !v.IsNull() {
+	if v, ok := attrs["repeat_on_days"].(types.Set); ok && !v.IsNull() {
 		var days []string
 		d := v.ElementsAs(ctx, &days, false)
 		diags.Append(d...)
-		schedule.DaysOfWeek = days
+		schedule.RepeatOnDays = days
+	}
+	if v, ok := attrs["date_start"].(types.String); ok && !v.IsNull() {
+		schedule.DateStart = v.ValueString()
+	}
+	if v, ok := attrs["date_end"].(types.String); ok && !v.IsNull() {
+		schedule.DateEnd = v.ValueString()
+	}
+	if v, ok := attrs["date"].(types.String); ok && !v.IsNull() {
+		schedule.Date = v.ValueString()
 	}
 
 	return schedule
@@ -207,9 +224,9 @@ func trafficScheduleToObject(ctx context.Context, schedule *unifi.PolicySchedule
 	}
 
 	var daysSet types.Set
-	if len(schedule.DaysOfWeek) > 0 {
+	if len(schedule.RepeatOnDays) > 0 {
 		var days []attr.Value
-		for _, d := range schedule.DaysOfWeek {
+		for _, d := range schedule.RepeatOnDays {
 			days = append(days, types.StringValue(d))
 		}
 		var d diag.Diagnostics
@@ -219,11 +236,22 @@ func trafficScheduleToObject(ctx context.Context, schedule *unifi.PolicySchedule
 		daysSet = types.SetNull(types.StringType)
 	}
 
+	var timeAllDay types.Bool
+	if schedule.TimeAllDay != nil {
+		timeAllDay = types.BoolValue(*schedule.TimeAllDay)
+	} else {
+		timeAllDay = types.BoolNull()
+	}
+
 	attrs := map[string]attr.Value{
 		"mode":             stringValueOrNull(schedule.Mode),
+		"time_all_day":     timeAllDay,
 		"time_range_start": stringValueOrNull(schedule.TimeRangeStart),
 		"time_range_end":   stringValueOrNull(schedule.TimeRangeEnd),
-		"days_of_week":     daysSet,
+		"repeat_on_days":   daysSet,
+		"date_start":       stringValueOrNull(schedule.DateStart),
+		"date_end":         stringValueOrNull(schedule.DateEnd),
+		"date":             stringValueOrNull(schedule.Date),
 	}
 
 	obj, d := types.ObjectValue(trafficScheduleAttrTypes, attrs)
@@ -299,7 +327,9 @@ func isEmptySchedule(schedule *unifi.PolicySchedule) bool {
 		return true
 	}
 	return schedule.Mode == "" && schedule.TimeRangeStart == "" &&
-		schedule.TimeRangeEnd == "" && len(schedule.DaysOfWeek) == 0
+		schedule.TimeRangeEnd == "" && len(schedule.RepeatOnDays) == 0 &&
+		schedule.TimeAllDay == nil && schedule.DateStart == "" &&
+		schedule.DateEnd == "" && schedule.Date == ""
 }
 
 func isEmptyBandwidthLimit(bw *unifi.TrafficBandwidth) bool {

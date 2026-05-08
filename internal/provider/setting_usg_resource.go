@@ -99,7 +99,7 @@ func (r *SettingUSGResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Optional: true, Computed: true, Default: booldefault.StaticBool(false),
 			},
 			"mss_clamp": schema.StringAttribute{
-				Description: "MSS clamping mode: 'auto' or 'custom'.",
+				Description: "MSS clamping mode. Valid values: 'auto', 'custom', 'disabled'.",
 				Optional:    true,
 				Computed:    true,
 			},

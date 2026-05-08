@@ -11,14 +11,15 @@ resource "unifi_traffic_route" "domain_route" {
   matching_target = "DOMAIN"
   network_id      = unifi_network.work_vpn.id
 
-  domains {
-    domain      = "*.work.example.com"
-    description = "Work domain"
-  }
-
-  domains {
-    domain = "corporate.example.com"
-  }
+  domains = [
+    {
+      domain      = "*.work.example.com"
+      description = "Work domain"
+    },
+    {
+      domain = "corporate.example.com"
+    },
+  ]
 
   kill_switch = true
 }
@@ -37,13 +38,6 @@ resource "unifi_traffic_route" "region_route" {
   matching_target = "REGION"
   network_id      = unifi_network.us_vpn.id
   regions         = ["US", "CA"]
-}
-
-# Route with fallback enabled
-resource "unifi_traffic_route" "fallback_route" {
-  name       = "Backup-Route"
-  network_id = unifi_network.backup.id
-  fallback   = true
 }
 
 # Disabled route
