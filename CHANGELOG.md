@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- `unifi_network` — the `ResourceWithModifyPlan` interface assertion and the broken validator function. Removed the corresponding `TestAccNetworkResource_mdnsRequiresSiteLevel` test and the `testAccCheckSiteMDNSDisabled` / `testAccCheckSiteMDNSEnabled` test prechecks (they read the same wrong field). The `TestAccNetworkResource_mdnsHappyPathSiteLevelOn` test was renamed to `TestAccNetworkResource_mdnsRoundTrip` and now runs unconditionally.
+- `unifi_network` — the `ResourceWithModifyPlan` interface assertion, the broken validator function, and `modifyPlanSettingUSGTimeout`. Removed the `TestAccNetworkResource_mdnsRequiresSiteLevel` test and the `testAccCheckSiteMDNSDisabled` / `testAccCheckSiteMDNSEnabled` test prechecks (they read the same wrong field). Removed the `TestAccNetworkResource_mdnsHappyPathSiteLevelOn` test as well — round-tripping `mdns_enabled = true` can't be reliably tested without first reading `setting/mdns`, which the SDK doesn't yet expose; an explanatory comment block in `network_resource_test.go` documents the gap. The Optional+Computed default-from-controller path remains covered by `TestAccNetworkResource_mdnsUpnpComputedFromController`.
 
 ## [0.10.1] - 2026-05-08
 
