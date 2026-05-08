@@ -40,13 +40,7 @@ output "nat_type" {
 
 ### Read-Only
 
-- `dest_address` (String) The destination IP address or CIDR block.
-- `dest_port` (String) The destination port or port range.
 - `enabled` (Boolean) Whether the NAT rule is enabled.
 - `logging` (Boolean) Whether to log traffic matching this rule.
 - `protocol` (String) The protocol for the NAT rule.
-- `source_address` (String) The source IP address or CIDR block.
-- `source_port` (String) The source port or port range.
-- `translated_ip` (String) The IP address to translate to (for DNAT/SNAT).
-- `translated_port` (String) The port to translate to (for DNAT/SNAT).
 - `type` (String) The NAT rule type (MASQUERADE, DNAT, SNAT).

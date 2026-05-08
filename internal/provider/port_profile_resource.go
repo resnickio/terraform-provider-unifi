@@ -159,11 +159,11 @@ func (r *PortProfileResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"poe_mode": schema.StringAttribute{
-				Description: "PoE mode. Valid values: 'auto', 'pasv24', 'passthrough', 'off'.",
+				Description: "PoE mode for the port profile. Valid values: 'auto', 'off'. (For per-port overrides, see unifi_device_port_override which also accepts 'pasv24' and 'passthrough'.)",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("auto", "pasv24", "passthrough", "off"),
+					stringvalidator.OneOf("auto", "off"),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -171,11 +171,11 @@ func (r *PortProfileResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 
 			"op_mode": schema.StringAttribute{
-				Description: "Port operation mode. Valid values: 'switch', 'mirror', 'aggregate'.",
+				Description: "Port operation mode for the profile. Only 'switch' is valid for port profiles. (For per-port overrides, see unifi_device_port_override which also accepts 'mirror' and 'aggregate'.)",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("switch", "mirror", "aggregate"),
+					stringvalidator.OneOf("switch"),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),

@@ -89,12 +89,12 @@ func (r *StaticRouteResource) Schema(ctx context.Context, req resource.SchemaReq
 				Default:     booldefault.StaticBool(true),
 			},
 			"type": schema.StringAttribute{
-				Description: "The type of route. Valid values: 'static-route', 'interface-route'. Defaults to 'static-route'.",
+				Description: "The route classification. Only 'static-route' is valid; the per-route flavor (next-hop / interface / blackhole) lives in static_route_type. Defaults to 'static-route'.",
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("static-route"),
 				Validators: []validator.String{
-					stringvalidator.OneOf("static-route", "interface-route"),
+					stringvalidator.OneOf("static-route"),
 				},
 			},
 			"static_route_network": schema.StringAttribute{

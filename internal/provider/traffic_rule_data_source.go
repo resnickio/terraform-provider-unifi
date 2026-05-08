@@ -35,7 +35,7 @@ type TrafficRuleDataSourceModel struct {
 	IPAddresses    types.Set    `tfsdk:"ip_addresses"`
 	IPRanges       types.Set    `tfsdk:"ip_ranges"`
 	Regions        types.Set    `tfsdk:"regions"`
-	NetworkID      types.String `tfsdk:"network_id"`
+	NetworkIDs     types.Set    `tfsdk:"network_ids"`
 	BandwidthLimit types.Object `tfsdk:"bandwidth_limit"`
 }
 
@@ -101,21 +101,37 @@ func (d *TrafficRuleDataSource) Schema(ctx context.Context, req datasource.Schem
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"mode": schema.StringAttribute{
-						Description: "Schedule mode (ALWAYS, CUSTOM).",
+						Description: "Schedule mode (ALWAYS, EVERY_DAY, EVERY_WEEK, ONE_TIME_ONLY, CUSTOM).",
+						Computed:    true,
+					},
+					"time_all_day": schema.BoolAttribute{
+						Description: "Whether the schedule applies for the full day.",
 						Computed:    true,
 					},
 					"time_range_start": schema.StringAttribute{
-						Description: "Start time in HH:MM format.",
+						Description: "Start time in HH:MM (24h).",
 						Computed:    true,
 					},
 					"time_range_end": schema.StringAttribute{
-						Description: "End time in HH:MM format.",
+						Description: "End time in HH:MM (24h).",
 						Computed:    true,
 					},
-					"days_of_week": schema.SetAttribute{
-						Description: "Days of week when the rule is active.",
+					"repeat_on_days": schema.SetAttribute{
+						Description: "Days of the week the schedule repeats on (lowercase 3-letter codes).",
 						Computed:    true,
 						ElementType: types.StringType,
+					},
+					"date_start": schema.StringAttribute{
+						Description: "Start date in YYYY-MM-DD (CUSTOM mode).",
+						Computed:    true,
+					},
+					"date_end": schema.StringAttribute{
+						Description: "End date in YYYY-MM-DD (CUSTOM mode).",
+						Computed:    true,
+					},
+					"date": schema.StringAttribute{
+						Description: "Single date in YYYY-MM-DD (ONE_TIME_ONLY mode).",
+						Computed:    true,
 					},
 				},
 			},
@@ -148,9 +164,10 @@ func (d *TrafficRuleDataSource) Schema(ctx context.Context, req datasource.Schem
 				Computed:    true,
 				ElementType: types.StringType,
 			},
-			"network_id": schema.StringAttribute{
-				Description: "The network ID to apply the rule to.",
+			"network_ids": schema.SetAttribute{
+				Description: "Set of network IDs the rule applies to.",
 				Computed:    true,
+				ElementType: types.StringType,
 			},
 			"domains": schema.ListNestedAttribute{
 				Description: "List of domains for domain-based filtering.",
@@ -292,10 +309,12 @@ func (d *TrafficRuleDataSource) sdkToState(ctx context.Context, rule *unifi.Traf
 		state.MatchingTarget = types.StringNull()
 	}
 
-	if rule.NetworkID != "" {
-		state.NetworkID = types.StringValue(rule.NetworkID)
+	if len(rule.NetworkIDs) > 0 {
+		ids, d := types.SetValueFrom(ctx, types.StringType, rule.NetworkIDs)
+		diags.Append(d...)
+		state.NetworkIDs = ids
 	} else {
-		state.NetworkID = types.StringNull()
+		state.NetworkIDs = types.SetNull(types.StringType)
 	}
 
 	targets, diagsTargets := trafficTargetsToList(ctx, rule.TargetDevices)

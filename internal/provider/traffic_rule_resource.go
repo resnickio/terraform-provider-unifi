@@ -43,7 +43,7 @@ type TrafficRuleResourceModel struct {
 	IPAddresses    types.Set      `tfsdk:"ip_addresses"`
 	IPRanges       types.Set      `tfsdk:"ip_ranges"`
 	Regions        types.Set      `tfsdk:"regions"`
-	NetworkID      types.String   `tfsdk:"network_id"`
+	NetworkIDs     types.Set      `tfsdk:"network_ids"`
 	BandwidthLimit types.Object   `tfsdk:"bandwidth_limit"`
 	Timeouts       timeouts.Value `tfsdk:"timeouts"`
 }
@@ -93,10 +93,10 @@ func (r *TrafficRuleResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 			},
 			"matching_target": schema.StringAttribute{
-				Description: "The matching target type. Valid values: INTERNET, IP, DOMAIN, REGION, APP.",
+				Description: "The matching target type. Valid values: INTERNET, IP, DOMAIN, REGION, APP, APP_CATEGORY, LOCAL_NETWORK.",
 				Optional:    true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("INTERNET", "IP", "DOMAIN", "REGION", "APP"),
+					stringvalidator.OneOf("INTERNET", "IP", "DOMAIN", "REGION", "APP", "APP_CATEGORY", "LOCAL_NETWORK"),
 				},
 			},
 			"target_devices": schema.ListNestedAttribute{
@@ -120,28 +120,53 @@ func (r *TrafficRuleResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 			},
 			"schedule": schema.SingleNestedAttribute{
-				Description: "Schedule for when the rule is active.",
+				Description: "Schedule for when the rule is active. The controller defaults to mode='ALWAYS' when omitted, so this is Computed: state may show a non-null schedule even when the config doesn't set one.",
 				Optional:    true,
+				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"mode": schema.StringAttribute{
-						Description: "Schedule mode. Valid values: ALWAYS, CUSTOM.",
+						Description: "Schedule mode. Valid values: 'ALWAYS', 'EVERY_DAY', 'EVERY_WEEK', 'ONE_TIME_ONLY', 'CUSTOM'. Per-mode required fields: ALWAYS — none; EVERY_DAY — `time_all_day` or `time_range_start`+`time_range_end`; EVERY_WEEK — `repeat_on_days` plus a time spec; ONE_TIME_ONLY — `date` plus a time spec; CUSTOM — `repeat_on_days`, `date_start`, `date_end`, plus a time spec.",
 						Optional:    true,
+						Computed:    true,
 						Validators: []validator.String{
-							stringvalidator.OneOf("ALWAYS", "CUSTOM"),
+							stringvalidator.OneOf("ALWAYS", "EVERY_DAY", "EVERY_WEEK", "ONE_TIME_ONLY", "CUSTOM"),
 						},
 					},
-					"time_range_start": schema.StringAttribute{
-						Description: "Start time in HH:MM format.",
+					"time_all_day": schema.BoolAttribute{
+						Description: "Whether the schedule applies for the full day. Mutually exclusive with `time_range_start`/`time_range_end`.",
 						Optional:    true,
+						Computed:    true,
+					},
+					"time_range_start": schema.StringAttribute{
+						Description: "Start time in HH:MM (24h).",
+						Optional:    true,
+						Computed:    true,
 					},
 					"time_range_end": schema.StringAttribute{
-						Description: "End time in HH:MM format.",
+						Description: "End time in HH:MM (24h).",
 						Optional:    true,
+						Computed:    true,
 					},
-					"days_of_week": schema.SetAttribute{
-						Description: "Days of week when the rule is active. Valid values: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY.",
+					"repeat_on_days": schema.SetAttribute{
+						Description: "Days of the week the schedule repeats on. Valid values: 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun' (lowercase, 3-letter codes).",
 						Optional:    true,
+						Computed:    true,
 						ElementType: types.StringType,
+					},
+					"date_start": schema.StringAttribute{
+						Description: "Start date in YYYY-MM-DD. Required for `mode = CUSTOM`.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"date_end": schema.StringAttribute{
+						Description: "End date in YYYY-MM-DD. Required for `mode = CUSTOM`.",
+						Optional:    true,
+						Computed:    true,
+					},
+					"date": schema.StringAttribute{
+						Description: "Single date in YYYY-MM-DD. Required for `mode = ONE_TIME_ONLY`.",
+						Optional:    true,
+						Computed:    true,
 					},
 				},
 			},
@@ -174,9 +199,10 @@ func (r *TrafficRuleResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:    true,
 				ElementType: types.StringType,
 			},
-			"network_id": schema.StringAttribute{
-				Description: "The network ID to apply the rule to.",
+			"network_ids": schema.SetAttribute{
+				Description: "Set of network IDs the rule applies to. Replaces the singular `network_id` attribute (controller never persisted single-value form).",
 				Optional:    true,
+				ElementType: types.StringType,
 			},
 			"domains": schema.ListNestedAttribute{
 				Description: "List of domains for domain-based filtering.",
@@ -398,8 +424,10 @@ func (r *TrafficRuleResource) planToSDK(ctx context.Context, plan *TrafficRuleRe
 		rule.MatchingTarget = plan.MatchingTarget.ValueString()
 	}
 
-	if !plan.NetworkID.IsNull() && !plan.NetworkID.IsUnknown() {
-		rule.NetworkID = plan.NetworkID.ValueString()
+	if !plan.NetworkIDs.IsNull() && !plan.NetworkIDs.IsUnknown() {
+		var ids []string
+		diags.Append(plan.NetworkIDs.ElementsAs(ctx, &ids, false)...)
+		rule.NetworkIDs = ids
 	}
 
 	rule.TargetDevices = trafficTargetsFromList(ctx, plan.TargetDevices, diags)
@@ -446,7 +474,14 @@ func (r *TrafficRuleResource) sdkToState(ctx context.Context, rule *unifi.Traffi
 	var diags diag.Diagnostics
 
 	state.ID = types.StringValue(rule.ID)
-	state.Name = types.StringValue(rule.Name)
+	// The controller does not return `name` reliably on GET (or POST/PUT) for
+	// traffic rules. Preserve the value already in state when the API gives us
+	// nothing — otherwise the framework's apply-consistency check fails.
+	if rule.Name != "" {
+		state.Name = types.StringValue(rule.Name)
+	} else if state.Name.IsNull() || state.Name.IsUnknown() {
+		state.Name = types.StringValue("")
+	}
 	state.Enabled = types.BoolValue(derefBool(rule.Enabled))
 	state.Action = types.StringValue(rule.Action)
 
@@ -462,10 +497,12 @@ func (r *TrafficRuleResource) sdkToState(ctx context.Context, rule *unifi.Traffi
 		state.MatchingTarget = types.StringNull()
 	}
 
-	if rule.NetworkID != "" {
-		state.NetworkID = types.StringValue(rule.NetworkID)
+	if len(rule.NetworkIDs) > 0 {
+		ids, d := types.SetValueFrom(ctx, types.StringType, rule.NetworkIDs)
+		diags.Append(d...)
+		state.NetworkIDs = ids
 	} else {
-		state.NetworkID = types.StringNull()
+		state.NetworkIDs = types.SetNull(types.StringType)
 	}
 
 	targets, d := trafficTargetsToList(ctx, rule.TargetDevices)

@@ -47,21 +47,29 @@ func TestMatchingTargetTypeFor(t *testing.T) {
 		matchingTarget string
 		want           string
 	}{
-		// Inline literal values: SPECIFIC.
+		// Probe-confirmed inline literals: SPECIFIC.
 		{matchingTarget: "IP", want: "SPECIFIC"},
 		{matchingTarget: "NETWORK", want: "SPECIFIC"},
 		{matchingTarget: "REGION", want: "SPECIFIC"},
-		{matchingTarget: "WEB", want: "SPECIFIC"},
-		// Object references: OBJECT.
-		{matchingTarget: "APP", want: "OBJECT"},
-		{matchingTarget: "APP_CATEGORY", want: "OBJECT"},
+		// Object reference preserved from prior probe.
 		{matchingTarget: "IID", want: "OBJECT"},
-		// ANY and unset: empty (no companion type needed).
+		// ANY and unset: empty.
 		{matchingTarget: "ANY", want: ""},
 		{matchingTarget: "", want: ""},
-		// Pre-v0.9.0 values that used to be in this map but the controller
-		// never accepted. The helper returns "" for any non-real enum value;
-		// the schema validator now rejects these at plan time.
+		// Identity-aware values added in SDK v0.12.0. matching_target_type
+		// requirements unknown — fall through to "" until probed.
+		{matchingTarget: "CLIENT", want: ""},
+		{matchingTarget: "EXTERNAL_SOURCE", want: ""},
+		{matchingTarget: "MAC", want: ""},
+		{matchingTarget: "USER_IDENTITY", want: ""},
+		{matchingTarget: "USER_IDENTITY_ONE_CLICK_VPN", want: ""},
+		{matchingTarget: "USER_IDENTITY_ONE_CLICK_WIFI", want: ""},
+		{matchingTarget: "VPN_USER", want: ""},
+		// Removed in v0.12.0 (controller rejects). The helper returns "" for
+		// non-real values; the schema validator rejects them at plan time.
+		{matchingTarget: "WEB", want: ""},
+		{matchingTarget: "APP", want: ""},
+		{matchingTarget: "APP_CATEGORY", want: ""},
 		{matchingTarget: "DOMAIN", want: ""},
 		{matchingTarget: "PORT_GROUP", want: ""},
 		{matchingTarget: "ADDRESS_GROUP", want: ""},

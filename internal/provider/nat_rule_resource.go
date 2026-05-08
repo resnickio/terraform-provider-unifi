@@ -30,19 +30,13 @@ type NatRuleResource struct {
 }
 
 type NatRuleResourceModel struct {
-	ID             types.String   `tfsdk:"id"`
-	Enabled        types.Bool     `tfsdk:"enabled"`
-	Type           types.String   `tfsdk:"type"`
-	Description    types.String   `tfsdk:"description"`
-	Protocol       types.String   `tfsdk:"protocol"`
-	SourceAddress  types.String   `tfsdk:"source_address"`
-	SourcePort     types.String   `tfsdk:"source_port"`
-	DestAddress    types.String   `tfsdk:"dest_address"`
-	DestPort       types.String   `tfsdk:"dest_port"`
-	TranslatedIP   types.String   `tfsdk:"translated_ip"`
-	TranslatedPort types.String   `tfsdk:"translated_port"`
-	Logging        types.Bool     `tfsdk:"logging"`
-	Timeouts       timeouts.Value `tfsdk:"timeouts"`
+	ID          types.String   `tfsdk:"id"`
+	Enabled     types.Bool     `tfsdk:"enabled"`
+	Type        types.String   `tfsdk:"type"`
+	Description types.String   `tfsdk:"description"`
+	Protocol    types.String   `tfsdk:"protocol"`
+	Logging     types.Bool     `tfsdk:"logging"`
+	Timeouts    timeouts.Value `tfsdk:"timeouts"`
 }
 
 func NewNatRuleResource() resource.Resource {
@@ -55,7 +49,7 @@ func (r *NatRuleResource) Metadata(ctx context.Context, req resource.MetadataReq
 
 func (r *NatRuleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a UniFi NAT rule.",
+		Description: "Manages a UniFi NAT rule. Note: the v2 NAT API on current UniFi controllers does not accept source/destination/translated address/port carrier fields, so this resource currently only manages the rule shell (type, protocol, description, enabled, logging). Track upstream API stabilization before relying on it for translation rules.",
 		Blocks: map[string]schema.Block{
 			"timeouts": timeouts.Block(ctx, timeouts.Opts{
 				Create: true,
@@ -100,54 +94,6 @@ func (r *NatRuleResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Default:     stringdefault.StaticString("all"),
 				Validators: []validator.String{
 					stringvalidator.OneOf("all", "tcp", "udp", "tcp_udp"),
-				},
-			},
-			"source_address": schema.StringAttribute{
-				Description: "The source IP address or CIDR block.",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"source_port": schema.StringAttribute{
-				Description: "The source port or port range (e.g., '80' or '8000-9000').",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"dest_address": schema.StringAttribute{
-				Description: "The destination IP address or CIDR block.",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"dest_port": schema.StringAttribute{
-				Description: "The destination port or port range.",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"translated_ip": schema.StringAttribute{
-				Description: "The IP address to translate to (for DNAT/SNAT).",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"translated_port": schema.StringAttribute{
-				Description: "The port to translate to (for DNAT/SNAT).",
-				Optional:    true,
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"logging": schema.BoolAttribute{
@@ -324,30 +270,6 @@ func (r *NatRuleResource) planToSDK(plan *NatRuleResourceModel) *unifi.NatRule {
 		rule.Description = plan.Description.ValueString()
 	}
 
-	if !plan.SourceAddress.IsNull() && !plan.SourceAddress.IsUnknown() {
-		rule.SourceAddress = plan.SourceAddress.ValueString()
-	}
-
-	if !plan.SourcePort.IsNull() && !plan.SourcePort.IsUnknown() {
-		rule.SourcePort = plan.SourcePort.ValueString()
-	}
-
-	if !plan.DestAddress.IsNull() && !plan.DestAddress.IsUnknown() {
-		rule.DestAddress = plan.DestAddress.ValueString()
-	}
-
-	if !plan.DestPort.IsNull() && !plan.DestPort.IsUnknown() {
-		rule.DestPort = plan.DestPort.ValueString()
-	}
-
-	if !plan.TranslatedIP.IsNull() && !plan.TranslatedIP.IsUnknown() {
-		rule.TranslatedIP = plan.TranslatedIP.ValueString()
-	}
-
-	if !plan.TranslatedPort.IsNull() && !plan.TranslatedPort.IsUnknown() {
-		rule.TranslatedPort = plan.TranslatedPort.ValueString()
-	}
-
 	return rule
 }
 
@@ -364,42 +286,6 @@ func (r *NatRuleResource) sdkToState(ctx context.Context, rule *unifi.NatRule, s
 		state.Description = types.StringValue(rule.Description)
 	} else {
 		state.Description = types.StringNull()
-	}
-
-	if rule.SourceAddress != "" {
-		state.SourceAddress = types.StringValue(rule.SourceAddress)
-	} else {
-		state.SourceAddress = types.StringNull()
-	}
-
-	if rule.SourcePort != "" {
-		state.SourcePort = types.StringValue(rule.SourcePort)
-	} else {
-		state.SourcePort = types.StringNull()
-	}
-
-	if rule.DestAddress != "" {
-		state.DestAddress = types.StringValue(rule.DestAddress)
-	} else {
-		state.DestAddress = types.StringNull()
-	}
-
-	if rule.DestPort != "" {
-		state.DestPort = types.StringValue(rule.DestPort)
-	} else {
-		state.DestPort = types.StringNull()
-	}
-
-	if rule.TranslatedIP != "" {
-		state.TranslatedIP = types.StringValue(rule.TranslatedIP)
-	} else {
-		state.TranslatedIP = types.StringNull()
-	}
-
-	if rule.TranslatedPort != "" {
-		state.TranslatedPort = types.StringValue(rule.TranslatedPort)
-	} else {
-		state.TranslatedPort = types.StringNull()
 	}
 
 	return diags

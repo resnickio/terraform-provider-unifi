@@ -88,8 +88,8 @@ resource "unifi_port_profile" "storm_protected" {
 - `lldpmed_enabled` (Boolean) Enable LLDP-MED (Link Layer Discovery Protocol - Media Endpoint Discovery).
 - `lldpmed_notify_enabled` (Boolean) Enable LLDP-MED topology change notifications.
 - `native_network_id` (String) Network ID for the native/untagged VLAN.
-- `op_mode` (String) Port operation mode. Valid values: 'switch', 'mirror', 'aggregate'.
-- `poe_mode` (String) PoE mode. Valid values: 'auto', 'pasv24', 'passthrough', 'off'.
+- `op_mode` (String) Port operation mode for the profile. Only 'switch' is valid for port profiles. (For per-port overrides, see unifi_device_port_override which also accepts 'mirror' and 'aggregate'.)
+- `poe_mode` (String) PoE mode for the port profile. Valid values: 'auto', 'off'. (For per-port overrides, see unifi_device_port_override which also accepts 'pasv24' and 'passthrough'.)
 - `port_keepalive_enabled` (Boolean) Enable port keepalive.
 - `port_security_enabled` (Boolean) Enable port security (MAC address filtering).
 - `port_security_mac_address` (Set of String) Set of allowed MAC addresses when port security is enabled.

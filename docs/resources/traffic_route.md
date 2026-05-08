@@ -25,14 +25,15 @@ resource "unifi_traffic_route" "domain_route" {
   matching_target = "DOMAIN"
   network_id      = unifi_network.work_vpn.id
 
-  domains {
-    domain      = "*.work.example.com"
-    description = "Work domain"
-  }
-
-  domains {
-    domain = "corporate.example.com"
-  }
+  domains = [
+    {
+      domain      = "*.work.example.com"
+      description = "Work domain"
+    },
+    {
+      domain = "corporate.example.com"
+    },
+  ]
 
   kill_switch = true
 }
@@ -51,13 +52,6 @@ resource "unifi_traffic_route" "region_route" {
   matching_target = "REGION"
   network_id      = unifi_network.us_vpn.id
   regions         = ["US", "CA"]
-}
-
-# Route with fallback enabled
-resource "unifi_traffic_route" "fallback_route" {
-  name       = "Backup-Route"
-  network_id = unifi_network.backup.id
-  fallback   = true
 }
 
 # Disabled route
@@ -79,11 +73,10 @@ resource "unifi_traffic_route" "disabled" {
 - `description` (String) A description for the traffic route.
 - `domains` (Attributes List) List of domains for domain-based routing. (see [below for nested schema](#nestedatt--domains))
 - `enabled` (Boolean) Whether the traffic route is enabled. Defaults to true.
-- `fallback` (Boolean) Whether to use fallback routing. Defaults to false.
 - `ip_addresses` (Set of String) Set of IP addresses or CIDR blocks for IP-based routing.
 - `ip_ranges` (Set of String) Set of IP ranges for IP-based routing.
 - `kill_switch` (Boolean) Whether to enable kill switch (block traffic if VPN fails). Defaults to false.
-- `matching_target` (String) The matching target type. Valid values: INTERNET, IP, DOMAIN, REGION, APP.
+- `matching_target` (String) The matching target type. Valid values: INTERNET, IP, DOMAIN, REGION.
 - `network_id` (String) The network ID to route traffic through.
 - `regions` (Set of String) Set of geographic regions for region-based routing.
 - `target_devices` (Attributes List) List of target devices for the route. (see [below for nested schema](#nestedatt--target_devices))

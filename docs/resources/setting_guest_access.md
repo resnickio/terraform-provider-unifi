@@ -25,7 +25,7 @@ resource "unifi_setting_guest_access" "example" {
 
 ### Optional
 
-- `auth` (String) Authentication type. Valid values: 'none', 'password', 'hotspot', 'radius', 'custom'.
+- `auth` (String) Authentication type. Valid values: 'none', 'hotspot', 'facebook_wifi', 'custom'.
 - `ec_enabled` (Boolean) Enable external captive portal.
 - `expire` (Number) Guest expiration in minutes.
 - `expire_number` (Number) Number of expire units.

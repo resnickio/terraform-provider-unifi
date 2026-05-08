@@ -24,7 +24,7 @@ resource "unifi_setting_ips" "example" {
 ### Optional
 
 - `ad_blocking_enabled` (Boolean) Enable ad blocking.
-- `advanced_filtering_preference` (String) Advanced filtering preference. Valid values: 'disabled', 'manual', 'auto'.
+- `advanced_filtering_preference` (String) Advanced filtering preference. Valid values: 'disabled', 'manual'.
 - `content_filtering_blocking_page_enabled` (Boolean) Enable content filtering blocking page.
 - `dns_filtering` (Boolean) Enable DNS filtering.
 - `dns_filters` (Attributes List) DNS filter configurations. (see [below for nested schema](#nestedatt--dns_filters))

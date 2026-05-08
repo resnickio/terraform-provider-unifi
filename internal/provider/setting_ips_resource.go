@@ -203,11 +203,11 @@ func (r *SettingIPSResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Default:     booldefault.StaticBool(false),
 			},
 			"advanced_filtering_preference": schema.StringAttribute{
-				Description: "Advanced filtering preference. Valid values: 'disabled', 'manual', 'auto'.",
+				Description: "Advanced filtering preference. Valid values: 'disabled', 'manual'.",
 				Optional:    true,
 				Computed:    true,
 				Validators: []validator.String{
-					stringvalidator.OneOf("disabled", "manual", "auto"),
+					stringvalidator.OneOf("disabled", "manual"),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),

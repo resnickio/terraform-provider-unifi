@@ -166,7 +166,8 @@ The SDK handles path differences. Both use session-based authentication.
 |----------|------------|--------|
 | `unifi_firewall_zone` | No `site_id` attribute | UniFi API doesn't return site_id for zones |
 | `unifi_firewall_policy` | No `site_id` attribute | UniFi API doesn't return site_id for policies |
-| `unifi_firewall_policy` | `matching_target` carrier fields not implemented for `WEB`/`APP`/`APP_CATEGORY`/`IID` | These four matching modes were confirmed valid via a controller-side enum probe (`[APP, WEB, IP, APP_CATEGORY, NETWORK, IID, ANY, REGION]`). The Go SDK's `PolicyEndpoint` lacks fields for the match data (domain strings, app/category/group IDs), so the values pass validation but cannot produce a working policy yet. Manage via UniFi UI until SDK + provider PRs land the carrier fields. |
+| `unifi_firewall_policy` | `matching_target` carrier fields not implemented for identity-aware values (`CLIENT`/`EXTERNAL_SOURCE`/`IID`/`MAC`/`USER_IDENTITY`/`USER_IDENTITY_ONE_CLICK_VPN`/`USER_IDENTITY_ONE_CLICK_WIFI`/`VPN_USER`) | The full v0.12.0-confirmed enum is `[ANY, CLIENT, EXTERNAL_SOURCE, IID, IP, MAC, NETWORK, REGION, USER_IDENTITY, USER_IDENTITY_ONE_CLICK_VPN, USER_IDENTITY_ONE_CLICK_WIFI, VPN_USER]`. The Go SDK's `PolicyEndpoint` only plumbs `ips`/`network_id`/`mac`/`client_macs`/`port`, so the identity-aware values pass validation but cannot produce a working policy yet. The `matching_target_type` companion is also unknown for those values. Manage via UniFi UI until SDK + provider PRs land the carrier fields. |
+| `unifi_nat_rule` | Source/destination/translated address+port fields removed | The UniFi v2 NAT API on current controllers responds "Unrecognized field" for `source_address`, `source_port`, `dest_address`, `dest_port`, `translated_ip`, `translated_port`, and returns HTTP 500 for any non-trivial create. SDK v0.12.0 dropped those struct fields; this resource now manages only the rule shell (type, protocol, description, enabled, logging). Manage NAT translation via the UniFi UI until upstream API stabilizes. |
 | `unifi_wlan` | Import loses passphrase | API never returns passphrase (write-only) |
 | `unifi_radius_profile` | Import loses server secrets | API never returns secret field (write-only) |
 | `unifi_dynamic_dns` | Import loses password | API never returns password (write-only) |
@@ -175,6 +176,8 @@ The SDK handles path differences. Both use session-based authentication.
 | `unifi_setting_radius` | Import loses secret | API never returns x_secret (write-only) |
 | `unifi_setting_snmp` | Import loses password | API never returns x_password (write-only) |
 | `unifi_setting_magic_site_to_site_vpn` | Import loses private key | API never returns x_private_key (write-only) |
+| `unifi_traffic_rule` | Import loses `name` | The v2 `/trafficrules` GET endpoint does not return `name` (the SDK's own integration test confirms this with a `// API may not return name on GET, preserve from creation` workaround). Tests use `ImportStateVerifyIgnore: ["name"]`; users importing a traffic rule must re-set the name in config before applying. |
+| `unifi_traffic_route` | Import loses `name` | Same controller quirk as `unifi_traffic_rule` — GET `/trafficroutes/{id}` does not return `name`. |
 | `unifi_content_filtering` | No import support | v2 API singleton with synthetic ID |
 | `unifi_device` | Import-only create | Devices are physically adopted, not API-created |
 

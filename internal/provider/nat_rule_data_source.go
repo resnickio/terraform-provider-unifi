@@ -21,18 +21,12 @@ type NatRuleDataSource struct {
 }
 
 type NatRuleDataSourceModel struct {
-	ID             types.String `tfsdk:"id"`
-	Enabled        types.Bool   `tfsdk:"enabled"`
-	Type           types.String `tfsdk:"type"`
-	Description    types.String `tfsdk:"description"`
-	Protocol       types.String `tfsdk:"protocol"`
-	SourceAddress  types.String `tfsdk:"source_address"`
-	SourcePort     types.String `tfsdk:"source_port"`
-	DestAddress    types.String `tfsdk:"dest_address"`
-	DestPort       types.String `tfsdk:"dest_port"`
-	TranslatedIP   types.String `tfsdk:"translated_ip"`
-	TranslatedPort types.String `tfsdk:"translated_port"`
-	Logging        types.Bool   `tfsdk:"logging"`
+	ID          types.String `tfsdk:"id"`
+	Enabled     types.Bool   `tfsdk:"enabled"`
+	Type        types.String `tfsdk:"type"`
+	Description types.String `tfsdk:"description"`
+	Protocol    types.String `tfsdk:"protocol"`
+	Logging     types.Bool   `tfsdk:"logging"`
 }
 
 func NewNatRuleDataSource() datasource.DataSource {
@@ -70,30 +64,6 @@ func (d *NatRuleDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 			},
 			"protocol": schema.StringAttribute{
 				Description: "The protocol for the NAT rule.",
-				Computed:    true,
-			},
-			"source_address": schema.StringAttribute{
-				Description: "The source IP address or CIDR block.",
-				Computed:    true,
-			},
-			"source_port": schema.StringAttribute{
-				Description: "The source port or port range.",
-				Computed:    true,
-			},
-			"dest_address": schema.StringAttribute{
-				Description: "The destination IP address or CIDR block.",
-				Computed:    true,
-			},
-			"dest_port": schema.StringAttribute{
-				Description: "The destination port or port range.",
-				Computed:    true,
-			},
-			"translated_ip": schema.StringAttribute{
-				Description: "The IP address to translate to (for DNAT/SNAT).",
-				Computed:    true,
-			},
-			"translated_port": schema.StringAttribute{
-				Description: "The port to translate to (for DNAT/SNAT).",
 				Computed:    true,
 			},
 			"logging": schema.BoolAttribute{
@@ -194,42 +164,6 @@ func (d *NatRuleDataSource) sdkToState(ctx context.Context, rule *unifi.NatRule,
 		state.Description = types.StringValue(rule.Description)
 	} else {
 		state.Description = types.StringNull()
-	}
-
-	if rule.SourceAddress != "" {
-		state.SourceAddress = types.StringValue(rule.SourceAddress)
-	} else {
-		state.SourceAddress = types.StringNull()
-	}
-
-	if rule.SourcePort != "" {
-		state.SourcePort = types.StringValue(rule.SourcePort)
-	} else {
-		state.SourcePort = types.StringNull()
-	}
-
-	if rule.DestAddress != "" {
-		state.DestAddress = types.StringValue(rule.DestAddress)
-	} else {
-		state.DestAddress = types.StringNull()
-	}
-
-	if rule.DestPort != "" {
-		state.DestPort = types.StringValue(rule.DestPort)
-	} else {
-		state.DestPort = types.StringNull()
-	}
-
-	if rule.TranslatedIP != "" {
-		state.TranslatedIP = types.StringValue(rule.TranslatedIP)
-	} else {
-		state.TranslatedIP = types.StringNull()
-	}
-
-	if rule.TranslatedPort != "" {
-		state.TranslatedPort = types.StringValue(rule.TranslatedPort)
-	} else {
-		state.TranslatedPort = types.StringNull()
 	}
 
 	return diags

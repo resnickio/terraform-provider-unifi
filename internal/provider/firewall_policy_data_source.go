@@ -187,21 +187,37 @@ func (d *FirewallPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"mode": schema.StringAttribute{
-						Description: "Schedule mode (ALWAYS, CUSTOM).",
+						Description: "Schedule mode (ALWAYS, EVERY_DAY, EVERY_WEEK, ONE_TIME_ONLY, CUSTOM).",
+						Computed:    true,
+					},
+					"time_all_day": schema.BoolAttribute{
+						Description: "Whether the schedule applies for the full day.",
 						Computed:    true,
 					},
 					"time_range_start": schema.StringAttribute{
-						Description: "Start time in HH:MM format.",
+						Description: "Start time in HH:MM (24h).",
 						Computed:    true,
 					},
 					"time_range_end": schema.StringAttribute{
-						Description: "End time in HH:MM format.",
+						Description: "End time in HH:MM (24h).",
 						Computed:    true,
 					},
-					"days_of_week": schema.SetAttribute{
-						Description: "Days of the week.",
+					"repeat_on_days": schema.SetAttribute{
+						Description: "Days of the week the schedule repeats on (lowercase 3-letter codes).",
 						Computed:    true,
 						ElementType: types.StringType,
+					},
+					"date_start": schema.StringAttribute{
+						Description: "Start date in YYYY-MM-DD (CUSTOM mode).",
+						Computed:    true,
+					},
+					"date_end": schema.StringAttribute{
+						Description: "End date in YYYY-MM-DD (CUSTOM mode).",
+						Computed:    true,
+					},
+					"date": schema.StringAttribute{
+						Description: "Single date in YYYY-MM-DD (ONE_TIME_ONLY mode).",
+						Computed:    true,
 					},
 				},
 			},
@@ -412,8 +428,8 @@ func (ds *FirewallPolicyDataSource) scheduleToObject(ctx context.Context, schedu
 	var diags diag.Diagnostics
 
 	var daysVal types.Set
-	if len(schedule.DaysOfWeek) > 0 {
-		daysSet, d := types.SetValueFrom(ctx, types.StringType, schedule.DaysOfWeek)
+	if len(schedule.RepeatOnDays) > 0 {
+		daysSet, d := types.SetValueFrom(ctx, types.StringType, schedule.RepeatOnDays)
 		diags.Append(d...)
 		if diags.HasError() {
 			return types.ObjectNull(scheduleAttrTypes), diags
@@ -423,11 +439,22 @@ func (ds *FirewallPolicyDataSource) scheduleToObject(ctx context.Context, schedu
 		daysVal = types.SetNull(types.StringType)
 	}
 
+	var timeAllDay types.Bool
+	if schedule.TimeAllDay != nil {
+		timeAllDay = types.BoolValue(*schedule.TimeAllDay)
+	} else {
+		timeAllDay = types.BoolNull()
+	}
+
 	attrs := map[string]attr.Value{
 		"mode":             stringValueOrNull(schedule.Mode),
+		"time_all_day":     timeAllDay,
 		"time_range_start": stringValueOrNull(schedule.TimeRangeStart),
 		"time_range_end":   stringValueOrNull(schedule.TimeRangeEnd),
-		"days_of_week":     daysVal,
+		"repeat_on_days":   daysVal,
+		"date_start":       stringValueOrNull(schedule.DateStart),
+		"date_end":         stringValueOrNull(schedule.DateEnd),
+		"date":             stringValueOrNull(schedule.Date),
 	}
 
 	obj, diagObj := types.ObjectValue(scheduleAttrTypes, attrs)

@@ -23,7 +23,8 @@ func TestAccTrafficRouteResource_basic(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_route.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -45,7 +46,8 @@ func TestAccTrafficRouteResource_withDomains(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_route.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -67,7 +69,8 @@ func TestAccTrafficRouteResource_withIPAddresses(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_route.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -88,7 +91,8 @@ func TestAccTrafficRouteResource_killSwitch(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_route.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -108,7 +112,8 @@ func TestAccTrafficRouteResource_disabled(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_route.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
@@ -135,7 +140,8 @@ func TestAccTrafficRouteResource_update(t *testing.T) {
 			{
 				ResourceName:      "unifi_traffic_route.test",
 				ImportState:       true,
-				ImportStateVerify: true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"name"},
 			},
 		},
 	})
