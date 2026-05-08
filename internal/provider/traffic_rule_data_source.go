@@ -293,7 +293,13 @@ func (d *TrafficRuleDataSource) sdkToState(ctx context.Context, rule *unifi.Traf
 	var diags diag.Diagnostics
 
 	state.ID = types.StringValue(rule.ID)
-	state.Name = types.StringValue(rule.Name)
+	// Controller's GET /trafficrules/{id} (and the LIST fallback) drops `name`
+	// from the response. Preserve the lookup name from config when the API
+	// returns empty so a `data.unifi_traffic_rule.x.name` reference doesn't
+	// silently flip to "".
+	if rule.Name != "" {
+		state.Name = types.StringValue(rule.Name)
+	}
 	state.Enabled = types.BoolValue(derefBool(rule.Enabled))
 	state.Action = types.StringValue(rule.Action)
 

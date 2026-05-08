@@ -221,7 +221,13 @@ func (d *TrafficRouteDataSource) sdkToState(ctx context.Context, route *unifi.Tr
 	var diags diag.Diagnostics
 
 	state.ID = types.StringValue(route.ID)
-	state.Name = types.StringValue(route.Name)
+	// Controller's GET /trafficroutes/{id} (and the LIST fallback) drops `name`
+	// from the response. Preserve the lookup name from config when the API
+	// returns empty so a `data.unifi_traffic_route.x.name` reference doesn't
+	// silently flip to "".
+	if route.Name != "" {
+		state.Name = types.StringValue(route.Name)
+	}
 	state.Enabled = types.BoolValue(derefBool(route.Enabled))
 	state.KillSwitch = types.BoolValue(derefBool(route.KillSwitchEnabled))
 
